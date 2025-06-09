@@ -59,9 +59,9 @@ describe('checkbox-search prompt', () => {
       });
 
       const screen = getScreen();
-      expect(screen).toContain('Space');
+      expect(screen).toContain('Tab');
       expect(screen).toContain('Enter'); // Capitalized as it appears in help text
-      expect(screen).toMatch(/Space.*to select/i);
+      expect(screen).toMatch(/Tab.*to select/i);
     });
   });
 
@@ -218,7 +218,7 @@ describe('checkbox-search prompt', () => {
       });
 
       // Select React
-      events.keypress('space');
+      events.keypress('tab');
       let screen = getScreen();
       expect(screen).toContain('◉'); // React should be selected
 
@@ -272,10 +272,10 @@ describe('checkbox-search prompt', () => {
       });
 
       // Select first and third items
-      events.keypress('space'); // Select Apple
+      events.keypress('tab'); // Select Apple
       events.keypress('down');
       events.keypress('down');
-      events.keypress('space'); // Select Cherry
+      events.keypress('tab'); // Select Cherry
 
       events.keypress('enter');
       await expect(answer).resolves.toEqual(['apple', 'cherry']);
@@ -323,7 +323,7 @@ describe('checkbox-search prompt', () => {
 
       // Navigate through filtered results
       events.keypress('down');
-      events.keypress('space'); // Select second item (Apricot)
+      events.keypress('tab'); // Select second item (Apricot)
       events.keypress('enter');
     });
 
@@ -394,7 +394,7 @@ describe('checkbox-search prompt', () => {
       const lines = screen.split('\n');
       const itemLines = lines.filter((line: string) => line.includes('Apple') || line.includes('Banana') || line.includes('Cherry'));
       itemLines.forEach((line: string) => {
-        expect(line).toContain('●'); // All should be selected
+        expect(line).toContain('◉'); // All should be selected
       });
 
       // Press 'a' again to deselect all
@@ -403,7 +403,7 @@ describe('checkbox-search prompt', () => {
       const lines2 = screen.split('\n');
       const itemLines2 = lines2.filter((line: string) => line.includes('Apple') || line.includes('Banana') || line.includes('Cherry'));
       itemLines2.forEach((line: string) => {
-        expect(line).toContain('○'); // All should be deselected
+        expect(line).toContain('◯'); // All should be deselected
       });
     });
 
@@ -414,7 +414,7 @@ describe('checkbox-search prompt', () => {
       });
 
       // Select first item only
-      events.keypress('space');
+      events.keypress('tab');
       let screen = getScreen();
       
       // Press 'i' to invert selection
@@ -469,7 +469,7 @@ describe('checkbox-search prompt', () => {
       expect(screen).toMatch(/at least one|required|must select/i);
 
       // Select an item and submit
-      events.keypress('space');
+      events.keypress('tab');
       events.keypress('enter');
       await expect(answer).resolves.toEqual(['Apple']);
     });
@@ -487,14 +487,14 @@ describe('checkbox-search prompt', () => {
       });
 
       // Select only one item and try to submit
-      events.keypress('space');
+      events.keypress('tab');
       events.keypress('enter');
       let screen = getScreen();
       expect(screen).toContain('Please select exactly 2 items');
 
       // Select another item and submit
       events.keypress('down');
-      events.keypress('space');
+      events.keypress('tab');
       events.keypress('enter');
       await expect(answer).resolves.toHaveLength(2);
     });
@@ -509,7 +509,7 @@ describe('checkbox-search prompt', () => {
       });
 
       // Select item and submit - should succeed
-      events.keypress('space');
+      events.keypress('tab');
       events.keypress('enter');
       await expect(answer).resolves.toEqual(['Apple']);
     });
@@ -533,7 +533,7 @@ describe('checkbox-search prompt', () => {
 
       // Navigate down - should skip disabled item
       events.keypress('down');
-      events.keypress('space'); // Should select Cherry, not Banana
+      events.keypress('tab'); // Should select Cherry, not Banana
       events.keypress('enter');
       
       // The prompt should not include the disabled item in results
@@ -578,9 +578,9 @@ describe('checkbox-search prompt', () => {
       expect(screen).toContain('Item 3');
 
       // Navigate and select - should skip separator
-      events.keypress('space'); // Select Item 1
+      events.keypress('tab'); // Select Item 1
       events.keypress('down'); // Should skip separator and go to Item 2
-      events.keypress('space'); // Select Item 2
+      events.keypress('tab'); // Select Item 2
       events.keypress('enter');
     });
   });
@@ -604,7 +604,7 @@ describe('checkbox-search prompt', () => {
       expect(screen).toContain('➤'); // Custom cursor icon
 
       // Select an item
-      events.keypress('space');
+      events.keypress('tab');
       screen = getScreen();
       expect(screen).toContain('✅'); // Custom checked icon
     });

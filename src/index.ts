@@ -401,7 +401,12 @@ export default createPrompt(
       
       // Handle shortcuts first (single character keys)
       if (key.name === shortcuts.all && shortcuts.all) {
-        setAllItems(allItems.map(check(true)));
+        // Check if all selectable items are currently selected
+        const selectableItems = allItems.filter(isSelectable);
+        const allSelected = selectableItems.length > 0 && selectableItems.every(item => item.checked);
+        
+        // Toggle: if all are selected, deselect all; otherwise, select all
+        setAllItems(allItems.map(check(!allSelected)));
         return;
       }
       
@@ -444,16 +449,12 @@ export default createPrompt(
       // Handle selection toggle with tab key ONLY
       if (key.name === 'tab') {
         const activeItem = filteredItems[active];
-        console.log('DEBUG: Tab pressed, activeItem:', activeItem);
         if (activeItem && isSelectable(activeItem)) {
-          console.log('DEBUG: Updating allItems, current allItems:', allItems);
           setAllItems(allItems.map((item) => {
             // Compare by value and name to be more robust
             if (!Separator.isSeparator(item) && !Separator.isSeparator(activeItem) && 
                 item.value === activeItem.value && item.name === activeItem.name) {
-              const toggled = toggle(item);
-              console.log('DEBUG: Toggling item:', item, '→', toggled);
-              return toggled;
+              return toggle(item);
             }
             return item;
           }));
@@ -517,8 +518,8 @@ export default createPrompt(
         const currentItem = allItems.find(i => 
           !Separator.isSeparator(i) && !Separator.isSeparator(item) && 
           i.value === item.value && i.name === item.name
-        );
-        const isChecked = currentItem ? currentItem.checked : (Separator.isSeparator(item) ? false : (item as NormalizedChoice<Value>).checked);
+        ) as NormalizedChoice<Value> | undefined;
+        const isChecked = currentItem ? currentItem.checked : false;
         
 
         const checkbox = isChecked ? theme.icon.checked : theme.icon.unchecked;
@@ -534,7 +535,13 @@ export default createPrompt(
         
         line.push(text);
         
-        if ((item as NormalizedChoice<Value>).description && !isActive) {
+        // Show disabled reason if item is disabled
+        if ((item as NormalizedChoice<Value>).disabled) {
+          const disabledReason = typeof (item as NormalizedChoice<Value>).disabled === 'string' 
+            ? (item as NormalizedChoice<Value>).disabled as string
+            : 'disabled';
+          line.push(theme.style.disabled(`(${disabledReason})`));
+        } else if ((item as NormalizedChoice<Value>).description && !isActive) {
           line.push(theme.style.description(`(${(item as NormalizedChoice<Value>).description})`));
         }
         
