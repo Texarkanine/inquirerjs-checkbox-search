@@ -68,7 +68,7 @@
     "dev": "tshy --watch",
     "lint": "eslint . --ext .ts --fix",
     "format": "prettier --write .",
-    "test": "vitest",
+    "test": "vitest run",
     "test:coverage": "vitest --coverage",
     "test:ui": "vitest --ui",
     "typecheck": "tsc --noEmit",
@@ -122,4 +122,4 @@
       "optional": true
     }
   }
-} 
+}

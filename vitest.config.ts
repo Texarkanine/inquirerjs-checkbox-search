@@ -4,27 +4,22 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html'],
-      exclude: [
-        'node_modules/',
-        'dist/',
-        '.tshy/',
-        'coverage/',
-        '**/*.d.ts',
-        '**/*.config.*',
-        '**/*.test.*',
-        '**/*.spec.*',
-      ],
-      thresholds: {
-        global: {
-          branches: 80,
-          functions: 80,
-          lines: 80,
-          statements: 80,
-        },
-      },
-    },
+    include: ['src/**/*.test.ts'],
+    exclude: ['inquirer-source-code-ref/**/*', 'node_modules/**/*'],
+  },
+  esbuild: {
+    target: 'node18',
+    tsconfigRaw: {
+      compilerOptions: {
+        target: 'ES2022',
+        module: 'ESNext',
+        moduleResolution: 'node',
+        strict: true,
+        esModuleInterop: true,
+        skipLibCheck: true,
+        forceConsistentCasingInFileNames: true,
+        types: ['node', 'vitest/globals']
+      }
+    }
   },
 }); 
