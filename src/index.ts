@@ -518,7 +518,7 @@ export default createPrompt(
           !Separator.isSeparator(i) && !Separator.isSeparator(item) && 
           i.value === item.value && i.name === item.name
         );
-        const isChecked = currentItem ? currentItem.checked : (Separator.isSeparator(item) ? false : item.checked);
+        const isChecked = currentItem ? currentItem.checked : (Separator.isSeparator(item) ? false : (item as NormalizedChoice<Value>).checked);
         
 
         const checkbox = isChecked ? theme.icon.checked : theme.icon.unchecked;
