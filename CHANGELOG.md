@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v0.1.1...v0.1.2) (2025-06-10)
+
+
+### Bug Fixes
+
+* **ci:** normalize repository URL format for npm publishing ([bbb658c](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/bbb658c24ff85cfa72020096d8172b15c5ffe4f8))
+
 ## [0.1.1](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v0.1.0...v0.1.1) (2025-06-10)
 
 
