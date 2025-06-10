@@ -32,7 +32,7 @@
   "homepage": "https://github.com/texarkanine/inquirerjs-checkbox-search#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/texarkanine/inquirerjs-checkbox-search.git"
+    "url": "git+https://github.com/texarkanine/inquirerjs-checkbox-search.git"
   },
   "bugs": {
     "url": "https://github.com/texarkanine/inquirerjs-checkbox-search/issues"
