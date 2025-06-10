@@ -1,0 +1,16 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Core Techniques for Working with inquirerjs-checkbox-search
+
+## Runing Tests
+
+**ONLY** use the following methods to run tests:
+
+1. whole test suite: `npm test`
+2. specific test or group: `npx vitest run -t "TEST_NAME"`
+    * example: `npx vitest run -t "should maintain selections across filtering"`
+
+The `--reporter=verbose` option doesn't do anything; don't use it with tests.
