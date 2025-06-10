@@ -20,16 +20,15 @@ import type { PartialDeep } from '@inquirer/type';
 import colors from 'yoctocolors-cjs';
 import figures from '@inquirer/figures';
 import ansiEscapes from 'ansi-escapes';
-import { blue, cyan, dim, yellow } from 'yoctocolors-cjs';
 
 /**
  * Theme configuration for the checkbox-search prompt
  */
 type CheckboxSearchTheme = {
   icon: {
-    checked: string;
-    unchecked: string;
-    cursor: string;
+    checked: string | ((text: string) => string);
+    unchecked: string | ((text: string) => string);
+    cursor: string | ((text: string) => string);
   };
   style: {
     answer: (text: string) => string;
@@ -282,6 +281,11 @@ export default createPrompt(
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [searchError, setSearchError] = useState<string>();
     
+    // Debug counter for filtering effect
+    const filterCallCounter = useRef(0);
+    const filteredItemsChangeCounter = useRef(0);
+    const allItemsRef = useRef<ReadonlyArray<Item<Value>>>([]);
+    
     // Initialize choices directly like the original checkbox prompt
     const [allItems, setAllItems] = useState<ReadonlyArray<Item<Value>>>(() => {
 
@@ -297,7 +301,41 @@ export default createPrompt(
       }
       return [];
     });
-    const [filteredItems, setFilteredItems] = useState<ReadonlyArray<Item<Value>>>(allItems);
+    
+    // Compute filtered items based on search term and filtering logic
+    const filteredItems = useMemo(() => {
+      // Async source mode - use allItems directly (source handles filtering)
+      if (config.source) {
+        return allItems;
+      }
+
+      // Static mode - filter allItems based on search term
+      if (!searchTerm.trim()) {
+        return allItems;
+      }
+
+      // Filter using provided filter function or default case-insensitive filter
+      const filterFn = config.filter || defaultFilter;
+      const selectableItems = allItems.filter(item => !Separator.isSeparator(item)) as ReadonlyArray<NormalizedChoice<Value>>;
+      const filtered = filterFn(selectableItems, searchTerm);
+      
+      // Create a set of filtered values for efficient lookup
+      const filteredValues = new Set(filtered.map(item => item.value));
+      
+      // Rebuild preserving current allItems state (including checked status)
+      const result: Item<Value>[] = [];
+      
+      for (const item of allItems) {
+        if (Separator.isSeparator(item)) {
+          result.push(item);
+        } else if (filteredValues.has(item.value)) {
+          result.push(item); // This preserves the current checked state from allItems
+        }
+      }
+      
+      return result;
+    }, [allItems, searchTerm, config.source, config.filter]);
+    
     const [active, setActive] = useState<number>(0);
     const [showHelpTip, setShowHelpTip] = useState(true);
     const [errorMsg, setError] = useState<string>();
@@ -313,85 +351,45 @@ export default createPrompt(
       };
     }, [filteredItems]);
     
-    // Handle async source loading with abort support
+    // Handle async source - load data based on search term
     useEffect(() => {
-      console.log('[DEBUG] Async source effect running, config.source =', !!config.source);
-      if (!config.source) return;
+      if (!config.source) {
+        return;
+      }
+
+      const controller = new AbortController();
       
-      const abortController = new AbortController();
+      // Set loading state and clear previous errors
       setStatus('loading');
       setSearchError(undefined);
       
-      const loadChoices = async () => {
-        try {
-          const choices = await config.source!(searchTerm, { signal: abortController.signal });
+      const result = config.source(searchTerm || undefined, { signal: controller.signal });
+      
+      // Handle both Promise and non-Promise returns
+      Promise.resolve(result)
+        .then((choices: readonly (string | Separator | Choice<Value>)[]) => {
+          if (controller.signal.aborted) return;
           
-          if (!abortController.signal.aborted) {
-            const normalized = normalizeChoices<Value>(choices);
-            // Apply default selections
-            const withDefaults = normalized.map(item => {
-              if (isSelectable(item) && defaultValues.includes(item.value)) {
-                return { ...item, checked: true };
-              }
-              return item;
-            });
-            console.log('[DEBUG] Async source: setting allItems to', withDefaults);
-            setAllItems(withDefaults);
-            setStatus('idle');
-          }
-        } catch (error) {
-          if (!abortController.signal.aborted) {
-            setSearchError(error instanceof Error ? error.message : 'Failed to load choices');
-            setStatus('idle');
-          }
-        }
-      };
-      
-      // Execute immediately for better test responsiveness
-      loadChoices();
-      
+          const normalizedChoices = normalizeChoices<Value>(choices as ReadonlyArray<Choice<Value> | Separator>);
+          setAllItems(normalizedChoices);
+          setStatus('idle');
+        })
+        .catch((error: unknown) => {
+          if (controller.signal.aborted) return;
+          console.error('Source function error:', error);
+          setSearchError(error instanceof Error ? error.message : 'Failed to load choices');
+          setStatus('idle');
+        });
+
       return () => {
-        abortController.abort();
+        controller.abort();
       };
-    }, [config.source, searchTerm, defaultValues]);
+    }, [config.source, searchTerm]);
     
-    // Apply filtering when search term or items change
+    // Update ref whenever allItems changes
     useEffect(() => {
-      const reactInAllItems = allItems.find(item => !Separator.isSeparator(item) && item.value === 'react') as NormalizedChoice<Value> | undefined;
-      console.log('[DEBUG] Filtering effect running, searchTerm =', searchTerm, 'React in allItems =', reactInAllItems?.checked);
-      
-      if (config.source) {
-        // For async sources, filtering is handled by the source function
-        setFilteredItems(allItems);
-      } else {
-        // For static choices, apply local filtering
-        if (!searchTerm.trim()) {
-          // No search term - show all items
-          setFilteredItems(allItems);
-        } else {
-          // Apply filtering
-          const selectableItems = allItems.filter(item => !Separator.isSeparator(item)) as ReadonlyArray<NormalizedChoice<Value>>;
-          const filtered = filter(selectableItems, searchTerm);
-          
-          // Create a set of filtered values for efficient lookup
-          const filteredValues = new Set(filtered.map(item => item.value));
-          
-          // Rebuild preserving current allItems state (including checked status)
-          const result: Item<Value>[] = [];
-          
-          for (const item of allItems) {
-            if (Separator.isSeparator(item)) {
-              result.push(item);
-            } else if (filteredValues.has(item.value)) {
-              result.push(item); // This preserves the current checked state from allItems
-            }
-          }
-          
-          console.log('[DEBUG] Filtering: created result with', result.length, 'items');
-          setFilteredItems([...result]); // Force new array reference
-        }
-      }
-    }, [allItems, searchTerm, filter, config.source]);
+      allItemsRef.current = allItems;
+    }, [allItems]);
     
     // Reset active index when filtered items change
     useEffect(() => {
@@ -400,14 +398,19 @@ export default createPrompt(
     
     // Keyboard event handling
     useKeypress((key, rl) => {
-      if (status !== 'idle') return;
+      // Allow search input even during loading, but block other actions
+      const isSearchInput = key.name !== 'up' && key.name !== 'down' && key.name !== 'tab' && key.name !== 'enter';
+      
+      if (status !== 'idle' && !isSearchInput) {
+        return;
+      }
       
       // Clear any existing errors
       setError(undefined);
       
       // Handle search input - use rl.line for current input
       // Single-character shortcuts are disabled to avoid conflicts with search
-      if (key.name !== 'up' && key.name !== 'down' && key.name !== 'tab' && key.name !== 'enter') {
+      if (isSearchInput) {
         setSearchTerm(rl.line);
         return;
       }
@@ -436,19 +439,16 @@ export default createPrompt(
         return;
       }
       
-      // Handle selection toggle with tab key ONLY
-      if (key.name === 'tab') {
-        const activeItem = filteredItems[active];
-        if (activeItem && isSelectable(activeItem)) {
-          const activeValue = (activeItem as NormalizedChoice<Value>).value;
-          
-          console.log('[DEBUG] Tab key pressed, activeValue =', activeValue);
-          
-          setAllItems(allItems.map((item) => {
+              // Handle selection toggle with tab key ONLY
+        if (key.name === 'tab') {
+          const activeItem = filteredItems[active];
+          if (activeItem && isSelectable(activeItem)) {
+            const activeValue = (activeItem as NormalizedChoice<Value>).value;
+            
+            setAllItems(allItems.map((item) => {
             // Compare by value only for robust matching
             if (!Separator.isSeparator(item) && item.value === activeValue) {
               const toggled = toggle(item);
-              console.log('[DEBUG] Tab key: toggling', activeValue, 'from', item.checked, 'to', (toggled as NormalizedChoice<Value>).checked);
               return toggled;
             }
             return item;
@@ -457,9 +457,9 @@ export default createPrompt(
         return;
       }
       
-      // Handle submission
-      if (isEnterKey(key)) {
-        const selectedChoices = allItems.filter(isChecked);
+              // Handle submission
+        if (isEnterKey(key)) {
+          const selectedChoices = allItems.filter(isChecked);
         
         if (required && selectedChoices.length === 0) {
           setError('At least one choice must be selected');
@@ -506,7 +506,7 @@ export default createPrompt(
         const line: string[] = [];
         
         if (Separator.isSeparator(item)) {
-          return dim(item.separator);
+          return colors.dim(item.separator);
         }
         
         // Look up checked state directly from allItems to get the current state
@@ -516,13 +516,14 @@ export default createPrompt(
         
         const isChecked = currentItem?.checked || false;
         
-        // DEBUG: Log React's rendering state
-        if ((item as NormalizedChoice<Value>).value === 'react') {
-          console.log('[DEBUG] renderItem: React found =', !!currentItem, 'checked =', currentItem?.checked, 'final =', isChecked);
-        }
+        // Helper function to resolve icon (string or function)
+        const resolveIcon = (icon: string | ((text: string) => string), choiceText: string): string => {
+          return typeof icon === 'function' ? icon(choiceText) : icon;
+        };
         
-        const checkbox = isChecked ? theme.icon.checked : theme.icon.unchecked;
-        const cursor = isActive ? theme.icon.cursor : ' ';
+        const choiceName = (item as NormalizedChoice<Value>).name;
+        const checkbox = resolveIcon(isChecked ? theme.icon.checked : theme.icon.unchecked, choiceName);
+        const cursor = isActive ? resolveIcon(theme.icon.cursor, choiceName) : ' ';
         line.push(cursor, checkbox);
         
         let text = (item as NormalizedChoice<Value>).name;
@@ -541,7 +542,16 @@ export default createPrompt(
             : 'disabled';
           line.push(theme.style.disabled(`(${disabledReason})`));
         } else if ((item as NormalizedChoice<Value>).description) {
-          line.push(theme.style.description(`(${(item as NormalizedChoice<Value>).description})`));
+          const description = (item as NormalizedChoice<Value>).description!;
+          // If using custom description styling, give full control to user (no parentheses)
+          // If using default styling, add parentheses for backward compatibility
+          const isUsingCustomDescriptionStyle = config.theme?.style?.description !== undefined;
+          
+          if (isUsingCustomDescriptionStyle) {
+            line.push(theme.style.description(description));
+          } else {
+            line.push(`(${theme.style.description(description)})`);
+          }
         }
         
         return line.join(' ');
