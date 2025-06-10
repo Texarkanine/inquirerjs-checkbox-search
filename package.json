@@ -29,16 +29,16 @@
     "tty",
     "ui"
   ],
-  "homepage": "https://github.com/mobaxterm/inquirer.js-checkbox-search#readme",
+  "homepage": "https://github.com/texarkanine/inquirerjs-checkbox-search#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mobaxterm/inquirer.js-checkbox-search.git"
+    "url": "https://github.com/texarkanine/inquirerjs-checkbox-search.git"
   },
   "bugs": {
-    "url": "https://github.com/mobaxterm/inquirer.js-checkbox-search/issues"
+    "url": "https://github.com/texarkanine/inquirerjs-checkbox-search/issues"
   },
   "license": "MIT",
-  "author": "Your Name <your.email@example.com>",
+  "author": "Texarkanine <texarkanine@protonmail.com>",
   "sideEffects": false,
   "type": "module",
   "exports": {
@@ -74,6 +74,7 @@
     "test:ui": "vitest --ui",
     "typecheck": "tsc --noEmit",
     "attw": "attw --pack",
+    "pkg:inspect": "rimraf package-inspect *.tgz && npm run build && npm pack && mkdir package-inspect && tar -xzf *.tgz -C package-inspect && echo '\\n📦 Package extracted to package-inspect/ for inspection'",
     "prepublishOnly": "npm run clean && npm run build && npm run test && npm run attw"
   },
   "dependencies": {

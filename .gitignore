@@ -49,6 +49,7 @@ pids
 
 # Output of 'npm pack'
 *.tgz
+package-inspect/
 
 # Yarn Integrity file
 .yarn-integrity

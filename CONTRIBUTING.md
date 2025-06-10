@@ -13,8 +13,8 @@
 1. Fork and clone the repository:
 
    ```bash
-   git clone https://github.com/your-username/inquirer.js-checkbox-search.git
-   cd inquirer.js-checkbox-search
+   git clone https://github.com/texarkanine/inquirerjs-checkbox-search.git
+   cd inquirerjs-checkbox-search
    ```
 
 2. Install dependencies:

@@ -195,8 +195,8 @@ This section covers the tools and workflows used in this project for contributor
 
 ```bash
 # Clone and install
-git clone <repo-url>
-cd inquirer.js-checkbox-search
+git clone https://github.com/texarkanine/inquirerjs-checkbox-search.git
+cd inquirerjs-checkbox-search
 npm install
 ```
 
