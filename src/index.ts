@@ -67,7 +67,7 @@ const checkboxSearchTheme: CheckboxSearchTheme = {
 /**
  * Choice object for the checkbox-search prompt
  */
-type Choice<Value> = {
+export type Choice<Value> = {
   value: Value;
   name?: string;
   description?: string;
@@ -80,7 +80,7 @@ type Choice<Value> = {
 /**
  * Normalized choice object used internally
  */
-type NormalizedChoice<Value> = {
+export type NormalizedChoice<Value> = {
   value: Value;
   name: string;
   description?: string;
@@ -167,8 +167,6 @@ function isChecked<Value>(item: Item<Value>): item is NormalizedChoice<Value> {
 function toggle<Value>(item: Item<Value>): Item<Value> {
   return isSelectable(item) ? { ...item, checked: !item.checked } : item;
 }
-
-
 
 /**
  * Normalize choice inputs into consistent format
@@ -593,16 +591,18 @@ export default createPrompt(
               : 'disabled';
           line.push(theme.style.disabled(`(${disabledReason})`));
         } else if ((item as NormalizedChoice<Value>).description) {
-          const description = (item as NormalizedChoice<Value>).description!;
+          const description = (item as NormalizedChoice<Value>).description;
           // If using custom description styling, give full control to user (no parentheses)
           // If using default styling, add parentheses for backward compatibility
           const isUsingCustomDescriptionStyle =
             config.theme?.style?.description !== undefined;
 
-          if (isUsingCustomDescriptionStyle) {
-            line.push(theme.style.description(description));
-          } else {
-            line.push(`(${theme.style.description(description)})`);
+          if (description) {
+            if (isUsingCustomDescriptionStyle) {
+              line.push(theme.style.description(description));
+            } else {
+              line.push(`(${theme.style.description(description)})`);
+            }
           }
         }
 

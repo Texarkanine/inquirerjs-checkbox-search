@@ -2,8 +2,6 @@ import { describe, it, expect } from 'vitest';
 import { render } from '@inquirer/testing';
 import checkboxSearch, { Separator } from './index.js';
 
-
-
 describe('checkbox-search prompt', () => {
   describe('Basic functionality', () => {
     it('should render with static choices', async () => {
@@ -418,7 +416,9 @@ describe('checkbox-search prompt', () => {
       const { answer, events, getScreen } = await render(checkboxSearch, {
         message: 'Select exactly 2 items',
         choices: ['Apple', 'Banana', 'Cherry', 'Date'],
-        validate: (selections: any[]) => {
+        validate: (
+          selections: ReadonlyArray<import('./index').NormalizedChoice<string>>,
+        ) => {
           if (selections.length !== 2) {
             return 'Please select exactly 2 items';
           }
@@ -443,7 +443,9 @@ describe('checkbox-search prompt', () => {
       const { answer, events } = await render(checkboxSearch, {
         message: 'Select items',
         choices: ['Apple', 'Banana', 'Cherry'],
-        validate: (selections: any[]) => {
+        validate: (
+          selections: ReadonlyArray<import('./index').NormalizedChoice<string>>,
+        ) => {
           return selections.length > 0
             ? true
             : 'Please select at least one item';
