@@ -5,6 +5,7 @@ A multi-select prompt with text filtering/search capability for inquirer.js that
 ## Overview
 
 This prompt allows users to:
+
 1. **Search/Filter**: Type to filter a list of options in real-time
 2. **Multi-Select**: Use tab key to toggle selection of multiple items
 3. **Navigate**: Use arrow keys to navigate through filtered results
@@ -17,18 +18,21 @@ The implementation leverages code reuse from existing inquirer.js prompts while 
 ### Core Functionality
 
 1. **Text Input & Filtering**
+
    - Real-time filtering as user types
    - Support for both static choices and async source functions
    - Custom filter functions supported
    - Escape key clears search terms
 
 2. **Multi-Selection**
+
    - Visual indicators for selected/unselected items (◉/◯)
    - Tab key toggles selection of current item
    - Maintains selections across filtering operations
    - Returns array of selected values
 
 3. **Navigation & UX**
+
    - Arrow keys navigate through filtered results
    - Cursor position maintained during selection toggles
    - Pagination for long lists
@@ -45,12 +49,14 @@ The implementation leverages code reuse from existing inquirer.js prompts while 
 ### Technical Implementation
 
 1. **Architecture**
+
    - Built using `@inquirer/core` hooks and utilities
    - TypeScript with strict type checking
    - ESM/CommonJS dual exports via tshy
    - Node.js 18+ compatibility
 
 2. **Performance**
+
    - Efficient filtering using memoized computations
    - Minimal re-rendering with React-style state management
    - Proper abort handling for async operations
@@ -67,27 +73,32 @@ The implementation leverages code reuse from existing inquirer.js prompts while 
 ```typescript
 type CheckboxSearchConfig<Value> = {
   message: string;
-  
+
   // Choice configuration
   choices?: ReadonlyArray<Choice<Value> | Separator | string>;
   source?: (
     term: string | undefined,
-    opt: { signal: AbortSignal }
+    opt: { signal: AbortSignal },
   ) => Promise<ReadonlyArray<Choice<Value> | Separator | string>>;
-  
+
   // Search options
-  filter?: (items: ReadonlyArray<NormalizedChoice<Value>>, term: string) => ReadonlyArray<NormalizedChoice<Value>>;
-  
-  // Selection options  
+  filter?: (
+    items: ReadonlyArray<NormalizedChoice<Value>>,
+    term: string,
+  ) => ReadonlyArray<NormalizedChoice<Value>>;
+
+  // Selection options
   required?: boolean;
-  validate?: (choices: ReadonlyArray<NormalizedChoice<Value>>) => boolean | string | Promise<string | boolean>;
+  validate?: (
+    choices: ReadonlyArray<NormalizedChoice<Value>>,
+  ) => boolean | string | Promise<string | boolean>;
   default?: ReadonlyArray<Value>;
-  
+
   // UI options
   pageSize?: number;
   loop?: boolean;
   instructions?: string | boolean;
-  
+
   // Theming
   theme?: PartialDeep<Theme<CheckboxSearchTheme>>;
 };
@@ -132,6 +143,7 @@ type CheckboxSearchTheme = {
 ## Usage Examples
 
 ### Basic Usage (Static List)
+
 ```typescript
 import checkboxSearch from 'inquirerjs-checkbox-search';
 
@@ -149,13 +161,14 @@ const selected = await checkboxSearch({
 ```
 
 ### Advanced Usage (Dynamic Source)
+
 ```typescript
 const selected = await checkboxSearch({
   message: 'Select GitHub repositories:',
   source: async (term, { signal }) => {
     const response = await fetch(`/api/repos?q=${term}`, { signal });
     const repos = await response.json();
-    return repos.map(repo => ({
+    return repos.map((repo) => ({
       value: repo.id,
       name: repo.name,
       description: repo.description,
@@ -170,6 +183,7 @@ const selected = await checkboxSearch({
 ```
 
 ### With Custom Theme
+
 ```typescript
 const selected = await checkboxSearch({
   message: 'Select items',
@@ -178,30 +192,32 @@ const selected = await checkboxSearch({
     icon: {
       checked: '✅',
       unchecked: '⬜',
-      cursor: '👉'
+      cursor: '👉',
     },
     style: {
       highlight: (text) => `🌟 ${text}`,
-      description: (text) => `💬 ${text}`
-    }
-  }
+      description: (text) => `💬 ${text}`,
+    },
+  },
 });
 ```
 
 ## Keyboard Controls
 
-| Key | Action |
-|-----|--------|
-| Type | Filter/search options |
-| ↑/↓ | Navigate through options |
-| Tab | Toggle selection of current option |
-| Escape | Clear search filter |
-| Enter | Confirm selection |
+| Key    | Action                             |
+| ------ | ---------------------------------- |
+| Type   | Filter/search options              |
+| ↑/↓    | Navigate through options           |
+| Tab    | Toggle selection of current option |
+| Escape | Clear search filter                |
+| Enter  | Confirm selection                  |
 
 ## Implementation Architecture
 
 ### State Management
+
 The prompt uses React-style hooks from `@inquirer/core`:
+
 - `useState` for search term, items, and selection state
 - `useEffect` for async operations and state synchronization
 - `useMemo` for computed filtered items
@@ -216,7 +232,9 @@ The prompt uses React-style hooks from `@inquirer/core`:
 5. **Theme Flexibility**: Supports both string and function-based theming
 
 ### Testing Strategy
+
 Comprehensive test suite covering:
+
 - Basic functionality and rendering
 - Search and filtering operations
 - Multi-selection behavior
@@ -240,4 +258,4 @@ Comprehensive test suite covering:
 2. **Theme System**: Full theming support with both string and function options
 3. **Async Support**: Complete async source support with proper cancellation
 4. **Type Safety**: Full TypeScript support with proper type inference
-5. **Accessibility**: Standard keyboard navigation and screen reader support 
+5. **Accessibility**: Standard keyboard navigation and screen reader support

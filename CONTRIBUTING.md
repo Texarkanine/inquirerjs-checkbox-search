@@ -4,24 +4,27 @@
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - npm 9+
 - Git
 
 ### Setup
 
 1. Fork and clone the repository:
+
    ```bash
    git clone https://github.com/your-username/inquirer.js-checkbox-search.git
    cd inquirer.js-checkbox-search
    ```
 
 2. Install dependencies:
+
    ```bash
    npm install
    ```
 
 3. Build the project:
+
    ```bash
    npm run build
    ```
@@ -36,6 +39,7 @@
 ### Making Changes
 
 1. Create a new branch for your feature/fix:
+
    ```bash
    git checkout -b feat/your-feature-name
    # or
@@ -57,6 +61,7 @@
 - **UI**: `npm run test:ui` - Run tests with Vitest UI
 
 All new features should include comprehensive tests covering:
+
 - Positive test cases
 - Edge cases
 - Error conditions
@@ -70,6 +75,7 @@ We use ESLint and Prettier for code formatting and style enforcement:
 - **Lint**: `npm run lint` - Check and fix linting issues
 
 The project follows these standards:
+
 - TypeScript strict mode
 - ESLint recommended rules
 - Prettier formatting
@@ -92,47 +98,51 @@ This project uses [Conventional Commits](https://www.conventionalcommits.org/en/
 
 ### Types
 
-- **feat**: A new feature for the user
-- **fix**: A bug fix for the user
-- **docs**: Documentation changes
-- **style**: Code style changes (formatting, missing semicolons, etc.)
-- **refactor**: Code refactoring without changing functionality
-- **perf**: Performance improvements
-- **test**: Adding or updating tests
-- **build**: Changes to build process or external dependencies
-- **ci**: Changes to CI configuration
-- **chore**: Other changes that don't modify src or test files
+- **feat**: A new feature for the user (triggers minor release)
+- **fix**: A bug fix for the user (triggers patch release)
+- **chore**: Maintenance tasks that don't affect the user (no release - avoid when possible)
+
+**Note**: `chore` commits do not trigger releases, so they should be avoided in most cases. Instead, use scopes to provide more context:
+
+- `feat(ui): add new search functionality`
+- `fix(docs): correct API examples`
+- `fix(ci): update Node.js version in workflow`
+
+Use scopes like `(docs)`, `(ci)`, `(test)`, `(deps)`, etc. instead of separate commit types.
 
 ### Examples
 
 ```bash
-# New feature
+# New features
 git commit -m "feat: add tab completion for search terms"
+git commit -m "feat(ui): add escape key to clear search"
 
-# Bug fix
+# Bug fixes
 git commit -m "fix: resolve navigation issue with filtered results"
+git commit -m "fix(theme): correct icon colors in dark mode"
+git commit -m "fix(docs): correct API examples in README"
 
 # Breaking change
 git commit -m "feat!: change API to support async filtering
 
 BREAKING CHANGE: the filter option now expects an async function"
 
-# With scope
-git commit -m "fix(theme): correct icon colors in dark mode"
-
-# Documentation
-git commit -m "docs: add usage examples for async sources"
+# Maintenance (avoid when possible)
+git commit -m "chore(deps): update TypeScript to 5.6"
+git commit -m "chore(ci): update Node.js version in workflow"
 ```
 
 ### Breaking Changes
 
 Breaking changes should be indicated by:
+
 1. A `!` after the type: `feat!:` or `fix!:`
 2. A `BREAKING CHANGE:` footer explaining the change
 
 ## Pull Request Process
 
 1. **Before submitting**:
+
    - Ensure all tests pass: `npm test`
    - Ensure code is properly formatted: `npm run format`
    - Ensure no linting errors: `npm run lint`
@@ -140,6 +150,7 @@ Breaking changes should be indicated by:
    - Ensure build succeeds: `npm run build`
 
 2. **Pull Request**:
+
    - Use a descriptive title following conventional commit format
    - Include a detailed description of changes
    - Reference any related issues
@@ -177,12 +188,13 @@ Releases are automated using [release-please](https://github.com/googleapis/rele
    - Updates version tags
 
 Version bumping follows semantic versioning:
+
 - `fix:` commits trigger patch releases (1.0.1)
-- `feat:` commits trigger minor releases (1.1.0) 
+- `feat:` commits trigger minor releases (1.1.0)
 - `feat!:` or `BREAKING CHANGE:` trigger major releases (2.0.0)
 
 ## Getting Help
 
 - **Issues**: Open an issue for bugs or feature requests
 - **Discussions**: Use GitHub Discussions for questions
-- **Documentation**: Check the README for usage examples 
+- **Documentation**: Check the README for usage examples

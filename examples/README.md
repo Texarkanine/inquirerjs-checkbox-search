@@ -1,0 +1,208 @@
+# Examples
+
+This directory contains working examples that demonstrate different features of the `inquirerjs-checkbox-search` package.
+
+## Prerequisites
+
+1. **Build the package first** (required for examples to work):
+
+   ```bash
+   npm run build
+   ```
+
+2. **Make examples executable** (optional, makes running easier):
+   ```bash
+   chmod +x examples/*.js
+   ```
+
+## Running Examples
+
+### Method 1: Direct execution (if made executable)
+
+```bash
+./examples/basic.js
+./examples/search-filtering.js
+# ... etc
+```
+
+### Method 2: Using Node.js
+
+```bash
+node examples/basic.js
+node examples/search-filtering.js
+# ... etc
+```
+
+## Available Examples
+
+### 1. `basic.js` - Simple Multi-Select
+
+**What it demonstrates:**
+
+- Basic multi-select functionality
+- Simple choice configuration
+- Tab to select, Enter to confirm
+
+**Run it:**
+
+```bash
+node examples/basic.js
+```
+
+### 2. `search-filtering.js` - Search Filtering
+
+**What it demonstrates:**
+
+- Real-time search filtering
+- Larger list of choices (15 countries)
+- Custom page size and instructions
+
+**Run it:**
+
+```bash
+node examples/search-filtering.js
+```
+
+**Try this:** Type letters to filter countries (e.g., "un" to see "United States" and "United Kingdom")
+
+### 3. `async-source.js` - Async Source Function
+
+**What it demonstrates:**
+
+- Dynamic loading with async source function
+- Loading states and request cancellation
+- Mock API simulation with delay
+
+**Run it:**
+
+```bash
+node examples/async-source.js
+```
+
+**Try this:**
+
+- Wait for initial load (shows popular repos)
+- Type "react" to search for React-related repositories
+- Type quickly to see request cancellation in action
+
+### 4. `custom-theme.js` - Custom Theming
+
+**What it demonstrates:**
+
+- Custom icons (✅, ⬜, 👉)
+- Custom styling functions with emojis
+- Theme configuration options
+
+**Run it:**
+
+```bash
+node examples/custom-theme.js
+```
+
+### 5. `validation.js` - Validation & Pre-selection
+
+**What it demonstrates:**
+
+- Input validation (2-4 selections required)
+- Pre-selected default options
+- Custom validation messages
+
+**Run it:**
+
+```bash
+node examples/validation.js
+```
+
+**Try this:**
+
+- Notice Alice and Bob are pre-selected
+- Try confirming with only 1 selection (validation error)
+- Try selecting more than 4 members (validation error)
+
+### 6. `custom-filter.js` - Custom Filter Function
+
+**What it demonstrates:**
+
+- Custom fuzzy matching filter
+- Enhanced search capabilities
+- Partial character matching
+
+**Run it:**
+
+```bash
+node examples/custom-filter.js
+```
+
+**Try this:**
+
+- Type "js" to find "JavaScript"
+- Type "py" to find "Python"
+- Type "c" to see C#, C++, etc.
+
+## Tips for Keyboard Navigation
+
+| Key        | Action                             |
+| ---------- | ---------------------------------- |
+| **Type**   | Filter/search options              |
+| **↑/↓**    | Navigate through options           |
+| **Tab**    | Toggle selection of current option |
+| **Escape** | Clear search filter                |
+| **Enter**  | Confirm selection                  |
+
+## Troubleshooting
+
+### "Cannot find module" error
+
+Make sure you've built the package first:
+
+```bash
+npm run build
+```
+
+### "Permission denied" error
+
+Make the file executable:
+
+```bash
+chmod +x examples/basic.js
+```
+
+Or use `node examples/basic.js` instead.
+
+### Examples not working as expected
+
+1. Ensure you're in the project root directory
+2. Verify the build completed successfully
+3. Check that `dist/esm/index.js` exists
+
+## Creating Your Own Examples
+
+To create a new example:
+
+1. Create a new `.js` file in the `examples/` directory
+2. Add the shebang line: `#!/usr/bin/env node`
+3. Import the package: `import checkboxSearch from '../dist/esm/index.js';`
+4. Use ES modules syntax (the package is built as ESM)
+5. Make it executable: `chmod +x examples/your-example.js`
+
+Example template:
+
+```javascript
+#!/usr/bin/env node
+
+import checkboxSearch from '../dist/esm/index.js';
+
+async function main() {
+  const result = await checkboxSearch({
+    message: 'Your question?',
+    choices: [
+      { value: 'option1', name: 'Option 1' },
+      { value: 'option2', name: 'Option 2' },
+    ],
+  });
+
+  console.log('Selected:', result);
+}
+
+main().catch(console.error);
+```

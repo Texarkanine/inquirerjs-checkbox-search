@@ -2,13 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { render } from '@inquirer/testing';
 import checkboxSearch, { Separator } from './index.js';
 
-// Theme for testing custom icons (only used in theming tests)
-const customIconTheme = {
-  icon: {
-    checked: '●',
-    unchecked: '○',
-  },
-};
+
 
 describe('checkbox-search prompt', () => {
   describe('Basic functionality', () => {
@@ -122,7 +116,7 @@ describe('checkbox-search prompt', () => {
       for (let i = 0; i < 5; i++) {
         events.keypress('backspace');
       }
-      
+
       screen = getScreen();
       expect(screen).toContain('Apple');
       expect(screen).toContain('Banana');
@@ -131,16 +125,16 @@ describe('checkbox-search prompt', () => {
 
     it('should handle async source function', async () => {
       const mockSource = async (term?: string) => {
-        await new Promise(resolve => setTimeout(resolve, 10)); // Simulate async
+        await new Promise((resolve) => setTimeout(resolve, 10)); // Simulate async
         const items = [
           { value: 'item1', name: 'Item One' },
           { value: 'item2', name: 'Item Two' },
           { value: 'item3', name: 'Another Item' },
         ];
-        
+
         if (!term) return items;
-        return items.filter(item => 
-          item.name.toLowerCase().includes(term.toLowerCase())
+        return items.filter((item) =>
+          item.name.toLowerCase().includes(term.toLowerCase()),
         );
       };
 
@@ -150,8 +144,8 @@ describe('checkbox-search prompt', () => {
       });
 
       // Wait for initial load
-      await new Promise(resolve => setTimeout(resolve, 20));
-      
+      await new Promise((resolve) => setTimeout(resolve, 20));
+
       let screen = getScreen();
       expect(screen).toContain('Item One');
       expect(screen).toContain('Item Two');
@@ -159,8 +153,8 @@ describe('checkbox-search prompt', () => {
 
       // Search for specific term
       events.type('another');
-      await new Promise(resolve => setTimeout(resolve, 20));
-      
+      await new Promise((resolve) => setTimeout(resolve, 20));
+
       screen = getScreen();
       expect(screen).not.toContain('Item One');
       expect(screen).not.toContain('Item Two');
@@ -175,18 +169,18 @@ describe('checkbox-search prompt', () => {
 
       events.type('xyz'); // Search term that matches nothing
       const screen = getScreen();
-      
+
       expect(screen).not.toContain('Apple');
       expect(screen).not.toContain('Banana');
       expect(screen).not.toContain('Cherry');
-      // Should show some indication of no results  
+      // Should show some indication of no results
       expect(screen).toContain('No choices available');
     });
   });
 
   describe('Multi-selection', () => {
     it('should toggle selection with tab key', async () => {
-      const { answer, events, getScreen } = await render(checkboxSearch, {
+      const { events, getScreen } = await render(checkboxSearch, {
         message: 'Select items',
         choices: ['Apple', 'Banana', 'Cherry'],
       });
@@ -316,7 +310,7 @@ describe('checkbox-search prompt', () => {
 
       // Filter to show only items with 'ap'
       events.type('ap');
-      let screen = getScreen();
+      const screen = getScreen();
       expect(screen).toContain('Apple');
       expect(screen).toContain('Apricot');
       expect(screen).not.toContain('Banana');
@@ -368,7 +362,7 @@ describe('checkbox-search prompt', () => {
       events.keypress('down');
       const lastScreen = getScreen();
 
-      // Try to go down from last item  
+      // Try to go down from last item
       events.keypress('down');
       screen = getScreen();
       // Should stay at last item (no wrap)
@@ -450,7 +444,9 @@ describe('checkbox-search prompt', () => {
         message: 'Select items',
         choices: ['Apple', 'Banana', 'Cherry'],
         validate: (selections: any[]) => {
-          return selections.length > 0 ? true : 'Please select at least one item';
+          return selections.length > 0
+            ? true
+            : 'Please select at least one item';
         },
       });
 
@@ -481,7 +477,7 @@ describe('checkbox-search prompt', () => {
       events.keypress('down');
       events.keypress('tab'); // Should select Cherry, not Banana
       events.keypress('enter');
-      
+
       // The prompt should not include the disabled item in results
       // (exact navigation behavior will be verified when implementation is complete)
     });
@@ -492,7 +488,11 @@ describe('checkbox-search prompt', () => {
         choices: [
           { value: 'enabled', name: 'Enabled Item' },
           { value: 'disabled1', name: 'Disabled Item 1', disabled: true },
-          { value: 'disabled2', name: 'Disabled Item 2', disabled: 'Custom reason' },
+          {
+            value: 'disabled2',
+            name: 'Disabled Item 2',
+            disabled: 'Custom reason',
+          },
         ],
       });
 
@@ -500,7 +500,7 @@ describe('checkbox-search prompt', () => {
       expect(screen).toContain('Enabled Item');
       expect(screen).toContain('Disabled Item 1');
       expect(screen).toContain('Disabled Item 2');
-      
+
       // Should show disabled indicator
       expect(screen).toContain('disabled');
       expect(screen).toContain('Custom reason');
@@ -578,14 +578,14 @@ describe('checkbox-search prompt', () => {
       let screen = getScreen();
       expect(screen).toContain('<<item>>'); // Custom search term styling
 
-      // Check description styling  
+      // Check description styling
       expect(screen).toContain('**First item**'); // Custom description styling
     });
 
     it('should apply custom theme style functions correctly', async () => {
       const customHighlight = (text: string) => `<<${text}>>`;
       const customDescription = (text: string) => `**${text}**`;
-      
+
       const { getScreen } = await render(checkboxSearch, {
         message: 'Select items',
         choices: [
@@ -596,15 +596,15 @@ describe('checkbox-search prompt', () => {
           style: {
             highlight: customHighlight,
             description: customDescription,
-          }
-        }
+          },
+        },
       });
 
       let screen = getScreen();
       // Should show custom description styling (no automatic parentheses when custom function is used)
       expect(screen).toContain('**Red fruit**');
       expect(screen).not.toContain('(Red fruit)'); // No parentheses with custom styling
-      
+
       // Active item should show custom highlight
       expect(screen).toContain('<<Apple>>');
     });
@@ -613,7 +613,7 @@ describe('checkbox-search prompt', () => {
       const customChecked = (text: string) => `✅ ${text}`;
       const customUnchecked = (text: string) => `⬜ ${text}`;
       const customCursor = (text: string) => `👉 ${text}`;
-      
+
       const { events, getScreen } = await render(checkboxSearch, {
         message: 'Select items',
         choices: [
@@ -625,8 +625,8 @@ describe('checkbox-search prompt', () => {
             checked: customChecked,
             unchecked: customUnchecked,
             cursor: customCursor,
-          }
-        }
+          },
+        },
       });
 
       let screen = getScreen();
@@ -635,11 +635,11 @@ describe('checkbox-search prompt', () => {
       expect(screen).toContain('⬜ Banana');
       // Should show function-based cursor with choice text
       expect(screen).toContain('👉 Apple');
-      
+
       // Select first item
       events.keypress('tab');
       screen = getScreen();
-      
+
       // Should show function-based checked icon with choice text
       expect(screen).toContain('✅ Apple');
       // Should still show function-based unchecked for unselected
@@ -648,7 +648,7 @@ describe('checkbox-search prompt', () => {
 
     it('should support mixed string and function icon theming', async () => {
       const customChecked = (text: string) => `🎯 ${text}`;
-      
+
       const { events, getScreen } = await render(checkboxSearch, {
         message: 'Select items',
         choices: [
@@ -657,22 +657,22 @@ describe('checkbox-search prompt', () => {
         ],
         theme: {
           icon: {
-            checked: customChecked,      // Function
-            unchecked: '○',             // String
-            cursor: '▶',                // String
-          }
-        }
+            checked: customChecked, // Function
+            unchecked: '○', // String
+            cursor: '▶', // String
+          },
+        },
       });
 
       let screen = getScreen();
       // Should show string-based unchecked and cursor
       expect(screen).toContain('○ Target');
       expect(screen).toContain('▶');
-      
+
       // Select first item
       events.keypress('tab');
       screen = getScreen();
-      
+
       // Should show function-based checked icon
       expect(screen).toContain('🎯 Target');
       // Should still show string-based unchecked for unselected
@@ -692,33 +692,43 @@ describe('checkbox-search prompt', () => {
       let screen = getScreen();
       // Initially cursor should be on first item (Apple)
       expect(screen).toContain('❯'); // Cursor should be visible
-      const appleLine = screen.split('\n').find((line: string) => line.includes('Apple'));
+      const appleLine = screen
+        .split('\n')
+        .find((line: string) => line.includes('Apple'));
       expect(appleLine).toContain('❯'); // Apple should have cursor
-      
+
       // Navigate down to Banana (second item)
       events.keypress('down');
       screen = getScreen();
-      const bananaLine = screen.split('\n').find((line: string) => line.includes('Banana'));
+      const bananaLine = screen
+        .split('\n')
+        .find((line: string) => line.includes('Banana'));
       expect(bananaLine).toContain('❯'); // Banana should now have cursor
-      
+
       // Select Banana
       events.keypress('tab');
       screen = getScreen();
-      const selectedBananaLine = screen.split('\n').find((line: string) => line.includes('Banana'));
+      const selectedBananaLine = screen
+        .split('\n')
+        .find((line: string) => line.includes('Banana'));
       expect(selectedBananaLine).toContain('◉'); // Banana should be selected
       expect(selectedBananaLine).toContain('❯'); // Cursor should still be on Banana
-      
+
       // Deselect Banana - THIS IS WHERE THE BUG HAPPENS
       events.keypress('tab');
       screen = getScreen();
-      
+
       // BUG: Cursor incorrectly jumps back to Apple instead of staying on Banana
-      const deselectedBananaLine = screen.split('\n').find((line: string) => line.includes('Banana'));
+      const deselectedBananaLine = screen
+        .split('\n')
+        .find((line: string) => line.includes('Banana'));
       expect(deselectedBananaLine).toContain('◯'); // Banana should be deselected
       expect(deselectedBananaLine).toContain('❯'); // Cursor should STILL be on Banana (not jump to Apple)
-      
+
       // Verify Apple doesn't have the cursor
-      const finalAppleLine = screen.split('\n').find((line: string) => line.includes('Apple'));
+      const finalAppleLine = screen
+        .split('\n')
+        .find((line: string) => line.includes('Apple'));
       expect(finalAppleLine).not.toContain('❯'); // Apple should NOT have cursor
     });
   });
@@ -726,7 +736,7 @@ describe('checkbox-search prompt', () => {
   describe('Async behavior', () => {
     it('should show loading state during async operations', async () => {
       const slowSource = async (term?: string) => {
-        await new Promise(resolve => setTimeout(resolve, 100)); // Slow async operation
+        await new Promise((resolve) => setTimeout(resolve, 100)); // Slow async operation
         return [
           { value: 'result1', name: 'Result 1' },
           { value: 'result2', name: 'Result 2' },
@@ -743,7 +753,7 @@ describe('checkbox-search prompt', () => {
       expect(screen).toMatch(/loading|wait/i);
 
       // Wait for results to load
-      await new Promise(resolve => setTimeout(resolve, 150));
+      await new Promise((resolve) => setTimeout(resolve, 150));
       screen = getScreen();
       expect(screen).toContain('Result 1');
       expect(screen).toContain('Result 2');
@@ -751,7 +761,7 @@ describe('checkbox-search prompt', () => {
 
     it('should handle async source errors gracefully', async () => {
       const errorSource = async (term?: string) => {
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
         throw new Error('Network error');
       };
 
@@ -761,16 +771,19 @@ describe('checkbox-search prompt', () => {
       });
 
       // Wait for error to occur
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 50));
       const screen = getScreen();
       expect(screen).toMatch(/error|failed|network error/i);
     });
 
     it('should cancel previous requests when search changes', async () => {
       let callCount = 0;
-      const mockSource = async (term?: string, opt?: { signal: AbortSignal }) => {
+      const mockSource = async (
+        term?: string,
+        opt?: { signal: AbortSignal },
+      ) => {
         const currentCall = ++callCount;
-        
+
         try {
           await new Promise((resolve, reject) => {
             const timeout = setTimeout(resolve, 50);
@@ -779,8 +792,10 @@ describe('checkbox-search prompt', () => {
               reject(new Error('Aborted'));
             });
           });
-          
-          return [{ value: `result-${currentCall}`, name: `Result ${currentCall}` }];
+
+          return [
+            { value: `result-${currentCall}`, name: `Result ${currentCall}` },
+          ];
         } catch (error) {
           if (error instanceof Error && error.message === 'Aborted') {
             throw error;
@@ -796,13 +811,13 @@ describe('checkbox-search prompt', () => {
 
       // Type quickly to trigger multiple requests
       events.type('a');
-      await new Promise(resolve => setTimeout(resolve, 10)); // Allow first request to start
+      await new Promise((resolve) => setTimeout(resolve, 10)); // Allow first request to start
       events.type('b');
-      await new Promise(resolve => setTimeout(resolve, 10)); // Allow second request to start
+      await new Promise((resolve) => setTimeout(resolve, 10)); // Allow second request to start
       events.type('c');
 
       // Wait for requests to complete
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       const screen = getScreen();
       // Should only show results from the latest request
@@ -895,11 +910,11 @@ describe('checkbox-search prompt', () => {
 
       // Select an item without any search
       events.keypress('tab'); // Select Apple
-      
+
       // Verify selection happened
       let screen = getScreen();
       expect(screen).toContain('◉'); // Should show checked item
-      
+
       // Press Enter to submit - THIS SHOULD WORK but currently fails
       events.keypress('enter');
       await expect(answer).resolves.toEqual(['apple']);
@@ -921,17 +936,17 @@ describe('checkbox-search prompt', () => {
       expect(screen).toContain('Apple');
       expect(screen).toContain('Banana'); // Both contain 'a'
       expect(screen).not.toContain('Cherry'); // Should be filtered out
-      
+
       // Select the filtered item
       events.keypress('tab'); // Select Apple
-      
+
       // Clear the search term by backspacing
       events.keypress('backspace');
       screen = getScreen();
       expect(screen).toContain('Apple');
       expect(screen).toContain('Banana'); // Should show all items again
       expect(screen).toContain('◉'); // Apple should still be selected
-      
+
       // Press Enter to submit - THIS SHOULD WORK but currently fails
       events.keypress('enter');
       await expect(answer).resolves.toEqual(['apple']);
@@ -953,16 +968,16 @@ describe('checkbox-search prompt', () => {
       expect(screen).toContain('Apple');
       expect(screen).not.toContain('Banana');
       expect(screen).not.toContain('Cherry');
-      
+
       // Press Escape to clear the search filter - THIS FEATURE DOESN'T EXIST YET
       events.keypress('escape');
       screen = getScreen();
-      
+
       // All items should be visible again
       expect(screen).toContain('Apple');
       expect(screen).toContain('Banana');
       expect(screen).toContain('Cherry');
-      
+
       // Search term should be cleared (no visible search text)
       expect(screen).not.toContain('Search: ap');
     });
@@ -983,35 +998,43 @@ describe('checkbox-search prompt', () => {
       expect(screen).toContain('Apple');
       expect(screen).toContain('Apricot');
       expect(screen).not.toContain('Banana');
-      
+
       // Select both filtered items
       events.keypress('tab'); // Select Apple
       events.keypress('down');
       events.keypress('tab'); // Select Apricot
-      
+
       screen = getScreen();
       // Both should be selected
       const lines = screen.split('\n');
       const appleLine = lines.find((line: string) => line.includes('Apple'));
-      const apricotLine = lines.find((line: string) => line.includes('Apricot'));
+      const apricotLine = lines.find((line: string) =>
+        line.includes('Apricot'),
+      );
       expect(appleLine).toContain('◉');
       expect(apricotLine).toContain('◉');
-      
+
       // Press Escape to clear the search filter
       events.keypress('escape');
       screen = getScreen();
-      
+
       // All items should be visible again
       expect(screen).toContain('Apple');
       expect(screen).toContain('Apricot');
       expect(screen).toContain('Banana');
-      
+
       // Selections should be maintained
       const newLines = screen.split('\n');
-      const newAppleLine = newLines.find((line: string) => line.includes('Apple'));
-      const newApricotLine = newLines.find((line: string) => line.includes('Apricot'));
-      const newBananaLine = newLines.find((line: string) => line.includes('Banana'));
-      
+      const newAppleLine = newLines.find((line: string) =>
+        line.includes('Apple'),
+      );
+      const newApricotLine = newLines.find((line: string) =>
+        line.includes('Apricot'),
+      );
+      const newBananaLine = newLines.find((line: string) =>
+        line.includes('Banana'),
+      );
+
       expect(newAppleLine).toContain('◉'); // Should still be selected
       expect(newApricotLine).toContain('◉'); // Should still be selected
       expect(newBananaLine).toContain('◯'); // Should not be selected
@@ -1027,23 +1050,23 @@ describe('checkbox-search prompt', () => {
         theme: {
           icon: {
             checked: '✅',
-            unchecked: '⬜', 
-            cursor: '👉'
-          }
-        }
+            unchecked: '⬜',
+            cursor: '👉',
+          },
+        },
       });
 
       let screen = getScreen();
       // Should show custom unchecked icon
       expect(screen).toContain('⬜ Apple');
       expect(screen).toContain('⬜ Banana');
-      // Should show custom cursor  
+      // Should show custom cursor
       expect(screen).toContain('👉');
-      
+
       // Select first item
       events.keypress('tab');
       screen = getScreen();
-      
+
       // Should show custom checked icon
       expect(screen).toContain('✅ Apple');
       // Should still show custom unchecked for unselected
@@ -1053,7 +1076,7 @@ describe('checkbox-search prompt', () => {
     it('should apply custom theme style functions correctly', async () => {
       const customHighlight = (text: string) => `<<${text}>>`;
       const customDescription = (text: string) => `**${text}**`;
-      
+
       const { getScreen } = await render(checkboxSearch, {
         message: 'Select items',
         choices: [
@@ -1064,17 +1087,17 @@ describe('checkbox-search prompt', () => {
           style: {
             highlight: customHighlight,
             description: customDescription,
-          }
-        }
+          },
+        },
       });
 
       let screen = getScreen();
       // Should show custom description styling (no automatic parentheses when custom function is used)
       expect(screen).toContain('**Red fruit**');
       expect(screen).not.toContain('(Red fruit)'); // No parentheses with custom styling
-      
+
       // Active item should show custom highlight
       expect(screen).toContain('<<Apple>>');
     });
   });
-}); 
+});

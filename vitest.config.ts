@@ -18,8 +18,8 @@ export default defineConfig({
         esModuleInterop: true,
         skipLibCheck: true,
         forceConsistentCasingInFileNames: true,
-        types: ['node', 'vitest/globals']
-      }
-    }
+        types: ['node', 'vitest/globals'],
+      },
+    },
   },
-}); 
+});
