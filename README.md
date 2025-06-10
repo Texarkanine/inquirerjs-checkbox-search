@@ -10,7 +10,7 @@ This prompt combines the functionality of `@inquirer/checkbox` and `@inquirer/se
 - ✅ **Multi-select** multiple options with checkboxes
 - 🔍 **Search/filter** options in real-time as you type
 - ⌨️ **Navigate** with arrow keys through filtered results
-- ⚡ **Fast** keyboard shortcuts for bulk operations
+- ⚡ **Fast** keyboard navigation and selection
 
 ## Installation
 
@@ -139,7 +139,7 @@ const selected = await checkboxSearch({
 | `validate` | `(selection: Array<Choice>) => boolean \| string \| Promise<string \| boolean>` | No | Custom validation function |
 | `instructions` | `string \| boolean` | No | Custom instructions text or false to hide |
 | `theme` | `Theme` | No | Custom theme configuration |
-| `shortcuts` | `object` | No | Custom keyboard shortcuts |
+
 
 *Either `choices` or `source` must be provided.
 

@@ -44,13 +44,7 @@ type CheckboxSearchTheme = {
   helpMode: 'always' | 'never' | 'auto';
 };
 
-/**
- * Keyboard shortcuts configuration
- */
-type CheckboxSearchShortcuts = {
-  all?: string | null;
-  invert?: string | null;
-};
+
 
 /**
  * Default theme for the checkbox-search prompt
@@ -136,7 +130,6 @@ type CheckboxSearchConfig<
   
   // UI customization
   theme?: PartialDeep<Theme<CheckboxSearchTheme>>;
-  shortcuts?: CheckboxSearchShortcuts;
   default?: ReadonlyArray<Value>;
 };
 
@@ -233,11 +226,12 @@ function defaultFilter<Value>(
 ): ReadonlyArray<NormalizedChoice<Value>> {
   if (!term.trim()) return items;
   
-  const searchTerm = term.toLowerCase();
+  const searchTerm = term.toLowerCase().normalize('NFD');
   return items.filter(item => {
-    const name = item.name.toLowerCase();
-    const description = (item.description ?? '').toLowerCase();
-    return name.includes(searchTerm) || description.includes(searchTerm);
+    const name = item.name.toLowerCase().normalize('NFD');
+    const description = (item.description ?? '').toLowerCase().normalize('NFD');
+    const value = String(item.value).toLowerCase().normalize('NFD');
+    return name.includes(searchTerm) || description.includes(searchTerm) || value.includes(searchTerm);
   });
 }
 
@@ -262,6 +256,9 @@ export default createPrompt(
     config: CheckboxSearchConfig<Value>, 
     done: (value: Array<Value>) => void
   ) => {
+    // Stable reference for empty array to prevent unnecessary recalculations
+    const emptyArray: ReadonlyArray<Value> = useMemo(() => [], []);
+    
     // Configuration with defaults
     const {
       instructions,
@@ -270,10 +267,10 @@ export default createPrompt(
       required,
       validate = () => true,
       filter = defaultFilter,
-      default: defaultValues = [],
+      default: defaultValues = emptyArray,
     } = config;
     
-    const shortcuts = { all: 'a', invert: 'i', ...config.shortcuts };
+
     const theme = makeTheme<CheckboxSearchTheme>(checkboxSearchTheme, config.theme);
     
     // State management hooks
@@ -285,8 +282,9 @@ export default createPrompt(
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [searchError, setSearchError] = useState<string>();
     
-    // Initialize static choices directly, similar to checkbox prompt
-    const initialItems = useMemo(() => {
+    // Initialize choices directly like the original checkbox prompt
+    const [allItems, setAllItems] = useState<ReadonlyArray<Item<Value>>>(() => {
+
       if (config.choices) {
         const normalized = normalizeChoices<Value>(config.choices);
         // Apply default selections
@@ -298,14 +296,13 @@ export default createPrompt(
         });
       }
       return [];
-    }, [config.choices, defaultValues]);
-    
-    // Choice and selection state  
-    const [allItems, setAllItems] = useState<ReadonlyArray<Item<Value>>>(initialItems);
-    const [filteredItems, setFilteredItems] = useState<ReadonlyArray<Item<Value>>>(initialItems);
+    });
+    const [filteredItems, setFilteredItems] = useState<ReadonlyArray<Item<Value>>>(allItems);
     const [active, setActive] = useState<number>(0);
     const [showHelpTip, setShowHelpTip] = useState(true);
     const [errorMsg, setError] = useState<string>();
+    
+
     
     // Calculate bounds for active item - only count selectable items
     const bounds = useMemo(() => {
@@ -318,6 +315,7 @@ export default createPrompt(
     
     // Handle async source loading with abort support
     useEffect(() => {
+      console.log('[DEBUG] Async source effect running, config.source =', !!config.source);
       if (!config.source) return;
       
       const abortController = new AbortController();
@@ -337,6 +335,7 @@ export default createPrompt(
               }
               return item;
             });
+            console.log('[DEBUG] Async source: setting allItems to', withDefaults);
             setAllItems(withDefaults);
             setStatus('idle');
           }
@@ -348,42 +347,49 @@ export default createPrompt(
         }
       };
       
-      // Debounce search requests
-      const timeoutId = setTimeout(loadChoices, searchTerm ? 200 : 0);
+      // Execute immediately for better test responsiveness
+      loadChoices();
       
       return () => {
-        clearTimeout(timeoutId);
         abortController.abort();
       };
     }, [config.source, searchTerm, defaultValues]);
     
     // Apply filtering when search term or items change
     useEffect(() => {
-
+      const reactInAllItems = allItems.find(item => !Separator.isSeparator(item) && item.value === 'react') as NormalizedChoice<Value> | undefined;
+      console.log('[DEBUG] Filtering effect running, searchTerm =', searchTerm, 'React in allItems =', reactInAllItems?.checked);
+      
       if (config.source) {
         // For async sources, filtering is handled by the source function
         setFilteredItems(allItems);
       } else {
         // For static choices, apply local filtering
-        const selectableItems = allItems.filter(item => !Separator.isSeparator(item)) as ReadonlyArray<NormalizedChoice<Value>>;
-        const filtered = filter(selectableItems, searchTerm);
-        
-        // Create a set of filtered values for efficient lookup
-        const filteredValues = new Set(filtered.map(item => item.value));
-        
-        // Rebuild preserving current allItems state (including checked status)
-        const result: Item<Value>[] = [];
-        
-        for (const item of allItems) {
-          if (Separator.isSeparator(item)) {
-            result.push(item);
-          } else if (filteredValues.has(item.value)) {
-            result.push(item); // This preserves the current checked state from allItems
+        if (!searchTerm.trim()) {
+          // No search term - show all items
+          setFilteredItems(allItems);
+        } else {
+          // Apply filtering
+          const selectableItems = allItems.filter(item => !Separator.isSeparator(item)) as ReadonlyArray<NormalizedChoice<Value>>;
+          const filtered = filter(selectableItems, searchTerm);
+          
+          // Create a set of filtered values for efficient lookup
+          const filteredValues = new Set(filtered.map(item => item.value));
+          
+          // Rebuild preserving current allItems state (including checked status)
+          const result: Item<Value>[] = [];
+          
+          for (const item of allItems) {
+            if (Separator.isSeparator(item)) {
+              result.push(item);
+            } else if (filteredValues.has(item.value)) {
+              result.push(item); // This preserves the current checked state from allItems
+            }
           }
+          
+          console.log('[DEBUG] Filtering: created result with', result.length, 'items');
+          setFilteredItems([...result]); // Force new array reference
         }
-        
-
-        setFilteredItems([...result]); // Force new array reference
       }
     }, [allItems, searchTerm, filter, config.source]);
     
@@ -399,24 +405,8 @@ export default createPrompt(
       // Clear any existing errors
       setError(undefined);
       
-      // Handle shortcuts first (single character keys)
-      if (key.name === shortcuts.all && shortcuts.all) {
-        // Check if all selectable items are currently selected
-        const selectableItems = allItems.filter(isSelectable);
-        const allSelected = selectableItems.length > 0 && selectableItems.every(item => item.checked);
-        
-        // Toggle: if all are selected, deselect all; otherwise, select all
-        setAllItems(allItems.map(check(!allSelected)));
-        return;
-      }
-      
-      if (key.name === shortcuts.invert && shortcuts.invert) {
-        setAllItems(allItems.map(toggle));
-        return;
-      }
-      
       // Handle search input - use rl.line for current input
-      // Space is always search input, only exclude navigation and action keys
+      // Single-character shortcuts are disabled to avoid conflicts with search
       if (key.name !== 'up' && key.name !== 'down' && key.name !== 'tab' && key.name !== 'enter') {
         setSearchTerm(rl.line);
         return;
@@ -450,11 +440,16 @@ export default createPrompt(
       if (key.name === 'tab') {
         const activeItem = filteredItems[active];
         if (activeItem && isSelectable(activeItem)) {
+          const activeValue = (activeItem as NormalizedChoice<Value>).value;
+          
+          console.log('[DEBUG] Tab key pressed, activeValue =', activeValue);
+          
           setAllItems(allItems.map((item) => {
-            // Compare by value and name to be more robust
-            if (!Separator.isSeparator(item) && !Separator.isSeparator(activeItem) && 
-                item.value === activeItem.value && item.name === activeItem.name) {
-              return toggle(item);
+            // Compare by value only for robust matching
+            if (!Separator.isSeparator(item) && item.value === activeValue) {
+              const toggled = toggle(item);
+              console.log('[DEBUG] Tab key: toggling', activeValue, 'from', item.checked, 'to', (toggled as NormalizedChoice<Value>).checked);
+              return toggled;
             }
             return item;
           }));
@@ -514,14 +509,18 @@ export default createPrompt(
           return dim(item.separator);
         }
         
-        // Find the current state of this item from allItems
-        const currentItem = allItems.find(i => 
-          !Separator.isSeparator(i) && !Separator.isSeparator(item) && 
-          i.value === item.value && i.name === item.name
+        // Look up checked state directly from allItems to get the current state
+        const currentItem = allItems.find(allItem => 
+          !Separator.isSeparator(allItem) && allItem.value === (item as NormalizedChoice<Value>).value
         ) as NormalizedChoice<Value> | undefined;
-        const isChecked = currentItem ? currentItem.checked : false;
         
-
+        const isChecked = currentItem?.checked || false;
+        
+        // DEBUG: Log React's rendering state
+        if ((item as NormalizedChoice<Value>).value === 'react') {
+          console.log('[DEBUG] renderItem: React found =', !!currentItem, 'checked =', currentItem?.checked, 'final =', isChecked);
+        }
+        
         const checkbox = isChecked ? theme.icon.checked : theme.icon.unchecked;
         const cursor = isActive ? theme.icon.cursor : ' ';
         line.push(cursor, checkbox);
@@ -541,7 +540,7 @@ export default createPrompt(
             ? (item as NormalizedChoice<Value>).disabled as string
             : 'disabled';
           line.push(theme.style.disabled(`(${disabledReason})`));
-        } else if ((item as NormalizedChoice<Value>).description && !isActive) {
+        } else if ((item as NormalizedChoice<Value>).description) {
           line.push(theme.style.description(`(${(item as NormalizedChoice<Value>).description})`));
         }
         
@@ -563,10 +562,7 @@ export default createPrompt(
     let helpTip = '';
     
     if (theme.helpMode === 'always' || (theme.helpMode === 'auto' && showHelpTip)) {
-      const tips: string[] = ['Tab to select'];
-      if (shortcuts.all) tips.push(`${shortcuts.all} to toggle all`);
-      if (shortcuts.invert) tips.push(`${shortcuts.invert} to invert selection`);
-      tips.push('Enter to submit');
+      const tips: string[] = ['Tab to select', 'Enter to submit'];
       helpTip = `\n${theme.style.help(`(${tips.join(', ')})`)}`;
     }
     

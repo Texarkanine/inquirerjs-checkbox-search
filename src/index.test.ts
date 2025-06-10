@@ -376,61 +376,7 @@ describe('checkbox-search prompt', () => {
     });
   });
 
-  describe('Keyboard shortcuts', () => {
-    it('should select all with "a" key', async () => {
-      const { answer, events, getScreen } = await render(checkboxSearch, {
-        message: 'Select items',
-        choices: ['Apple', 'Banana', 'Cherry'],
-      });
-
-      // Initially no items selected
-      let screen = getScreen();
-      expect(screen).toContain('◯'); // unchecked (default theme)
-      expect(screen).not.toContain('◉'); // checked (default theme)
-
-      // Press 'a' to select all
-      events.keypress('a');
-      screen = getScreen();
-      const lines = screen.split('\n');
-      const itemLines = lines.filter((line: string) => line.includes('Apple') || line.includes('Banana') || line.includes('Cherry'));
-      itemLines.forEach((line: string) => {
-        expect(line).toContain('◉'); // All should be selected
-      });
-
-      // Press 'a' again to deselect all
-      events.keypress('a');
-      screen = getScreen();
-      const lines2 = screen.split('\n');
-      const itemLines2 = lines2.filter((line: string) => line.includes('Apple') || line.includes('Banana') || line.includes('Cherry'));
-      itemLines2.forEach((line: string) => {
-        expect(line).toContain('◯'); // All should be deselected
-      });
-    });
-
-    it('should invert selection with "i" key', async () => {
-      const { events, getScreen } = await render(checkboxSearch, {
-        message: 'Select items',
-        choices: ['Apple', 'Banana', 'Cherry'],
-      });
-
-      // Select first item only
-      events.keypress('tab');
-      let screen = getScreen();
-      
-      // Press 'i' to invert selection
-      events.keypress('i');
-      screen = getScreen();
-      
-      const lines = screen.split('\n');
-      const appleLine = lines.find((line: string) => line.includes('Apple'));
-      const bananaLine = lines.find((line: string) => line.includes('Banana'));
-      const cherryLine = lines.find((line: string) => line.includes('Cherry'));
-
-      expect(appleLine).toContain('◯'); // Should be deselected (default theme)
-      expect(bananaLine).toContain('◉'); // Should be selected (default theme)
-      expect(cherryLine).toContain('◉'); // Should be selected (default theme)
-    });
-
+  describe('Keyboard navigation', () => {
     it('should autocomplete with tab key', async () => {
       const { events, getScreen } = await render(checkboxSearch, {
         message: 'Select items',

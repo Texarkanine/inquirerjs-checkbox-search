@@ -8,7 +8,7 @@ This prompt allows users to:
 1. **Search/Filter**: Type to filter a list of options in real-time
 2. **Multi-Select**: Use space to toggle selection of multiple items
 3. **Navigate**: Use arrow keys to navigate through filtered results
-4. **Select All/Invert**: Use keyboard shortcuts for bulk operations
+4. **Easy Selection**: Use tab key for intuitive selection toggle
 
 The design prioritizes code reuse from existing inquirer.js prompts while creating a cohesive user experience.
 
@@ -36,7 +36,7 @@ The design prioritizes code reuse from existing inquirer.js prompts while creati
    - Help text and instructions
 
 4. **Advanced Features**
-   - Select all / invert selection shortcuts
+   - Tab-to-select for easy interaction
    - Validation of final selection
    - Support for disabled items and separators
    - Theming and customization
@@ -116,7 +116,7 @@ useKeypress((key, rl) => {
     // Validate and return selected values
   }
   
-  // Other shortcuts (from checkbox prompt)
+  // Simplified keyboard interaction for search compatibility
   else if (key.name === 'a') { /* select all */ }
   else if (key.name === 'i') { /* invert selection */ }
   else if (key.name === 'tab') { /* autocomplete from search */ }
@@ -162,10 +162,7 @@ type CheckboxSearchConfig<Value> = {
   pageSize?: number;
   loop?: boolean;
   instructions?: string | boolean;
-  shortcuts?: {
-    all?: string | null;
-    invert?: string | null;
-  };
+  // Shortcuts removed for search compatibility
   
   // Theming
   theme?: PartialDeep<Theme<CheckboxSearchTheme>>;
@@ -202,7 +199,7 @@ type CheckboxSearchTheme = {
 ### Phase 2: Advanced Features  
 1. **Add async source support** - integrate dynamic loading from search prompt
 2. **Enhance navigation** - ensure proper behavior with filtered results
-3. **Add keyboard shortcuts** - select all, invert, tab completion
+3. **Add keyboard navigation** - tab selection, arrow navigation
 4. **Implement validation** - selection validation and error handling
 
 ### Phase 3: Polish & Testing
@@ -256,7 +253,7 @@ const selected = await checkboxSearch({
 ### From Checkbox Prompt (`@inquirer/checkbox`)
 - **Selection state management** - `checked` property, toggle logic
 - **Multi-selection validation** - required validation, custom validators  
-- **Keyboard shortcuts** - select all (`a`), invert selection (`i`)
+- **Keyboard navigation** - tab-to-select, arrow navigation
 - **Pagination and navigation** - arrow key handling, bounds checking
 - **Theme system** - icons (checked/unchecked), styling functions
 - **Rendering logic** - checkbox display, selection indicators
@@ -299,7 +296,7 @@ const selected = await checkboxSearch({
 1. **Functional**
    - ✅ Real-time search filtering
    - ✅ Multi-selection with visual feedback  
-   - ✅ Keyboard navigation and shortcuts
+   - ✅ Keyboard navigation simplified for search
    - ✅ Validation and error handling
 
 2. **Quality**
