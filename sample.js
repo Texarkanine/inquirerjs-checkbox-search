@@ -55,9 +55,10 @@ const selectedFruits = await checkboxSearch({
   // 🎨 Enhanced theming for the authentic fruit experience
   theme: {
     icon: {
-      checked: '✅',
-      unchecked: '⬜',
-      cursor: '👉',
+      // NEW: Function-based icons that include the fruit name!
+      checked: (text) => `✅ ${text}`,
+      unchecked: (text) => `⬜ ${text}`,
+      cursor: (text) => `👉 ${text}`,
     },
     style: {
       // Beautiful description styling

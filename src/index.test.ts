@@ -678,6 +678,49 @@ describe('checkbox-search prompt', () => {
       // Should still show string-based unchecked for unselected
       expect(screen).toContain('○ Arrow');
     });
+
+    it('should maintain cursor position when toggling selection on non-first items', async () => {
+      const { events, getScreen } = await render(checkboxSearch, {
+        message: 'Select items',
+        choices: [
+          { value: 'apple', name: 'Apple' },
+          { value: 'banana', name: 'Banana' },
+          { value: 'cherry', name: 'Cherry' },
+        ],
+      });
+
+      let screen = getScreen();
+      // Initially cursor should be on first item (Apple)
+      expect(screen).toContain('❯'); // Cursor should be visible
+      const appleLine = screen.split('\n').find((line: string) => line.includes('Apple'));
+      expect(appleLine).toContain('❯'); // Apple should have cursor
+      
+      // Navigate down to Banana (second item)
+      events.keypress('down');
+      screen = getScreen();
+      const bananaLine = screen.split('\n').find((line: string) => line.includes('Banana'));
+      expect(bananaLine).toContain('❯'); // Banana should now have cursor
+      
+      // Select Banana
+      events.keypress('tab');
+      screen = getScreen();
+      const selectedBananaLine = screen.split('\n').find((line: string) => line.includes('Banana'));
+      expect(selectedBananaLine).toContain('◉'); // Banana should be selected
+      expect(selectedBananaLine).toContain('❯'); // Cursor should still be on Banana
+      
+      // Deselect Banana - THIS IS WHERE THE BUG HAPPENS
+      events.keypress('tab');
+      screen = getScreen();
+      
+      // BUG: Cursor incorrectly jumps back to Apple instead of staying on Banana
+      const deselectedBananaLine = screen.split('\n').find((line: string) => line.includes('Banana'));
+      expect(deselectedBananaLine).toContain('◯'); // Banana should be deselected
+      expect(deselectedBananaLine).toContain('❯'); // Cursor should STILL be on Banana (not jump to Apple)
+      
+      // Verify Apple doesn't have the cursor
+      const finalAppleLine = screen.split('\n').find((line: string) => line.includes('Apple'));
+      expect(finalAppleLine).not.toContain('❯'); // Apple should NOT have cursor
+    });
   });
 
   describe('Async behavior', () => {
