@@ -391,27 +391,50 @@ export default createPrompt(
       allItemsRef.current = allItems;
     }, [allItems]);
     
-    // Reset active index when filtered items change
+    // Reset active index when filtered items change, but preserve cursor position during selection toggles
     useEffect(() => {
+      // Don't reset cursor position if we're just toggling selection on the same items
+      // Only reset when the actual set of filtered items changes (not their selection state)
+      const currentFilteredValues = filteredItems
+        .filter(item => !Separator.isSeparator(item))
+        .map(item => (item as NormalizedChoice<Value>).value);
+      
+      const activeItem = filteredItems[active];
+      const activeValue = activeItem && !Separator.isSeparator(activeItem) 
+        ? (activeItem as NormalizedChoice<Value>).value 
+        : null;
+      
+      // If the currently active item is still in the filtered list, preserve its position
+      if (activeValue && currentFilteredValues.includes(activeValue)) {
+        const newActiveIndex = filteredItems.findIndex(item => 
+          !Separator.isSeparator(item) && (item as NormalizedChoice<Value>).value === activeValue
+        );
+        if (newActiveIndex !== -1) {
+          setActive(newActiveIndex);
+          return;
+        }
+      }
+      
+      // Otherwise reset to 0 (when filtering actually changes the set of items)
       setActive(0);
-    }, [filteredItems]);
+    }, [filteredItems, active]);
     
     // Keyboard event handling
     useKeypress((key, rl) => {
       // Allow search input even during loading, but block other actions
-      const isSearchInput = key.name !== 'up' && key.name !== 'down' && key.name !== 'tab' && key.name !== 'enter';
+      const isNavigationOrAction = key.name === 'up' || key.name === 'down' || key.name === 'tab' || key.name === 'enter' || key.name === 'escape';
       
-      if (status !== 'idle' && !isSearchInput) {
+      if (status !== 'idle' && isNavigationOrAction) {
         return;
       }
       
       // Clear any existing errors
       setError(undefined);
       
-      // Handle search input - use rl.line for current input
-      // Single-character shortcuts are disabled to avoid conflicts with search
-      if (isSearchInput) {
-        setSearchTerm(rl.line);
+      // Handle Escape key - clear search term
+      if (key.name === 'escape') {
+        setSearchTerm('');
+        rl.line = ''; // Also clear the readline input
         return;
       }
       
@@ -498,6 +521,10 @@ export default createPrompt(
         done(selectedChoices.map(choice => choice.value));
         return;
       }
+      
+      // Handle all other input as search term updates (like the search prompt does)
+      // This includes typing, backspace, delete, etc. - let readline handle the editing
+      setSearchTerm(rl.line);
     });
     
     // Create renderItem function that's reactive to current state

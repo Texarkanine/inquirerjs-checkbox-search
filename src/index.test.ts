@@ -919,7 +919,8 @@ describe('checkbox-search prompt', () => {
       events.type('a');
       let screen = getScreen();
       expect(screen).toContain('Apple');
-      expect(screen).not.toContain('Banana'); // Should be filtered out
+      expect(screen).toContain('Banana'); // Both contain 'a'
+      expect(screen).not.toContain('Cherry'); // Should be filtered out
       
       // Select the filtered item
       events.keypress('tab'); // Select Apple
