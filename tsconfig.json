@@ -10,8 +10,8 @@
     "declaration": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    "types": ["node", "vitest/globals"]
+    "types": ["node"]
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "inquirer-source-code-ref"]
+  "exclude": ["node_modules", "dist", "src/**/*.test.ts", "src/**/*.spec.ts"]
 }

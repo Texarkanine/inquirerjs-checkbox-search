@@ -96,6 +96,8 @@ export default [
       'node_modules/',
       'coverage/',
       'inquirer-source-code-ref/',
+      'package-inspect/',
+      '*.tgz',
     ],
   },
 ];
