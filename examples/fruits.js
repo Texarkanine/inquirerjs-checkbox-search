@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // Import from built distribution
-import checkboxSearch from './dist/esm/index.js';
+import checkboxSearch from '../dist/esm/index.js';
 
 // 🍎 REAL Fruit Database with ONLY actual emoji for real fruits!
 const fruits = [

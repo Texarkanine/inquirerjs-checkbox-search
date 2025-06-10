@@ -10,22 +10,7 @@ This directory contains working examples that demonstrate different features of 
    npm run build
    ```
 
-2. **Make examples executable** (optional, makes running easier):
-   ```bash
-   chmod +x examples/*.js
-   ```
-
 ## Running Examples
-
-### Method 1: Direct execution (if made executable)
-
-```bash
-./examples/basic.js
-./examples/search-filtering.js
-# ... etc
-```
-
-### Method 2: Using Node.js
 
 ```bash
 node examples/basic.js
@@ -139,16 +124,6 @@ node examples/custom-filter.js
 - Type "py" to find "Python"
 - Type "c" to see C#, C++, etc.
 
-## Tips for Keyboard Navigation
-
-| Key        | Action                             |
-| ---------- | ---------------------------------- |
-| **Type**   | Filter/search options              |
-| **↑/↓**    | Navigate through options           |
-| **Tab**    | Toggle selection of current option |
-| **Escape** | Clear search filter                |
-| **Enter**  | Confirm selection                  |
-
 ## Troubleshooting
 
 ### "Cannot find module" error
@@ -159,50 +134,8 @@ Make sure you've built the package first:
 npm run build
 ```
 
-### "Permission denied" error
-
-Make the file executable:
-
-```bash
-chmod +x examples/basic.js
-```
-
-Or use `node examples/basic.js` instead.
-
 ### Examples not working as expected
 
 1. Ensure you're in the project root directory
 2. Verify the build completed successfully
 3. Check that `dist/esm/index.js` exists
-
-## Creating Your Own Examples
-
-To create a new example:
-
-1. Create a new `.js` file in the `examples/` directory
-2. Add the shebang line: `#!/usr/bin/env node`
-3. Import the package: `import checkboxSearch from '../dist/esm/index.js';`
-4. Use ES modules syntax (the package is built as ESM)
-5. Make it executable: `chmod +x examples/your-example.js`
-
-Example template:
-
-```javascript
-#!/usr/bin/env node
-
-import checkboxSearch from '../dist/esm/index.js';
-
-async function main() {
-  const result = await checkboxSearch({
-    message: 'Your question?',
-    choices: [
-      { value: 'option1', name: 'Option 1' },
-      { value: 'option2', name: 'Option 2' },
-    ],
-  });
-
-  console.log('Selected:', result);
-}
-
-main().catch(console.error);
-```

@@ -9,6 +9,9 @@ dist/
 .tshy/
 *.tsbuildinfo
 
+# tshy build artifacts
+src/package.json
+
 # Testing
 coverage/
 .nyc_output
@@ -51,4 +54,4 @@ pids
 .yarn-integrity
 
 # dotenv environment variables file
-.env 
+.env

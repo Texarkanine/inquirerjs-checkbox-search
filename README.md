@@ -2,12 +2,11 @@
 
 A multi-select prompt with text filtering/search capability for [inquirer.js](https://github.com/SBoudrias/Inquirer.js).
 
-This prompt combines the functionality of `@inquirer/checkbox` and `@inquirer/search`, allowing users to:
+This prompt combines the functionality of `@inquirer/checkbox` and `@inquirer/search`, allowing you to:
 
 - ✅ **Multi-select** multiple options with checkboxes
 - 🔍 **Search/filter** options in real-time as you type
 - ⌨️ **Navigate** with arrow keys through filtered results
-- ⚡ **Fast** keyboard navigation and selection
 
 ## Installation
 
@@ -62,24 +61,6 @@ console.log('Selected:', selected);
 // => ['react', 'vue']
 ```
 
-### 📁 Working Examples
-
-See the [`examples/`](./examples/) directory for complete, runnable examples:
-
-- **[Basic Multi-Select](./examples/basic.js)** - Simple multi-select functionality
-- **[Search Filtering](./examples/search-filtering.js)** - Real-time search with larger lists
-- **[Async Source](./examples/async-source.js)** - Dynamic loading with mock API
-- **[Custom Theme](./examples/custom-theme.js)** - Custom icons and styling
-- **[Validation](./examples/validation.js)** - Input validation and pre-selection
-- **[Custom Filter](./examples/custom-filter.js)** - Fuzzy matching filter
-
-**To run examples:**
-
-1. Build the package: `npm run build`
-2. Run any example: `node examples/basic.js`
-
-See the [examples README](./examples/README.md) for detailed instructions.
-
 ## API
 
 ### Options
@@ -118,9 +99,9 @@ type Choice<Value = any> = {
 ```typescript
 type CheckboxSearchTheme = {
   icon: {
-    checked: string | ((text: string) => string); // Icon for selected items (default: ◉)
-    unchecked: string | ((text: string) => string); // Icon for unselected items (default: ◯)
-    cursor: string | ((text: string) => string); // Cursor icon (default: ❯)
+    checked: string | ((text: string) => string);
+    unchecked: string | ((text: string) => string);
+    cursor: string | ((text: string) => string);
   };
   style: {
     answer: (text: string) => string;
@@ -150,10 +131,19 @@ type CheckboxSearchTheme = {
 
 For detailed examples of advanced features, see the [`examples/`](./examples/) directory:
 
-- **Validation & Pre-selection** - [`validation.js`](./examples/validation.js)
-- **Custom Theming** - [`custom-theme.js`](./examples/custom-theme.js)
-- **Async Source Functions** - [`async-source.js`](./examples/async-source.js)
-- **Custom Filter Logic** - [`custom-filter.js`](./examples/custom-filter.js)
+- **[Basic Multi-Select](./examples/basic.js)** - Simple multi-select functionality
+- **[Search Filtering](./examples/search-filtering.js)** - Real-time search with larger lists
+- **[Async Source](./examples/async-source.js)** - Dynamic loading with mock API
+- **[Custom Theme](./examples/custom-theme.js)** - Custom icons and styling
+- **[Validation](./examples/validation.js)** - Input validation and pre-selection
+- **[Custom Filter](./examples/custom-filter.js)** - Fuzzy matching filter
+
+**To run examples:**
+
+1. Build the package: `npm run build`
+2. Run any example: `node examples/basic.js`
+
+See the [examples README](./examples/README.md) for detailed instructions.
 
 Each example includes detailed comments and demonstrates real-world usage patterns.
 
