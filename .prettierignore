@@ -1,0 +1,13 @@
+# Release-please manages this file and uses its own formatting
+CHANGELOG.md
+
+# Build outputs
+dist/
+lib/
+build/
+
+# Dependencies
+node_modules/
+
+# Coverage reports
+coverage/
