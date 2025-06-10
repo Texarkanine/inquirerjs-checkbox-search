@@ -3,7 +3,8 @@
   "packages": {
     ".": {
       "bump-minor-pre-major": true,
-      "bump-patch-for-minor-pre-major": true
+      "bump-patch-for-minor-pre-major": true,
+      "initial-version": "0.1.0"
     }
   }
 }
