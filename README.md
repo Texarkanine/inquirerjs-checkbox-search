@@ -248,26 +248,6 @@ npm run prepublishOnly    # Full build + test + validation pipeline
 └── .prettierrc          # Formatting config
 ```
 
-#### Testing Workflow
-
-1. **Write Tests First** (TDD approach)
-
-   - Create test files alongside source files
-   - Use `@inquirer/testing` utilities for prompt testing
-   - Cover all user interactions and edge cases
-
-2. **Run Tests During Development**
-
-   ```bash
-   npm run test:unit -- --watch    # Watch mode for rapid feedback
-   npm run test:ui           # Visual test runner
-   ```
-
-3. **Check Coverage**
-   ```bash
-   npm run test:coverage     # Generate coverage report
-   ```
-
 #### Quality Assurance Workflow
 
 1. **Before Committing**
@@ -303,76 +283,6 @@ npm run prepublishOnly    # Full build + test + validation pipeline
      - GitHub release creation
      - npm package publication
      - Version tag creation
-
-#### Common Development Tasks
-
-**Adding a New Feature**
-
-1. Write tests first (`src/*.test.ts`)
-2. Implement feature in `src/index.ts`
-3. Run all checks: `npm test`
-
-**Debugging Tests**
-
-1. Use Vitest UI: `npm run test:ui`
-2. Add `console.log` or use debugger
-3. Run specific test: `npm run test:unit -- -t "test name"`
-
-**Updating Dependencies**
-
-1. Update `package.json`
-2. Run `npm install`
-3. Test compatibility: `npm test`
-
-**Troubleshooting Build Issues**
-
-1. Clean build: `npm run clean`
-2. Reinstall: `rm -rf node_modules package-lock.json && npm install`
-3. Check TypeScript: `npm run typecheck`
-4. Validate exports: `npm run attw`
-
-#### IDE Setup
-
-For optimal development experience:
-
-1. **VS Code Extensions**
-
-   - TypeScript and JavaScript Language Features (built-in)
-   - ESLint extension
-   - Prettier extension
-   - Vitest extension (optional)
-
-2. **Editor Settings**
-   - Format on save with Prettier
-   - ESLint auto-fix on save
-   - TypeScript strict mode enabled
-
-### Dependencies Overview
-
-#### Runtime Dependencies
-
-- `@inquirer/core` - Core inquirer functionality and hooks
-- `@inquirer/figures` - Terminal symbols and icons
-- `@inquirer/type` - TypeScript types for inquirer
-- `ansi-escapes` - ANSI escape sequences for terminal control
-- `yoctocolors-cjs` - Terminal colors (CommonJS compatible)
-
-#### Development Dependencies
-
-- Build: `tshy`, `typescript`, `rimraf`
-- Testing: `vitest`, `@inquirer/testing`, `@vitest/coverage-v8`, `@vitest/ui`
-- Linting: `eslint`, `@typescript-eslint/*`, `eslint-config-prettier`
-- Formatting: `prettier`
-- Validation: `@arethetypeswrong/cli`
-
-## Requirements
-
-- Node.js 18 or higher
-- npm 9 or higher (for workspaces support)
-
-## License
-
-MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Contributing
 

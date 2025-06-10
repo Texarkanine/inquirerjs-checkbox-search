@@ -48,10 +48,8 @@
 
 2. Make your changes following our coding standards
 3. Add or update tests as needed
-4. Run the test suite: `npm test`
-5. Run type checking: `npm run typecheck`
-6. Run linting: `npm run lint`
-7. Build the project: `npm run build`
+4. Build the project: `npm run build`
+5. Run the test suite: `npm test`
 
 ### Testing
 
@@ -108,30 +106,6 @@ This project uses [Conventional Commits](https://www.conventionalcommits.org/en/
 - `fix(docs): correct API examples`
 - `fix(ci): update Node.js version in workflow`
 
-Use scopes like `(docs)`, `(ci)`, `(test)`, `(deps)`, etc. instead of separate commit types.
-
-### Examples
-
-```bash
-# New features
-git commit -m "feat: add tab completion for search terms"
-git commit -m "feat(ui): add escape key to clear search"
-
-# Bug fixes
-git commit -m "fix: resolve navigation issue with filtered results"
-git commit -m "fix(theme): correct icon colors in dark mode"
-git commit -m "fix(docs): correct API examples in README"
-
-# Breaking change
-git commit -m "feat!: change API to support async filtering
-
-BREAKING CHANGE: the filter option now expects an async function"
-
-# Maintenance (avoid when possible)
-git commit -m "chore(deps): update TypeScript to 5.6"
-git commit -m "chore(ci): update Node.js version in workflow"
-```
-
 ### Breaking Changes
 
 Breaking changes should be indicated by:
@@ -143,11 +117,11 @@ Breaking changes should be indicated by:
 
 1. **Before submitting**:
 
+   - Ensure build succeeds: `npm run build`
    - Ensure all tests pass: `npm test`
    - Ensure code is properly formatted: `npm run format`
    - Ensure no linting errors: `npm run lint`
    - Ensure TypeScript compiles: `npm run typecheck`
-   - Ensure build succeeds: `npm run build`
 
 2. **Pull Request**:
 
@@ -161,20 +135,6 @@ Breaking changes should be indicated by:
    - All PRs require at least one approval
    - CI checks must pass
    - Code coverage should not decrease significantly
-
-## Project Structure
-
-```
-├── src/
-│   ├── index.ts          # Main prompt implementation
-│   └── *.test.ts         # Test files
-├── .github/
-│   └── workflows/        # GitHub Actions CI/CD
-├── dist/                 # Built output (generated)
-├── package.json          # Package configuration
-├── tsconfig.json         # TypeScript configuration
-└── README.md            # Documentation
-```
 
 ## Release Process
 
@@ -192,9 +152,3 @@ Version bumping follows semantic versioning:
 - `fix:` commits trigger patch releases (1.0.1)
 - `feat:` commits trigger minor releases (1.1.0)
 - `feat!:` or `BREAKING CHANGE:` trigger major releases (2.0.0)
-
-## Getting Help
-
-- **Issues**: Open an issue for bugs or feature requests
-- **Discussions**: Use GitHub Discussions for questions
-- **Documentation**: Check the README for usage examples
