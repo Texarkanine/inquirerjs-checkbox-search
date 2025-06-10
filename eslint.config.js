@@ -31,6 +31,11 @@ export default [
     },
     rules: {
       ...tsPlugin.configs.recommended.rules,
+      // Unused variables should be REMOVED, not prefixed with underscore.
+      // Only use underscore prefix for:
+      // 1. Function parameters required by interface but not used (e.g., _event in event handlers)
+      // 2. Variables that must exist for destructuring but aren't used (e.g., const {used, _unused} = obj)
+      // 3. Parameters in callbacks where signature is fixed but parameter isn't needed
       '@typescript-eslint/no-unused-vars': [
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },

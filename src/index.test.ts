@@ -256,7 +256,7 @@ describe('checkbox-search prompt', () => {
     });
 
     it('should return array of selected values on enter', async () => {
-      const { answer, events, getScreen } = await render(checkboxSearch, {
+      const { answer, events } = await render(checkboxSearch, {
         message: 'Select items',
         choices: [
           { value: 'apple', name: 'Apple' },
@@ -440,7 +440,7 @@ describe('checkbox-search prompt', () => {
     });
 
     it('should allow submission when validation passes', async () => {
-      const { answer, events, getScreen } = await render(checkboxSearch, {
+      const { answer, events } = await render(checkboxSearch, {
         message: 'Select items',
         choices: ['Apple', 'Banana', 'Cherry'],
         validate: (selections: any[]) => {
@@ -735,7 +735,7 @@ describe('checkbox-search prompt', () => {
 
   describe('Async behavior', () => {
     it('should show loading state during async operations', async () => {
-      const slowSource = async (term?: string) => {
+      const slowSource = async () => {
         await new Promise((resolve) => setTimeout(resolve, 100)); // Slow async operation
         return [
           { value: 'result1', name: 'Result 1' },
@@ -743,7 +743,7 @@ describe('checkbox-search prompt', () => {
         ];
       };
 
-      const { events, getScreen } = await render(checkboxSearch, {
+      const { getScreen } = await render(checkboxSearch, {
         message: 'Search items',
         source: slowSource,
       });
@@ -760,7 +760,7 @@ describe('checkbox-search prompt', () => {
     });
 
     it('should handle async source errors gracefully', async () => {
-      const errorSource = async (term?: string) => {
+      const errorSource = async () => {
         await new Promise((resolve) => setTimeout(resolve, 10));
         throw new Error('Network error');
       };
