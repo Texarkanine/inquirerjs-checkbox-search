@@ -1,11 +1,5 @@
 # Contributing to inquirerjs-checkbox-search
 
-Thank you for your interest in contributing to the checkbox-search prompt for inquirer.js! This document outlines the process for contributing to this repository.
-
-## Code of Conduct
-
-By participating in this project, you are expected to uphold our code of conduct. Please be respectful and constructive in all interactions.
-
 ## Development Setup
 
 ### Prerequisites
@@ -84,7 +78,7 @@ The project follows these standards:
 
 ## Commit Message Convention
 
-**IMPORTANT**: This project uses [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) for automated releases and changelog generation.
+This project uses [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) for automated releases and changelog generation.
 
 ### Commit Message Format
 
@@ -162,7 +156,6 @@ Breaking changes should be indicated by:
 ```
 ├── src/
 │   ├── index.ts          # Main prompt implementation
-│   ├── types.ts          # TypeScript type definitions
 │   └── *.test.ts         # Test files
 ├── .github/
 │   └── workflows/        # GitHub Actions CI/CD
@@ -192,10 +185,4 @@ Version bumping follows semantic versioning:
 
 - **Issues**: Open an issue for bugs or feature requests
 - **Discussions**: Use GitHub Discussions for questions
-- **Documentation**: Check the README for usage examples
-
-## License
-
-By contributing, you agree that your contributions will be licensed under the same license as the project (MIT).
-
-Thank you for contributing! 🚀 
+- **Documentation**: Check the README for usage examples 
