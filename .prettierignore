@@ -1,13 +1,14 @@
-# Release-please manages this file and uses its own formatting
-CHANGELOG.md
-
-# Build outputs
+# Generated files
 dist/
-lib/
-build/
+coverage/
+.tshy/
+package-inspect/
 
 # Dependencies
 node_modules/
 
-# Coverage reports
-coverage/
+# Release files (managed by release-please)
+CHANGELOG.md
+
+# Lock files
+package-lock.json
