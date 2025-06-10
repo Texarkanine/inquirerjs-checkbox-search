@@ -716,7 +716,7 @@ describe('checkbox-search prompt', () => {
       expect(selectedBananaLine).toContain('◉'); // Banana should be selected
       expect(selectedBananaLine).toContain('❯'); // Cursor should still be on Banana
 
-      // Deselect Banana - THIS IS WHERE THE BUG HAPPENS
+      // Deselect Banana
       events.keypress('tab');
       screen = getScreen();
 

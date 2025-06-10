@@ -67,15 +67,18 @@
     "clean": "rimraf dist .tshy",
     "dev": "tshy --watch",
     "lint": "eslint . --ext .ts --fix",
+    "lint:check": "eslint . --ext .ts",
     "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "npm run format && npm run lint && npm run typecheck && npm run test:unit",
+    "test:ci": "npm run format:check && npm run lint:check && npm run typecheck && npm run test:unit",
     "test:unit": "vitest run",
     "test:coverage": "vitest --coverage",
     "test:ui": "vitest --ui",
     "typecheck": "tsc --noEmit",
     "attw": "attw --pack",
     "pkg:inspect": "rimraf package-inspect *.tgz && npm run build && npm pack && mkdir package-inspect && tar -xzf *.tgz -C package-inspect && echo '\\n📦 Package extracted to package-inspect/ for inspection'",
-    "prepublishOnly": "npm run clean && npm run build && npm run test && npm run attw"
+    "prepublishOnly": "npm run clean && npm run build && npm run test:ci && npm run attw"
   },
   "dependencies": {
     "@inquirer/core": "^10.1.13",
