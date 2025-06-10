@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v0.1.0...v0.1.1) (2025-06-10)
+
+
+### Bug Fixes
+
+* **ci:** prettier was checking release-please's CHANGELOG.md ([1ee608e](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/1ee608ea4316a3ea6eab2d82cc24b69f3fe5f27d))
+
 ## 0.1.0 (2025-06-10)
 
 
