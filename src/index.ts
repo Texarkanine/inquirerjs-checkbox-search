@@ -414,6 +414,11 @@ export default createPrompt(
 
     // Keyboard event handling
     useKeypress((key, rl) => {
+      // Helper function to update search term in both readline and React state
+      const updateSearchTerm = (newTerm: string) => {
+        rl.line = newTerm;
+        setSearchTerm(newTerm);
+      };
       // Allow search input even during loading, but block other actions
       const isNavigationOrAction =
         key.name === 'up' ||
@@ -431,8 +436,7 @@ export default createPrompt(
 
       // Handle Escape key - clear search term quickly
       if (key.name === 'escape') {
-        rl.line = ''; // Clear readline input first (avoid re-render)
-        setSearchTerm(''); // Then update state
+        updateSearchTerm(''); // Clear both readline and React state
         return;
       }
 
@@ -469,6 +473,10 @@ export default createPrompt(
 
       // Handle selection toggle with tab key ONLY - prevent tab from affecting search text
       if (key.name === 'tab') {
+        // CRITICAL FIX: Preserve search term exactly as it was before tab press
+        // Readline's tab completion can modify rl.line, so we need to restore it
+        const preservedSearchTerm = searchTerm;
+        
         const activeItem = filteredItems[active];
         if (activeItem && isSelectable(activeItem)) {
           const activeValue = (activeItem as NormalizedChoice<Value>).value;
@@ -484,7 +492,12 @@ export default createPrompt(
             }),
           );
         }
-        return; // Important: return here to prevent tab from being added to search term
+        
+        // CRITICAL FIX: Forcibly restore readline state to prevent tab pollution
+        // This must happen AFTER the selection toggle to avoid state conflicts
+        updateSearchTerm(preservedSearchTerm);
+        
+        return; // Important: return here to prevent further tab processing
       }
 
       // Handle submission
@@ -534,6 +547,7 @@ export default createPrompt(
       // Handle all other input as search term updates EXCEPT tab
       // Only update search term for actual typing, not navigation keys
       if (!isNavigationOrAction) {
+        // For general input, only update React state since rl.line is already current
         setSearchTerm(rl.line);
       }
     });

@@ -369,7 +369,7 @@ describe('checkbox-search prompt', () => {
   });
 
   describe('Keyboard navigation', () => {
-    it('should autocomplete with tab key', async () => {
+    it('should toggle selection with tab key, not perform autocomplete', async () => {
       const { events, getScreen } = await render(checkboxSearch, {
         message: 'Select items',
         choices: [
@@ -386,10 +386,19 @@ describe('checkbox-search prompt', () => {
       expect(screen).not.toContain('TypeScript');
       expect(screen).not.toContain('Python');
 
-      // Press tab to autocomplete
+      // Press tab to select/toggle the highlighted choice (JavaScript)
       events.keypress('tab');
       screen = getScreen();
-      expect(screen).toContain('JavaScript'); // Should fill search with highlighted choice
+      
+      // Should show JavaScript as selected (checked)
+      expect(screen).toContain('◉'); // Should show checked item
+      
+      // Search term should still be 'java', NOT autocompleted to 'JavaScript'
+      expect(screen).toContain('java'); // Original search term preserved
+      expect(screen).toContain('JavaScript'); // Still shows the filtered choice
+      
+      // Should NOT show any tab characters in search
+      expect(screen).not.toMatch(/Search:.*\t/);
     });
   });
 
@@ -900,6 +909,67 @@ describe('checkbox-search prompt', () => {
   });
 
   describe('Critical Bug Fixes', () => {
+    it('should not add tab characters to search text when toggling selections', async () => {
+      const { events, getScreen } = await render(checkboxSearch, {
+        message: 'Select items',
+        choices: [
+          { value: 'apple', name: 'Apple' },
+          { value: 'banana', name: 'Banana' },
+          { value: 'cherry', name: 'Cherry' },
+        ],
+      });
+
+      // Type some search text
+      events.type('app');
+      let screen = getScreen();
+      expect(screen).toContain('Search:');
+      expect(screen).toContain('app'); // Should show search term
+
+      // Press tab to select/toggle item - should NOT add tab character to search
+      events.keypress('tab');
+      screen = getScreen();
+      
+      // Verify selection happened
+      expect(screen).toContain('◉'); // Should show Apple is selected
+      
+      // Critical: Search term should still be 'app', NOT 'app\t' or 'app    ' (spaces from tab)
+      expect(screen).toContain('app'); // Should still show original search term
+      expect(screen).not.toMatch(/app\s+\t/); // Should not contain tab character after 'app'
+      expect(screen).not.toMatch(/Search:.*\t/); // Should not contain tab character in search line
+      expect(screen).not.toMatch(/app\s{2,}/); // Should not contain multiple spaces after 'app' (from tab conversion)
+      
+      // Type more text - should work normally
+      events.type('le');
+      screen = getScreen();
+      expect(screen).toContain('apple'); // Should show 'apple' now
+      expect(screen).not.toMatch(/\t/); // Should not contain any tab characters anywhere
+      expect(screen).not.toMatch(/app\s+le/); // Should not have extra spaces between 'app' and 'le'
+    });
+
+    it('should detect readline tab-to-spaces conversion bug', async () => {
+      const { events, getScreen } = await render(checkboxSearch, {
+        message: 'Select items',
+        choices: [
+          { value: 'test', name: 'Test Item' },
+        ],
+      });
+
+      // Type 'te', press tab, type 'st' - should result in 'test', not 'te    st' (spaces from tab)
+      events.type('te');
+      events.keypress('tab'); // This should toggle selection, not add spaces to search
+      events.type('st');
+      
+      let screen = getScreen();
+      
+      // Should show selection happened (Test Item matches "test" search)
+      expect(screen).toContain('◉'); // Test Item should be selected
+      
+      // Search should be 'test', not 'te    st' or similar with spaces
+      expect(screen).toContain('test'); // Should show clean concatenated search
+      expect(screen).not.toMatch(/te\s+st/); // Should NOT have spaces between te and st
+      expect(screen).not.toMatch(/Search:.*te\s{2,}/); // Should NOT have multiple spaces after te
+    });
+
     it('should submit with Enter even when no search term is visible', async () => {
       const { answer, events, getScreen } = await render(checkboxSearch, {
         message: 'Select items',
