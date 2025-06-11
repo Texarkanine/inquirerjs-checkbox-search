@@ -64,7 +64,7 @@
   ],
   "scripts": {
     "build": "tshy",
-    "clean": "rimraf dist .tshy",
+    "clean": "rimraf dist .tshy package-inspect coverage src/node_modules",
     "dev": "tshy --watch",
     "lint": "eslint . --ext .ts --fix",
     "lint:check": "eslint . --ext .ts",

@@ -58,7 +58,7 @@ const checkboxSearchTheme: CheckboxSearchTheme = {
     help: colors.dim,
     highlight: colors.cyan,
     searchTerm: colors.cyan,
-    description: colors.dim,
+    description: colors.cyan,
     disabled: colors.dim,
   },
   helpMode: 'always',
@@ -538,6 +538,9 @@ export default createPrompt(
       }
     });
 
+    // Track the current description for the active item
+    let currentDescription: string | undefined;
+
     // Create renderItem function that's reactive to current state
     const renderItem = useMemo(() => {
       return ({ item, isActive }: { item: Item<Value>; isActive: boolean }) => {
@@ -577,34 +580,23 @@ export default createPrompt(
         let text = (item as NormalizedChoice<Value>).name;
         if (isActive) {
           text = theme.style.highlight(text);
+          // Capture the description of the active item to display at bottom
+          currentDescription = (item as NormalizedChoice<Value>).description;
         } else if ((item as NormalizedChoice<Value>).disabled) {
           text = theme.style.disabled(text);
         }
 
         line.push(text);
 
-        // Show disabled reason if item is disabled
+        // Show disabled reason if item is disabled (but no descriptions inline anymore)
         if ((item as NormalizedChoice<Value>).disabled) {
           const disabledReason =
             typeof (item as NormalizedChoice<Value>).disabled === 'string'
               ? ((item as NormalizedChoice<Value>).disabled as string)
               : 'disabled';
           line.push(theme.style.disabled(`(${disabledReason})`));
-        } else if ((item as NormalizedChoice<Value>).description) {
-          const description = (item as NormalizedChoice<Value>).description;
-          // If using custom description styling, give full control to user (no parentheses)
-          // If using default styling, add parentheses for backward compatibility
-          const isUsingCustomDescriptionStyle =
-            config.theme?.style?.description !== undefined;
-
-          if (description) {
-            if (isUsingCustomDescriptionStyle) {
-              line.push(theme.style.description(description));
-            } else {
-              line.push(`(${theme.style.description(description)})`);
-            }
-          }
         }
+        // NOTE: Removed the inline description display - descriptions now appear at bottom
 
         return line.join(' ');
       };
@@ -653,7 +645,13 @@ export default createPrompt(
       content = `\n${page}`;
     }
 
-    return `${prefix} ${message}${helpTip}${searchLine}${errorLine}${content}${ansiEscapes.cursorHide}`;
+    // Add description of active item at the bottom (like original inquirer.js)
+    let descriptionLine = '';
+    if (currentDescription) {
+      descriptionLine = `\n${theme.style.description(currentDescription)}`;
+    }
+
+    return `${prefix} ${message}${helpTip}${searchLine}${errorLine}${content}${descriptionLine}${ansiEscapes.cursorHide}`;
   },
 );
 

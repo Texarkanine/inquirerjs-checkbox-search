@@ -95,9 +95,10 @@ export default [
     ignores: [
       'dist/',
       '.tshy/',
+      '.tshy-build/',
       'node_modules/',
+      'src/node_modules/',
       'coverage/',
-      'inquirer-source-code-ref/',
       'package-inspect/',
       '*.tgz',
     ],
