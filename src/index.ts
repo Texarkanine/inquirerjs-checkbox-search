@@ -471,10 +471,8 @@ export default createPrompt(
         return;
       }
 
-      // Handle selection toggle with tab key ONLY - prevent tab from affecting search text
+      // Handle selection toggle with tab key
       if (key.name === 'tab') {
-        // CRITICAL FIX: Preserve search term exactly as it was before tab press
-        // Readline's tab completion can modify rl.line, so we need to restore it
         const preservedSearchTerm = searchTerm;
         
         const activeItem = filteredItems[active];
@@ -493,11 +491,12 @@ export default createPrompt(
           );
         }
         
-        // CRITICAL FIX: Forcibly restore readline state to prevent tab pollution
-        // This must happen AFTER the selection toggle to avoid state conflicts
+
         updateSearchTerm(preservedSearchTerm);
         
-        return; // Important: return here to prevent further tab processing
+        // return to prevent tab from affecting search text:
+        // Readline's tab completion in @inquirer/core can modify rl.line, adding spaces to the search text
+        return;
       }
 
       // Handle submission
