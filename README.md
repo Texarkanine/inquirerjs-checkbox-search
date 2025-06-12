@@ -100,36 +100,6 @@ type CheckboxSearchTheme = {
 | <kbd>Escape</kbd>         | Clear search filter                |
 | <kbd>Enter</kbd>          | Confirm selection                  |
 
-## Auto Page Sizing
-
-The `autoPageSize` option allows the prompt to automatically scale the number of displayed choices based on your terminal height, providing a better user experience across different terminal sizes.
-
-```javascript
-import checkboxSearch from 'inquirerjs-checkbox-search';
-
-const result = await checkboxSearch({
-  message: 'Select your preferences',
-  choices: manyChoices, // Large list of choices
-  autoPageSize: true, // Automatically scale to terminal height
-  pageSize: 7, // Fallback size if terminal height unavailable
-});
-```
-
-### How it works:
-
-- **Terminal Detection**: Uses `process.stdout.rows` to detect terminal height
-- **Smart Calculation**: Reserves space for UI elements (prompt, search, help, etc.)
-- **Safe Bounds**: Enforces minimum (2) and maximum (50) page sizes
-- **Graceful Fallback**: Uses fixed `pageSize` if terminal dimensions unavailable
-- **Backward Compatible**: Disabled by default (`autoPageSize: false`)
-
-### Example scenarios:
-
-- **Small terminal (10 rows)**: Shows ~4 choices
-- **Medium terminal (30 rows)**: Shows ~24 choices
-- **Large terminal (100 rows)**: Capped at 50 choices max
-- **No terminal info**: Falls back to `pageSize` setting
-
 ## Advanced Features
 
 For detailed examples of advanced features, see the [`examples/`](./examples/) directory:

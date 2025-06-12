@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Example demonstrating the autoPageSize feature for terminal height scaling
+ * Example demonstrating the auto page size feature for terminal height scaling
  */
 
 import checkboxSearch from '../dist/esm/index.js';
@@ -16,7 +16,7 @@ const manyChoices = Array.from({ length: 100 }, (_, i) => ({
 async function demoAutoPageSize() {
   console.log('🔧 Auto Page Size Demo\n');
   console.log(
-    'This example demonstrates how autoPageSize adapts to your terminal height.\n',
+    'This example demonstrates how the prompt adapts to your terminal height.\n',
   );
 
   try {
