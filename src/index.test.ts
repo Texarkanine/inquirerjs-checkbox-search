@@ -1585,6 +1585,14 @@ describe('checkbox-search prompt', () => {
     });
 
     it('should calculate dynamic pageSize based on terminal height when pageSize is not specified', async () => {
+      // Skip this test if process.stdout.rows doesn't exist (non-TTY environments)
+      if (!('rows' in process.stdout)) {
+        console.log(
+          'Skipping test: process.stdout.rows not available in this environment',
+        );
+        return;
+      }
+
       const manyChoices = Array.from({ length: 50 }, (_, i) => ({
         value: `item${i}`,
         name: `Item ${i}`,
@@ -1614,6 +1622,14 @@ describe('checkbox-search prompt', () => {
     });
 
     it('should fallback to default pageSize (7) when terminal height is not available', async () => {
+      // Skip this test if process.stdout.rows doesn't exist (non-TTY environments)
+      if (!('rows' in process.stdout)) {
+        console.log(
+          'Skipping test: process.stdout.rows not available in this environment',
+        );
+        return;
+      }
+
       const manyChoices = Array.from({ length: 20 }, (_, i) => ({
         value: `item${i}`,
         name: `Item ${i}`,
@@ -1643,6 +1659,14 @@ describe('checkbox-search prompt', () => {
     });
 
     it('should handle small terminal heights gracefully', async () => {
+      // Skip this test if process.stdout.rows doesn't exist (non-TTY environments)
+      if (!('rows' in process.stdout)) {
+        console.log(
+          'Skipping test: process.stdout.rows not available in this environment',
+        );
+        return;
+      }
+
       const manyChoices = Array.from({ length: 20 }, (_, i) => ({
         value: `item${i}`,
         name: `Item ${i}`,
@@ -1673,6 +1697,14 @@ describe('checkbox-search prompt', () => {
     });
 
     it('should handle large terminal heights appropriately', async () => {
+      // Skip this test if process.stdout.rows doesn't exist (non-TTY environments)
+      if (!('rows' in process.stdout)) {
+        console.log(
+          'Skipping test: process.stdout.rows not available in this environment',
+        );
+        return;
+      }
+
       const manyChoices = Array.from({ length: 100 }, (_, i) => ({
         value: `item${i}`,
         name: `Item ${i}`,
