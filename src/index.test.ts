@@ -55,6 +55,18 @@ describe('checkbox-search prompt', () => {
       expect(screen).toContain('Enter'); // Capitalized as it appears in help text
       expect(screen).toMatch(/Tab.*to select/i);
     });
+
+    it('should display custom help instructions', async () => {
+      const { getScreen } = await render(checkboxSearch, {
+        message: 'Select options',
+        choices: ['Option 1', 'Option 2'],
+        instructions: 'tibbity-tab to select, entery-denter to submit',
+      });
+
+      const screen = getScreen();
+      expect(screen).toContain('tibbity-tab to select');
+      expect(screen).toContain('entery-denter to submit');
+    });
   });
 
   describe('Search and filtering', () => {
