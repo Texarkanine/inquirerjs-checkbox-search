@@ -74,11 +74,13 @@ After the phantom input bug fix, a residual issue remains:
 ## Status: ✅ **FIXED - AWAITING LIVE BEHAVIOR CONFIRMATION**
 
 ### Key Changes Made:
+
 1. **Fixed updateSearchTerm()**: Changed from `rl.line = newTerm; rl.cursor = newTerm.length` to `rl.clearLine(0); rl.write(newTerm)`
 2. **Removed unused imports**: Cleaned up `isUpKey` and `isDownKey` imports
 3. **Followed official pattern**: Used same approach as inquirer.js search implementation
 
 ### Expected Outcome:
+
 - Tab selections should no longer require a "phantom backspace" to wake up search functionality
 - Escape key should not stack invisible characters
 - All existing functionality preserved

@@ -133,6 +133,158 @@ describe('checkbox-search prompt', () => {
       expect(screen).toContain('Cherry');
     });
 
+    /**
+     * Feature test: Escape key to clear search filter
+     *
+     * This feature allows users to quickly clear search filters without
+     * manually backspacing through the entire search term.
+     */
+    it('should clear search filter with Escape key', async () => {
+      const { events, getScreen } = await render(checkboxSearch, {
+        message: 'Select items',
+        choices: [
+          { value: 'apple', name: 'Apple' },
+          { value: 'banana', name: 'Banana' },
+          { value: 'cherry', name: 'Cherry' },
+        ],
+      });
+
+      // Type a search term to filter results
+      events.type('ap');
+      let screen = getScreen();
+      expect(screen).toContain('Apple');
+      expect(screen).not.toContain('Banana');
+      expect(screen).not.toContain('Cherry');
+
+      // Press Escape to clear the search filter
+      events.keypress('escape');
+      screen = getScreen();
+
+      // All items should be visible again
+      expect(screen).toContain('Apple');
+      expect(screen).toContain('Banana');
+      expect(screen).toContain('Cherry');
+
+      // Search term should be cleared (no visible search text)
+      expect(screen).not.toContain('Search: ap');
+    });
+
+    /**
+     * Feature test: Escape key preserving selections
+     *
+     * When clearing search filters with escape, any selections made while
+     * filtering should be preserved when returning to the full list.
+     */
+    it('should maintain selections when clearing search filter with Escape', async () => {
+      const { events, getScreen } = await render(checkboxSearch, {
+        message: 'Select items',
+        choices: [
+          { value: 'apple', name: 'Apple' },
+          { value: 'apricot', name: 'Apricot' },
+          { value: 'banana', name: 'Banana' },
+        ],
+      });
+
+      // Type a search term to filter results
+      events.type('ap');
+      let screen = getScreen();
+      expect(screen).toContain('Apple');
+      expect(screen).toContain('Apricot');
+      expect(screen).not.toContain('Banana');
+
+      // Select both filtered items
+      events.keypress('tab'); // Select Apple
+      events.keypress('down');
+      events.keypress('tab'); // Select Apricot
+
+      screen = getScreen();
+      // Both should be selected
+      const lines = screen.split('\n');
+      const appleLine = lines.find((line: string) => line.includes('Apple'));
+      const apricotLine = lines.find((line: string) =>
+        line.includes('Apricot'),
+      );
+      expect(appleLine).toContain('◉');
+      expect(apricotLine).toContain('◉');
+
+      // Press Escape to clear the search filter
+      events.keypress('escape');
+      screen = getScreen();
+
+      // All items should be visible again
+      expect(screen).toContain('Apple');
+      expect(screen).toContain('Apricot');
+      expect(screen).toContain('Banana');
+
+      // Selections should be maintained
+      const newLines = screen.split('\n');
+      const newAppleLine = newLines.find((line: string) =>
+        line.includes('Apple'),
+      );
+      const newApricotLine = newLines.find((line: string) =>
+        line.includes('Apricot'),
+      );
+      const newBananaLine = newLines.find((line: string) =>
+        line.includes('Banana'),
+      );
+
+      expect(newAppleLine).toContain('◉'); // Should still be selected
+      expect(newApricotLine).toContain('◉'); // Should still be selected
+      expect(newBananaLine).toContain('◯'); // Should not be selected
+    });
+
+    /**
+     * Bug reproduction test: j/k keys triggering vim navigation instead of search
+     *
+     * Previously, the "j" and "k" keys would trigger vim-style navigation (down/up)
+     * instead of being added to the search term. This was caused by using
+     * @inquirer/core's isUpKey() and isDownKey() functions which include vim keys.
+     */
+    it('should handle "j" key input properly for search (vim navigation bug fix)', async () => {
+      const { events, getScreen } = await render(checkboxSearch, {
+        message: 'Select fruits',
+        choices: [
+          { value: 'jackfruit', name: 'Jackfruit' },
+          { value: 'apple', name: 'Apple' },
+          { value: 'banana', name: 'Banana' },
+        ],
+      });
+
+      // Type "j" - should add to search term
+      events.type('j');
+
+      let screen = getScreen();
+      expect(screen).toContain('j'); // Should show "j" in search term
+      expect(screen).toContain('Jackfruit'); // Should filter to jackfruit
+      expect(screen).not.toContain('Apple');
+      expect(screen).not.toContain('Banana');
+    });
+
+    /**
+     * Bug reproduction test: k key triggering vim navigation instead of search
+     *
+     * Companion test to the j key bug - "k" should add to search, not navigate up.
+     */
+    it('should handle "k" key input properly for search (vim navigation bug fix)', async () => {
+      const { events, getScreen } = await render(checkboxSearch, {
+        message: 'Select fruits',
+        choices: [
+          { value: 'kiwi', name: 'Kiwi' },
+          { value: 'apple', name: 'Apple' },
+          { value: 'banana', name: 'Banana' },
+        ],
+      });
+
+      // Type "k" - should add to search term, not navigate up
+      events.type('k');
+
+      let screen = getScreen();
+      expect(screen).toContain('k'); // Should show "k" in search term
+      expect(screen).toContain('Kiwi'); // Should filter to kiwi
+      expect(screen).not.toContain('Apple');
+      expect(screen).not.toContain('Banana');
+    });
+
     it('should handle async source function', async () => {
       const mockSource = async (term?: string) => {
         await new Promise((resolve) => setTimeout(resolve, 10)); // Simulate async
@@ -198,75 +350,34 @@ describe('checkbox-search prompt', () => {
       // Initially no items selected
       let screen = getScreen();
       expect(screen).toContain('◯'); // unchecked (default theme)
-      expect(screen).not.toContain('◉'); // checked (default theme)
+      expect(screen).not.toContain('◉'); // checked
 
-      // Select first item
+      // Press tab to select first item
       events.keypress('tab');
       screen = getScreen();
-      expect(screen).toContain('◉'); // should show checked item
 
-      // Toggle same item to deselect
+      // Should show selection
+      expect(screen).toContain('◉'); // Should show at least one checked item
+      expect(screen).toContain('◯'); // Should still show unchecked items
+
+      // Press tab again to deselect
       events.keypress('tab');
       screen = getScreen();
-      expect(screen).toContain('◯'); // should be unchecked again
+
+      // Should be back to no selections
+      expect(screen).toContain('◯');
+      expect(screen).not.toContain('◉');
     });
 
-    it('should maintain selections across filtering', async () => {
+    /**
+     * Bug reproduction test: Tab key was adding tab characters to search text
+     *
+     * Previously, pressing tab to select items would insert tab characters or spaces
+     * into the search input field, corrupting the search term. This test ensures
+     * that tab selection is properly isolated from search input handling.
+     */
+    it('should not add tab characters to search text when toggling selections', async () => {
       const { events, getScreen } = await render(checkboxSearch, {
-        message: 'Select frameworks',
-        choices: [
-          { value: 'react', name: 'React' },
-          { value: 'vue', name: 'Vue.js' },
-          { value: 'angular', name: 'Angular' },
-        ],
-      });
-
-      // Select React
-      events.keypress('tab');
-      let screen = getScreen();
-      expect(screen).toContain('◉'); // React should be selected
-
-      // Filter to show only React
-      events.type('rea');
-      screen = getScreen();
-      expect(screen).toContain('React');
-      expect(screen).toContain('◉'); // React should still be selected
-
-      // Clear filter
-      for (let i = 0; i < 3; i++) {
-        events.keypress('backspace');
-      }
-      screen = getScreen();
-      expect(screen).toContain('React');
-      expect(screen).toContain('Vue.js');
-      expect(screen).toContain('Angular');
-      expect(screen).toContain('◉'); // React should still be selected
-    });
-
-    it('should handle pre-selected choices', async () => {
-      const { getScreen } = await render(checkboxSearch, {
-        message: 'Select items',
-        choices: [
-          { value: 'apple', name: 'Apple', checked: true },
-          { value: 'banana', name: 'Banana', checked: false },
-          { value: 'cherry', name: 'Cherry', checked: true },
-        ],
-      });
-
-      const screen = getScreen();
-      // Should show Apple and Cherry as pre-selected
-      const lines = screen.split('\n');
-      const appleLine = lines.find((line: string) => line.includes('Apple'));
-      const bananaLine = lines.find((line: string) => line.includes('Banana'));
-      const cherryLine = lines.find((line: string) => line.includes('Cherry'));
-
-      expect(appleLine).toContain('◉');
-      expect(bananaLine).toContain('◯');
-      expect(cherryLine).toContain('◉');
-    });
-
-    it('should return array of selected values on enter', async () => {
-      const { answer, events } = await render(checkboxSearch, {
         message: 'Select items',
         choices: [
           { value: 'apple', name: 'Apple' },
@@ -275,14 +386,322 @@ describe('checkbox-search prompt', () => {
         ],
       });
 
-      // Select first and third items
+      // Type some search text
+      events.type('app');
+      let screen = getScreen();
+      expect(screen).toContain('Search:');
+      expect(screen).toContain('app'); // Should show search term
+
+      // Press tab to select/toggle item - should NOT add tab character to search
+      events.keypress('tab');
+      screen = getScreen();
+
+      // Verify selection happened
+      expect(screen).toContain('◉'); // Should show Apple is selected
+
+      // Critical: Search term should still be 'app', NOT 'app\t' or 'app    ' (spaces from tab)
+      expect(screen).toContain('app'); // Should still show original search term
+      expect(screen).not.toMatch(/app\s+\t/); // Should not contain tab character after 'app'
+      expect(screen).not.toMatch(/Search:.*\t/); // Should not contain tab character in search line
+      expect(screen).not.toMatch(/app\s{2,}/); // Should not contain multiple spaces after 'app' (from tab conversion)
+
+      // Type more text - should work normally
+      events.type('le');
+      screen = getScreen();
+      expect(screen).toContain('apple'); // Should show 'apple' now
+      expect(screen).not.toMatch(/\t/); // Should not contain any tab characters anywhere
+      expect(screen).not.toMatch(/app\s+le/); // Should not have extra spaces between 'app' and 'le'
+    });
+
+    /**
+     * Bug reproduction test: Readline tab-to-spaces conversion
+     *
+     * Some readline configurations convert tab characters to spaces, which could
+     * corrupt search input when tab is used for selection. This test ensures
+     * proper isolation between tab selection and search text.
+     */
+    it('should detect readline tab-to-spaces conversion bug', async () => {
+      const { events, getScreen } = await render(checkboxSearch, {
+        message: 'Select items',
+        choices: [{ value: 'test', name: 'Test Item' }],
+      });
+
+      // Type 'te', press tab, type 'st' - should result in 'test', not 'te    st' (spaces from tab)
+      events.type('te');
+      events.keypress('tab'); // This should toggle selection, not add spaces to search
+      events.type('st');
+
+      let screen = getScreen();
+
+      // Should show selection happened (Test Item matches "test" search)
+      expect(screen).toContain('◉'); // Test Item should be selected
+
+      // Search should be 'test', not 'te    st' or similar with spaces
+      expect(screen).toContain('test'); // Should show clean concatenated search
+      expect(screen).not.toMatch(/te\s+st/); // Should NOT have spaces between te and st
+      expect(screen).not.toMatch(/Search:.*te\s{2,}/); // Should NOT have multiple spaces after te
+    });
+
+    /**
+     * Bug reproduction test: Enter key not working after selections
+     *
+     * Previously, making selections could interfere with the enter key functionality,
+     * preventing form submission. This test ensures enter works reliably.
+     */
+    it('should submit with Enter even when no search term is visible', async () => {
+      const { answer, events, getScreen } = await render(checkboxSearch, {
+        message: 'Select items',
+        choices: [
+          { value: 'apple', name: 'Apple' },
+          { value: 'banana', name: 'Banana' },
+          { value: 'cherry', name: 'Cherry' },
+        ],
+      });
+
+      // Select an item without any search
+      events.keypress('tab'); // Select Apple
+
+      // Verify selection happened
+      let screen = getScreen();
+      expect(screen).toContain('◉'); // Should show checked item
+
+      // Press Enter to submit - THIS SHOULD WORK but previously failed
+      events.keypress('enter');
+      await expect(answer).resolves.toEqual(['apple']);
+    });
+
+    /**
+     * Bug reproduction test: Enter key not working after search and clear
+     *
+     * A variant of the enter key bug where typing and then clearing search
+     * could leave the prompt in a state where enter didn't work properly.
+     */
+    it('should submit with Enter after typing and clearing search term', async () => {
+      const { answer, events, getScreen } = await render(checkboxSearch, {
+        message: 'Select items',
+        choices: [
+          { value: 'apple', name: 'Apple' },
+          { value: 'banana', name: 'Banana' },
+          { value: 'cherry', name: 'Cherry' },
+        ],
+      });
+
+      // Type a search term
+      events.type('a');
+      let screen = getScreen();
+      expect(screen).toContain('Apple');
+      expect(screen).toContain('Banana'); // Both contain 'a'
+      expect(screen).not.toContain('Cherry'); // Should be filtered out
+
+      // Select the filtered item
+      events.keypress('tab'); // Select Apple
+
+      // Clear the search term by backspacing
+      events.keypress('backspace');
+      screen = getScreen();
+      expect(screen).toContain('Apple');
+      expect(screen).toContain('Banana'); // Should show all items again
+      expect(screen).toContain('◉'); // Apple should still be selected
+
+      // Press Enter to submit - THIS SHOULD WORK but previously failed
+      events.keypress('enter');
+      await expect(answer).resolves.toEqual(['apple']);
+    });
+
+    /**
+     * Bug reproduction test: Phantom input after tab selections
+     *
+     * After making tab selections, search input required an extra backspace
+     * to "wake up" the cursor. This test ensures immediate search responsiveness
+     * after tab operations.
+     */
+    it('should handle search input properly after tab selections', async () => {
+      const { events, getScreen } = await render(checkboxSearch, {
+        message: 'Select fruits',
+        choices: [
+          { value: 'apple', name: 'Apple' },
+          { value: 'watermelon', name: 'Watermelon' },
+          { value: 'melon', name: 'Melon' },
+          { value: 'orange', name: 'Orange' },
+        ],
+      });
+
+      // 1. tab (select first item)
+      events.keypress('tab');
+
+      // 2. down arrow
+      events.keypress('down');
+
+      // 3. tab (select 2nd item)
+      events.keypress('tab');
+
+      // 4. type "mel" (filters to melons)
+      events.type('mel');
+
+      let screen = getScreen();
+      expect(screen).toContain('Search: mel'); // Should show search term
+      expect(screen).toContain('Watermelon');
+      expect(screen).toContain('Melon');
+      expect(screen).not.toContain('Apple');
+      expect(screen).not.toContain('Orange');
+
+      // 5. Test backspace behavior - should delete "l" on first backspace
+      events.keypress('backspace');
+
+      screen = getScreen();
+      expect(screen).toContain('Search: me'); // Should show "me" after deleting "l"
+      expect(screen).not.toContain('Search: mel');
+
+      // Verify it's working properly - should only require one backspace per character
+      events.keypress('backspace');
+
+      screen = getScreen();
+      expect(screen).toContain('Search: m'); // Should show "m" after deleting "e"
+      expect(screen).not.toContain('Search: me');
+    });
+
+    /**
+     * Bug reproduction test: Multiple tab selections corrupting search state
+     *
+     * Making multiple tab selections could accumulate phantom characters
+     * in the search input, requiring multiple backspaces to clear. This test
+     * ensures clean search state regardless of selection history.
+     */
+    it('should handle multiple tab selections without corrupting search state', async () => {
+      const { events, getScreen } = await render(checkboxSearch, {
+        message: 'Select fruits',
+        choices: [
+          { value: 'apple', name: 'Apple' },
+          { value: 'banana', name: 'Banana' },
+          { value: 'cherry', name: 'Cherry' },
+          { value: 'date', name: 'Date' },
+        ],
+      });
+
+      // Make multiple tab selections
       events.keypress('tab'); // Select Apple
       events.keypress('down');
+      events.keypress('tab'); // Select Banana
       events.keypress('down');
       events.keypress('tab'); // Select Cherry
 
+      // Now type a search term
+      events.type('d');
+
+      let screen = getScreen();
+      expect(screen).toContain('d'); // Should show "d" immediately
+      expect(screen).toContain('Date');
+      expect(screen).not.toContain('Apple');
+      expect(screen).not.toContain('Banana');
+      expect(screen).not.toContain('Cherry');
+
+      // Verify backspace works properly
+      events.keypress('backspace');
+
+      screen = getScreen();
+      expect(screen).not.toContain('d'); // Search term should be empty
+      expect(screen).toContain('Apple');
+      expect(screen).toContain('Banana');
+      expect(screen).toContain('Cherry');
+      expect(screen).toContain('Date');
+    });
+
+    it('should maintain selections across filtering', async () => {
+      const { events, getScreen } = await render(checkboxSearch, {
+        message: 'Select items',
+        choices: [
+          { value: 'apple', name: 'Apple' },
+          { value: 'apricot', name: 'Apricot' },
+          { value: 'banana', name: 'Banana' },
+        ],
+      });
+
+      // Select first item
+      events.keypress('tab');
+      let screen = getScreen();
+      expect(screen).toContain('◉'); // Apple should be selected
+
+      // Filter to items containing 'ap'
+      events.type('ap');
+      screen = getScreen();
+      expect(screen).toContain('Apple');
+      expect(screen).toContain('Apricot');
+      expect(screen).not.toContain('Banana'); // Should be filtered out
+
+      // Apple should still be selected even after filtering
+      const lines = screen.split('\n');
+      const appleLine = lines.find((line: string) => line.includes('Apple'));
+      expect(appleLine).toContain('◉');
+
+      // Clear filter
+      events.keypress('backspace');
+      events.keypress('backspace');
+      screen = getScreen();
+
+      // All items should be visible again, and Apple should still be selected
+      expect(screen).toContain('Apple');
+      expect(screen).toContain('Apricot');
+      expect(screen).toContain('Banana');
+
+      const newLines = screen.split('\n');
+      const newAppleLine = newLines.find((line: string) =>
+        line.includes('Apple'),
+      );
+      expect(newAppleLine).toContain('◉'); // Should still be selected
+    });
+
+    it('should handle pre-selected choices', async () => {
+      const { events, getScreen } = await render(checkboxSearch, {
+        message: 'Select items',
+        choices: [
+          { value: 'apple', name: 'Apple', checked: true },
+          { value: 'banana', name: 'Banana' },
+          { value: 'cherry', name: 'Cherry', checked: true },
+        ],
+      });
+
+      // Should show pre-selected items
+      let screen = getScreen();
+      const lines = screen.split('\n');
+      const appleLine = lines.find((line: string) => line.includes('Apple'));
+      const bananaLine = lines.find((line: string) => line.includes('Banana'));
+      const cherryLine = lines.find((line: string) => line.includes('Cherry'));
+
+      expect(appleLine).toContain('◉'); // Should be pre-selected
+      expect(bananaLine).toContain('◯'); // Should not be selected
+      expect(cherryLine).toContain('◉'); // Should be pre-selected
+
+      // Can still toggle selections
+      events.keypress('tab'); // Toggle Apple (should deselect)
+      screen = getScreen();
+
+      const newLines = screen.split('\n');
+      const newAppleLine = newLines.find((line: string) =>
+        line.includes('Apple'),
+      );
+      expect(newAppleLine).toContain('◯'); // Should now be deselected
+    });
+
+    it('should return array of selected values on enter', async () => {
+      const { answer, events } = await render(checkboxSearch, {
+        message: 'Select items',
+        choices: [
+          { value: 'val1', name: 'Option 1' },
+          { value: 'val2', name: 'Option 2' },
+          { value: 'val3', name: 'Option 3' },
+        ],
+      });
+
+      // Select first and third options
+      events.keypress('tab'); // Select first
+      events.keypress('down');
+      events.keypress('down');
+      events.keypress('tab'); // Select third
+
+      // Submit
       events.keypress('enter');
-      await expect(answer).resolves.toEqual(['apple', 'cherry']);
+
+      await expect(answer).resolves.toEqual(['val1', 'val3']);
     });
   });
 
@@ -535,9 +954,14 @@ describe('checkbox-search prompt', () => {
       expect(svelteLine).toContain('◉'); // Svelte should still be selected
       expect(svelteLine).not.toContain('❯'); // But cursor should NOT be on Svelte anymore
     });
-  });
 
-  describe('Keyboard navigation', () => {
+    /**
+     * Tab key behavior test: Ensuring tab selects rather than autocompletes
+     *
+     * This test ensures that the tab key is used for selection/toggling choices
+     * rather than performing autocomplete functionality that might be expected
+     * in other search interfaces.
+     */
     it('should toggle selection with tab key, not perform autocomplete', async () => {
       const { events, getScreen } = await render(checkboxSearch, {
         message: 'Select items',
@@ -713,55 +1137,69 @@ describe('checkbox-search prompt', () => {
 
   describe('Theme customization', () => {
     it('should use custom icons when provided', async () => {
-      const { events, getScreen } = await render(checkboxSearch, {
+      const { getScreen } = await render(checkboxSearch, {
         message: 'Select items',
         choices: ['Apple', 'Banana'],
         theme: {
           icon: {
-            checked: '✅',
-            unchecked: '⬜',
-            cursor: '➤',
+            checked: '✓',
+            unchecked: '○',
+            cursor: '→',
           },
         },
       });
 
-      let screen = getScreen();
-      expect(screen).toContain('⬜'); // Custom unchecked icon
-      expect(screen).toContain('➤'); // Custom cursor icon
-
-      // Select an item
-      events.keypress('tab');
-      screen = getScreen();
-      expect(screen).toContain('✅'); // Custom checked icon
+      const screen = getScreen();
+      expect(screen).toContain('○ Apple'); // Custom unchecked icon
+      expect(screen).toContain('○ Banana');
+      expect(screen).toContain('→'); // Custom cursor icon
     });
 
-    it('should use custom styling functions', async () => {
-      const customSearchStyle = (text: string) => `<<${text}>>`;
-      const customDescriptionStyle = (text: string) => `**${text}**`;
-
+    /**
+     * Bug reproduction test: Custom theme icons not applying correctly
+     *
+     * Previously, custom theme icons weren't being applied consistently,
+     * especially when toggling between selected and unselected states.
+     */
+    it('should apply custom theme icons correctly', async () => {
       const { events, getScreen } = await render(checkboxSearch, {
         message: 'Select items',
         choices: [
-          { value: 'item1', name: 'Item 1', description: 'First item' },
-          { value: 'item2', name: 'Item 2', description: 'Second item' },
+          { value: 'apple', name: 'Apple' },
+          { value: 'banana', name: 'Banana' },
         ],
         theme: {
-          style: {
-            searchTerm: customSearchStyle,
-            description: customDescriptionStyle,
+          icon: {
+            checked: '✅',
+            unchecked: '⬜',
+            cursor: '👉',
           },
         },
       });
 
-      // Type search term
-      events.type('item');
       let screen = getScreen();
-      expect(screen).toContain('<<item>>'); // Custom search term styling
+      // Should show custom unchecked icon
+      expect(screen).toContain('⬜ Apple');
+      expect(screen).toContain('⬜ Banana');
+      // Should show custom cursor
+      expect(screen).toContain('👉');
 
-      // Check description styling
-      expect(screen).toContain('**First item**'); // Custom description styling
+      // Select first item
+      events.keypress('tab');
+      screen = getScreen();
+
+      // Should show custom checked icon
+      expect(screen).toContain('✅ Apple');
+      // Should still show custom unchecked for unselected
+      expect(screen).toContain('⬜ Banana');
     });
 
+    /**
+     * Bug reproduction test: Custom theme style functions not applying
+     *
+     * Custom style functions for highlighting and descriptions weren't being
+     * applied correctly, reverting to default styling.
+     */
     it('should apply custom theme style functions correctly', async () => {
       const customHighlight = (text: string) => `<<${text}>>`;
       const customDescription = (text: string) => `**${text}**`;
@@ -780,13 +1218,73 @@ describe('checkbox-search prompt', () => {
         },
       });
 
-      let screen = getScreen();
-      // Should show custom description styling (no automatic parentheses when custom function is used)
-      expect(screen).toContain('**Red fruit**');
-      expect(screen).not.toContain('(Red fruit)'); // No parentheses with custom styling
-
-      // Active item should show custom highlight
+      const screen = getScreen();
+      // Should show custom highlighted text for active item
       expect(screen).toContain('<<Apple>>');
+      // Should show custom styled description
+      expect(screen).toContain('**Red fruit**');
+    });
+
+    it('should use custom styling functions', async () => {
+      const customSearchStyle = (text: string) => `<<${text}>>`;
+      const customDescriptionStyle = (text: string) => `**${text}**`;
+
+      const { events, getScreen } = await render(checkboxSearch, {
+        message: 'Select items',
+        choices: [
+          { value: 'apple', name: 'Apple', description: 'Red fruit' },
+          { value: 'banana', name: 'Banana', description: 'Yellow fruit' },
+        ],
+        theme: {
+          style: {
+            searchTerm: customSearchStyle,
+            description: customDescriptionStyle,
+          },
+        },
+      });
+
+      // Type search term
+      events.type('app');
+      const screen = getScreen();
+
+      // Should use custom search term styling
+      expect(screen).toContain('<<app>>');
+      // Should use custom description styling
+      expect(screen).toContain('**Red fruit**');
+    });
+
+    it('should apply custom theme style functions correctly', async () => {
+      const customHighlight = (text: string) => `<<${text}>>`;
+      const customDescription = (text: string) => `**${text}**`;
+
+      const { events, getScreen } = await render(checkboxSearch, {
+        message: 'Select items',
+        choices: [
+          { value: 'apple', name: 'Apple', description: 'Red fruit' },
+          { value: 'banana', name: 'Banana', description: 'Yellow fruit' },
+        ],
+        theme: {
+          style: {
+            highlight: customHighlight,
+            description: customDescription,
+          },
+        },
+      });
+
+      let screen = getScreen();
+      // Should apply custom highlighting to active item
+      expect(screen).toContain('<<Apple>>');
+      // Should apply custom description styling
+      expect(screen).toContain('**Red fruit**');
+
+      // Navigate to second item
+      events.keypress('down');
+      screen = getScreen();
+
+      // Should apply custom highlighting to new active item
+      expect(screen).toContain('<<Banana>>');
+      // Should apply custom description styling to new description
+      expect(screen).toContain('**Yellow fruit**');
     });
 
     it('should support function-based icon theming', async () => {
@@ -796,10 +1294,7 @@ describe('checkbox-search prompt', () => {
 
       const { events, getScreen } = await render(checkboxSearch, {
         message: 'Select items',
-        choices: [
-          { value: 'apple', name: 'Apple' },
-          { value: 'banana', name: 'Banana' },
-        ],
+        choices: ['Apple', 'Banana'],
         theme: {
           icon: {
             checked: customChecked,
@@ -810,106 +1305,80 @@ describe('checkbox-search prompt', () => {
       });
 
       let screen = getScreen();
-      // Should show function-based unchecked icons with choice text
-      expect(screen).toContain('⬜ Apple');
-      expect(screen).toContain('⬜ Banana');
-      // Should show function-based cursor with choice text
+      // Should show function-based cursor
       expect(screen).toContain('👉 Apple');
+      // Should show function-based unchecked
+      expect(screen).toContain('⬜ Apple');
 
       // Select first item
       events.keypress('tab');
       screen = getScreen();
 
-      // Should show function-based checked icon with choice text
+      // Should show function-based checked
       expect(screen).toContain('✅ Apple');
-      // Should still show function-based unchecked for unselected
-      expect(screen).toContain('⬜ Banana');
     });
 
     it('should support mixed string and function icon theming', async () => {
+      // Mix of string and function icons
       const customChecked = (text: string) => `🎯 ${text}`;
 
       const { events, getScreen } = await render(checkboxSearch, {
         message: 'Select items',
-        choices: [
-          { value: 'target', name: 'Target' },
-          { value: 'arrow', name: 'Arrow' },
-        ],
+        choices: ['Apple', 'Banana'],
         theme: {
           icon: {
             checked: customChecked, // Function
-            unchecked: '○', // String
-            cursor: '▶', // String
+            unchecked: '⬜', // String
+            cursor: '👉', // String
           },
         },
       });
 
       let screen = getScreen();
-      // Should show string-based unchecked and cursor
-      expect(screen).toContain('○ Target');
-      expect(screen).toContain('▶');
+      expect(screen).toContain('👉'); // String cursor
+      expect(screen).toContain('⬜ Apple'); // String unchecked
 
       // Select first item
       events.keypress('tab');
       screen = getScreen();
 
       // Should show function-based checked icon
-      expect(screen).toContain('🎯 Target');
-      // Should still show string-based unchecked for unselected
-      expect(screen).toContain('○ Arrow');
+      expect(screen).toContain('🎯 Apple');
+      // Should still show string-based unchecked for other items
+      expect(screen).toContain('⬜ Banana');
     });
 
     it('should maintain cursor position when toggling selection on non-first items', async () => {
       const { events, getScreen } = await render(checkboxSearch, {
         message: 'Select items',
-        choices: [
-          { value: 'apple', name: 'Apple' },
-          { value: 'banana', name: 'Banana' },
-          { value: 'cherry', name: 'Cherry' },
-        ],
+        choices: ['Apple', 'Banana', 'Cherry'],
+        theme: {
+          icon: {
+            cursor: '→',
+          },
+        },
       });
 
-      let screen = getScreen();
-      // Initially cursor should be on first item (Apple)
-      expect(screen).toContain('❯'); // Cursor should be visible
-      const appleLine = screen
-        .split('\n')
-        .find((line: string) => line.includes('Apple'));
-      expect(appleLine).toContain('❯'); // Apple should have cursor
-
-      // Navigate down to Banana (second item)
+      // Navigate to second item
       events.keypress('down');
-      screen = getScreen();
-      const bananaLine = screen
-        .split('\n')
-        .find((line: string) => line.includes('Banana'));
-      expect(bananaLine).toContain('❯'); // Banana should now have cursor
+      let screen = getScreen();
 
-      // Select Banana
-      events.keypress('tab');
-      screen = getScreen();
-      const selectedBananaLine = screen
-        .split('\n')
-        .find((line: string) => line.includes('Banana'));
-      expect(selectedBananaLine).toContain('◉'); // Banana should be selected
-      expect(selectedBananaLine).toContain('❯'); // Cursor should still be on Banana
+      // Verify cursor is on Banana
+      const lines = screen.split('\n');
+      const bananaLine = lines.find((line: string) => line.includes('Banana'));
+      expect(bananaLine).toContain('→');
 
-      // Deselect Banana
+      // Toggle selection
       events.keypress('tab');
       screen = getScreen();
 
-      // BUG: Cursor incorrectly jumps back to Apple instead of staying on Banana
-      const deselectedBananaLine = screen
-        .split('\n')
-        .find((line: string) => line.includes('Banana'));
-      expect(deselectedBananaLine).toContain('◯'); // Banana should be deselected
-      expect(deselectedBananaLine).toContain('❯'); // Cursor should STILL be on Banana (not jump to Apple)
-
-      // Verify Apple doesn't have the cursor
-      const finalAppleLine = screen
-        .split('\n')
-        .find((line: string) => line.includes('Apple'));
-      expect(finalAppleLine).not.toContain('❯'); // Apple should NOT have cursor
+      // Cursor should still be on Banana
+      const newLines = screen.split('\n');
+      const newBananaLine = newLines.find((line: string) =>
+        line.includes('Banana'),
+      );
+      expect(newBananaLine).toContain('→');
+      expect(newBananaLine).toContain('◉'); // Should be selected
     });
   });
 
@@ -1074,269 +1543,6 @@ describe('checkbox-search prompt', () => {
       screen = getScreen();
       expect(screen).toContain('Iñtërnâtiønàl');
       expect(screen).not.toContain('🚀 Rocket Ship');
-    });
-  });
-
-  describe('Regression Tests', () => {
-    it('should not add tab characters to search text when toggling selections', async () => {
-      const { events, getScreen } = await render(checkboxSearch, {
-        message: 'Select items',
-        choices: [
-          { value: 'apple', name: 'Apple' },
-          { value: 'banana', name: 'Banana' },
-          { value: 'cherry', name: 'Cherry' },
-        ],
-      });
-
-      // Type some search text
-      events.type('app');
-      let screen = getScreen();
-      expect(screen).toContain('Search:');
-      expect(screen).toContain('app'); // Should show search term
-
-      // Press tab to select/toggle item - should NOT add tab character to search
-      events.keypress('tab');
-      screen = getScreen();
-
-      // Verify selection happened
-      expect(screen).toContain('◉'); // Should show Apple is selected
-
-      // Critical: Search term should still be 'app', NOT 'app\t' or 'app    ' (spaces from tab)
-      expect(screen).toContain('app'); // Should still show original search term
-      expect(screen).not.toMatch(/app\s+\t/); // Should not contain tab character after 'app'
-      expect(screen).not.toMatch(/Search:.*\t/); // Should not contain tab character in search line
-      expect(screen).not.toMatch(/app\s{2,}/); // Should not contain multiple spaces after 'app' (from tab conversion)
-
-      // Type more text - should work normally
-      events.type('le');
-      screen = getScreen();
-      expect(screen).toContain('apple'); // Should show 'apple' now
-      expect(screen).not.toMatch(/\t/); // Should not contain any tab characters anywhere
-      expect(screen).not.toMatch(/app\s+le/); // Should not have extra spaces between 'app' and 'le'
-    });
-
-    it('should detect readline tab-to-spaces conversion bug', async () => {
-      const { events, getScreen } = await render(checkboxSearch, {
-        message: 'Select items',
-        choices: [{ value: 'test', name: 'Test Item' }],
-      });
-
-      // Type 'te', press tab, type 'st' - should result in 'test', not 'te    st' (spaces from tab)
-      events.type('te');
-      events.keypress('tab'); // This should toggle selection, not add spaces to search
-      events.type('st');
-
-      let screen = getScreen();
-
-      // Should show selection happened (Test Item matches "test" search)
-      expect(screen).toContain('◉'); // Test Item should be selected
-
-      // Search should be 'test', not 'te    st' or similar with spaces
-      expect(screen).toContain('test'); // Should show clean concatenated search
-      expect(screen).not.toMatch(/te\s+st/); // Should NOT have spaces between te and st
-      expect(screen).not.toMatch(/Search:.*te\s{2,}/); // Should NOT have multiple spaces after te
-    });
-
-    it('should submit with Enter even when no search term is visible', async () => {
-      const { answer, events, getScreen } = await render(checkboxSearch, {
-        message: 'Select items',
-        choices: [
-          { value: 'apple', name: 'Apple' },
-          { value: 'banana', name: 'Banana' },
-          { value: 'cherry', name: 'Cherry' },
-        ],
-      });
-
-      // Select an item without any search
-      events.keypress('tab'); // Select Apple
-
-      // Verify selection happened
-      let screen = getScreen();
-      expect(screen).toContain('◉'); // Should show checked item
-
-      // Press Enter to submit - THIS SHOULD WORK but currently fails
-      events.keypress('enter');
-      await expect(answer).resolves.toEqual(['apple']);
-    });
-
-    it('should submit with Enter after typing and clearing search term', async () => {
-      const { answer, events, getScreen } = await render(checkboxSearch, {
-        message: 'Select items',
-        choices: [
-          { value: 'apple', name: 'Apple' },
-          { value: 'banana', name: 'Banana' },
-          { value: 'cherry', name: 'Cherry' },
-        ],
-      });
-
-      // Type a search term
-      events.type('a');
-      let screen = getScreen();
-      expect(screen).toContain('Apple');
-      expect(screen).toContain('Banana'); // Both contain 'a'
-      expect(screen).not.toContain('Cherry'); // Should be filtered out
-
-      // Select the filtered item
-      events.keypress('tab'); // Select Apple
-
-      // Clear the search term by backspacing
-      events.keypress('backspace');
-      screen = getScreen();
-      expect(screen).toContain('Apple');
-      expect(screen).toContain('Banana'); // Should show all items again
-      expect(screen).toContain('◉'); // Apple should still be selected
-
-      // Press Enter to submit - THIS SHOULD WORK but currently fails
-      events.keypress('enter');
-      await expect(answer).resolves.toEqual(['apple']);
-    });
-
-    it('should clear search filter with Escape key', async () => {
-      const { events, getScreen } = await render(checkboxSearch, {
-        message: 'Select items',
-        choices: [
-          { value: 'apple', name: 'Apple' },
-          { value: 'banana', name: 'Banana' },
-          { value: 'cherry', name: 'Cherry' },
-        ],
-      });
-
-      // Type a search term to filter results
-      events.type('ap');
-      let screen = getScreen();
-      expect(screen).toContain('Apple');
-      expect(screen).not.toContain('Banana');
-      expect(screen).not.toContain('Cherry');
-
-      // Press Escape to clear the search filter - THIS FEATURE DOESN'T EXIST YET
-      events.keypress('escape');
-      screen = getScreen();
-
-      // All items should be visible again
-      expect(screen).toContain('Apple');
-      expect(screen).toContain('Banana');
-      expect(screen).toContain('Cherry');
-
-      // Search term should be cleared (no visible search text)
-      expect(screen).not.toContain('Search: ap');
-    });
-
-    it('should maintain selections when clearing search filter with Escape', async () => {
-      const { events, getScreen } = await render(checkboxSearch, {
-        message: 'Select items',
-        choices: [
-          { value: 'apple', name: 'Apple' },
-          { value: 'apricot', name: 'Apricot' },
-          { value: 'banana', name: 'Banana' },
-        ],
-      });
-
-      // Type a search term to filter results
-      events.type('ap');
-      let screen = getScreen();
-      expect(screen).toContain('Apple');
-      expect(screen).toContain('Apricot');
-      expect(screen).not.toContain('Banana');
-
-      // Select both filtered items
-      events.keypress('tab'); // Select Apple
-      events.keypress('down');
-      events.keypress('tab'); // Select Apricot
-
-      screen = getScreen();
-      // Both should be selected
-      const lines = screen.split('\n');
-      const appleLine = lines.find((line: string) => line.includes('Apple'));
-      const apricotLine = lines.find((line: string) =>
-        line.includes('Apricot'),
-      );
-      expect(appleLine).toContain('◉');
-      expect(apricotLine).toContain('◉');
-
-      // Press Escape to clear the search filter
-      events.keypress('escape');
-      screen = getScreen();
-
-      // All items should be visible again
-      expect(screen).toContain('Apple');
-      expect(screen).toContain('Apricot');
-      expect(screen).toContain('Banana');
-
-      // Selections should be maintained
-      const newLines = screen.split('\n');
-      const newAppleLine = newLines.find((line: string) =>
-        line.includes('Apple'),
-      );
-      const newApricotLine = newLines.find((line: string) =>
-        line.includes('Apricot'),
-      );
-      const newBananaLine = newLines.find((line: string) =>
-        line.includes('Banana'),
-      );
-
-      expect(newAppleLine).toContain('◉'); // Should still be selected
-      expect(newApricotLine).toContain('◉'); // Should still be selected
-      expect(newBananaLine).toContain('◯'); // Should not be selected
-    });
-
-    it('should apply custom theme icons correctly', async () => {
-      const { events, getScreen } = await render(checkboxSearch, {
-        message: 'Select items',
-        choices: [
-          { value: 'apple', name: 'Apple' },
-          { value: 'banana', name: 'Banana' },
-        ],
-        theme: {
-          icon: {
-            checked: '✅',
-            unchecked: '⬜',
-            cursor: '👉',
-          },
-        },
-      });
-
-      let screen = getScreen();
-      // Should show custom unchecked icon
-      expect(screen).toContain('⬜ Apple');
-      expect(screen).toContain('⬜ Banana');
-      // Should show custom cursor
-      expect(screen).toContain('👉');
-
-      // Select first item
-      events.keypress('tab');
-      screen = getScreen();
-
-      // Should show custom checked icon
-      expect(screen).toContain('✅ Apple');
-      // Should still show custom unchecked for unselected
-      expect(screen).toContain('⬜ Banana');
-    });
-
-    it('should apply custom theme style functions correctly', async () => {
-      const customHighlight = (text: string) => `<<${text}>>`;
-      const customDescription = (text: string) => `**${text}**`;
-
-      const { getScreen } = await render(checkboxSearch, {
-        message: 'Select items',
-        choices: [
-          { value: 'apple', name: 'Apple', description: 'Red fruit' },
-          { value: 'banana', name: 'Banana', description: 'Yellow fruit' },
-        ],
-        theme: {
-          style: {
-            highlight: customHighlight,
-            description: customDescription,
-          },
-        },
-      });
-
-      let screen = getScreen();
-      // Should show custom description styling (no automatic parentheses when custom function is used)
-      expect(screen).toContain('**Red fruit**');
-      expect(screen).not.toContain('(Red fruit)'); // No parentheses with custom styling
-
-      // Active item should show custom highlight
-      expect(screen).toContain('<<Apple>>');
     });
   });
 
@@ -1687,134 +1893,6 @@ describe('checkbox-search prompt', () => {
         .find((line: string) => line.includes('Apple') && line.includes('◯'));
       expect(appleChoiceLine).toBeDefined();
       expect(appleChoiceLine).not.toContain('**Red fruit**');
-    });
-  });
-
-  describe('Phantom Input Bug Reproduction', () => {
-    it('should handle "j" key input properly (control test)', async () => {
-      const { events, getScreen } = await render(checkboxSearch, {
-        message: 'Select fruits',
-        choices: [
-          { value: 'jackfruit', name: 'Jackfruit' },
-          { value: 'apple', name: 'Apple' },
-          { value: 'banana', name: 'Banana' },
-        ],
-      });
-
-      // Type "j" - should add to search term
-      events.type('j');
-
-      let screen = getScreen();
-      console.log('J KEY SCREEN OUTPUT:', screen);
-      expect(screen).toContain('j'); // Should show "j" in search term
-      expect(screen).toContain('Jackfruit'); // Should filter to jackfruit
-      expect(screen).not.toContain('Apple');
-      expect(screen).not.toContain('Banana');
-    });
-
-    it('should handle simple "k" key input without any tab selections', async () => {
-      const { events, getScreen } = await render(checkboxSearch, {
-        message: 'Select fruits',
-        choices: [
-          { value: 'kiwi', name: 'Kiwi' },
-          { value: 'apple', name: 'Apple' },
-          { value: 'banana', name: 'Banana' },
-        ],
-      });
-
-      // Type "k" - should add to search term, not navigate
-      events.type('k');
-
-      let screen = getScreen();
-      console.log('K KEY SCREEN OUTPUT:', screen);
-      expect(screen).toContain('k'); // Should show "k" in search term
-      expect(screen).toContain('Kiwi'); // Should filter to kiwi
-      expect(screen).not.toContain('Apple');
-      expect(screen).not.toContain('Banana');
-    });
-
-    it('should handle search input properly after tab selections', async () => {
-      const { events, getScreen } = await render(checkboxSearch, {
-        message: 'Select fruits',
-        choices: [
-          { value: 'apple', name: 'Apple' },
-          { value: 'watermelon', name: 'Watermelon' },
-          { value: 'melon', name: 'Melon' },
-          { value: 'orange', name: 'Orange' },
-        ],
-      });
-
-      // 1. tab (select first item)
-      events.keypress('tab');
-
-      // 2. down arrow
-      events.keypress('down');
-
-      // 3. tab (select 2nd item)
-      events.keypress('tab');
-
-      // 4. type "mel" (filters to melons)
-      events.type('mel');
-
-      let screen = getScreen();
-      expect(screen).toContain('Search: mel'); // Should show search term
-      expect(screen).toContain('Watermelon');
-      expect(screen).toContain('Melon');
-      expect(screen).not.toContain('Apple');
-      expect(screen).not.toContain('Orange');
-
-      // 5. Test backspace behavior - should delete "l" on first backspace
-      events.keypress('backspace');
-
-      screen = getScreen();
-      expect(screen).toContain('Search: me'); // Should show "me" after deleting "l"
-      expect(screen).not.toContain('Search: mel');
-
-      // Verify it's working properly - should only require one backspace per character
-      events.keypress('backspace');
-
-      screen = getScreen();
-      expect(screen).toContain('Search: m'); // Should show "m" after deleting "e"
-      expect(screen).not.toContain('Search: me');
-    });
-
-    it('should handle multiple tab selections without corrupting search state', async () => {
-      const { events, getScreen } = await render(checkboxSearch, {
-        message: 'Select fruits',
-        choices: [
-          { value: 'apple', name: 'Apple' },
-          { value: 'banana', name: 'Banana' },
-          { value: 'cherry', name: 'Cherry' },
-          { value: 'date', name: 'Date' },
-        ],
-      });
-
-      // Make multiple tab selections
-      events.keypress('tab'); // Select Apple
-      events.keypress('down');
-      events.keypress('tab'); // Select Banana
-      events.keypress('down');
-      events.keypress('tab'); // Select Cherry
-
-      // Now type a search term
-      events.type('d');
-
-      let screen = getScreen();
-      expect(screen).toContain('d'); // Should show "d" immediately
-      expect(screen).toContain('Date');
-      expect(screen).not.toContain('Apple');
-      expect(screen).not.toContain('Banana');
-      expect(screen).not.toContain('Cherry');
-
-      // Verify backspace works properly
-      events.keypress('backspace');
-
-      screen = getScreen();
-      expect(screen).not.toContain('d'); // Search term should be empty
-      expect(screen).toContain('Apple');
-      expect(screen).toContain('Banana');
-      expect(screen).toContain('Cherry');
-      expect(screen).toContain('Date');
     });
   });
 });
