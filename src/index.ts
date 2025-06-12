@@ -523,7 +523,9 @@ export default createPrompt(
           );
         }
 
-        const nextSelectableItem = filteredItems[nextSelectableIndex];
+        // Translate from position inside `selectableIndexes` to the real index
+        const nextFilteredIndex = selectableIndexes[nextSelectableIndex];
+        const nextSelectableItem = filteredItems[nextFilteredIndex];
         if (nextSelectableItem && isSelectable(nextSelectableItem)) {
           setActiveItemValue(nextSelectableItem.value);
         }

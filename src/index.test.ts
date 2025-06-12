@@ -1898,4 +1898,193 @@ describe('checkbox-search prompt', () => {
       expect(appleChoiceLine).not.toContain('**Red fruit**');
     });
   });
+
+  describe('Separator navigation (CRITICAL BUG TESTS)', () => {
+    it('should navigate correctly with separators - up/down navigation', async () => {
+      const { events, getScreen } = await render(checkboxSearch, {
+        message: 'Select items',
+        choices: [
+          { value: 'js', name: 'JavaScript' },
+          { value: 'ts', name: 'TypeScript' },
+          new Separator('--- Frameworks ---'),
+          { value: 'react', name: 'React' },
+          { value: 'vue', name: 'Vue.js' },
+          new Separator('--- Tools ---'),
+          { value: 'webpack', name: 'Webpack' },
+        ],
+      });
+
+      let screen = getScreen();
+
+      // Should start with JavaScript active (first selectable item)
+      expect(screen).toContain('❯ ◯ JavaScript');
+      expect(screen).not.toContain('❯ ◯ TypeScript');
+      expect(screen).not.toContain('❯ ◯ React');
+
+      // Navigate down - should go to TypeScript (second selectable item)
+      events.keypress('down');
+      screen = getScreen();
+      expect(screen).not.toContain('❯ ◯ JavaScript');
+      expect(screen).toContain('❯ ◯ TypeScript');
+      expect(screen).not.toContain('❯ ◯ React');
+
+      // Navigate down again - should skip separator and go to React
+      events.keypress('down');
+      screen = getScreen();
+      expect(screen).not.toContain('❯ ◯ TypeScript');
+      expect(screen).toContain('❯ ◯ React');
+      expect(screen).not.toContain('❯ ◯ Vue.js');
+
+      // Navigate down again - should go to Vue.js
+      events.keypress('down');
+      screen = getScreen();
+      expect(screen).not.toContain('❯ ◯ React');
+      expect(screen).toContain('❯ ◯ Vue.js');
+      expect(screen).not.toContain('❯ ◯ Webpack');
+
+      // Navigate down again - should skip separator and go to Webpack
+      events.keypress('down');
+      screen = getScreen();
+      expect(screen).not.toContain('❯ ◯ Vue.js');
+      expect(screen).toContain('❯ ◯ Webpack');
+    });
+
+    it('should navigate correctly with separators - up navigation', async () => {
+      const { events, getScreen } = await render(checkboxSearch, {
+        message: 'Select items',
+        choices: [
+          { value: 'js', name: 'JavaScript' },
+          new Separator('--- Frameworks ---'),
+          { value: 'react', name: 'React' },
+          { value: 'vue', name: 'Vue.js' },
+          new Separator('--- Tools ---'),
+          { value: 'webpack', name: 'Webpack' },
+        ],
+      });
+
+      // Start by navigating to the last item (Webpack)
+      events.keypress('down'); // to React
+      events.keypress('down'); // to Vue.js
+      events.keypress('down'); // to Webpack
+
+      let screen = getScreen();
+      expect(screen).toContain('❯ ◯ Webpack');
+
+      // Navigate up - should go to Vue.js
+      events.keypress('up');
+      screen = getScreen();
+      expect(screen).not.toContain('❯ ◯ Webpack');
+      expect(screen).toContain('❯ ◯ Vue.js');
+
+      // Navigate up again - should go to React
+      events.keypress('up');
+      screen = getScreen();
+      expect(screen).not.toContain('❯ ◯ Vue.js');
+      expect(screen).toContain('❯ ◯ React');
+
+      // Navigate up again - should skip separator and go to JavaScript
+      events.keypress('up');
+      screen = getScreen();
+      expect(screen).not.toContain('❯ ◯ React');
+      expect(screen).toContain('❯ ◯ JavaScript');
+    });
+
+    it('should handle selection with separators correctly', async () => {
+      const { answer, events, getScreen } = await render(checkboxSearch, {
+        message: 'Select items',
+        choices: [
+          { value: 'js', name: 'JavaScript' },
+          new Separator('--- Frameworks ---'),
+          { value: 'react', name: 'React' },
+          { value: 'vue', name: 'Vue.js' },
+        ],
+      });
+
+      // Navigate to React and select it
+      events.keypress('down'); // Go to React (first down should skip separator)
+
+      let screen = getScreen();
+      expect(screen).toContain('❯ ◯ React');
+
+      // Select React
+      events.keypress('tab');
+      screen = getScreen();
+      expect(screen).toContain('❯ ◉ React'); // Should be selected
+
+      // Navigate to Vue.js and select it
+      events.keypress('down');
+      screen = getScreen();
+      expect(screen).toContain('❯ ◯ Vue.js');
+
+      events.keypress('tab');
+      screen = getScreen();
+      expect(screen).toContain('❯ ◉ Vue.js'); // Should be selected
+
+      // Submit
+      events.keypress('enter');
+      await expect(answer).resolves.toEqual(['react', 'vue']);
+    });
+
+    it('should work with loop navigation and separators', async () => {
+      const { events, getScreen } = await render(checkboxSearch, {
+        message: 'Select items',
+        loop: true,
+        choices: [
+          { value: 'first', name: 'First' },
+          new Separator('--- Middle ---'),
+          { value: 'last', name: 'Last' },
+        ],
+      });
+
+      let screen = getScreen();
+      // Should start with First active
+      expect(screen).toContain('❯ ◯ First');
+
+      // Navigate up (should loop to Last)
+      events.keypress('up');
+      screen = getScreen();
+      expect(screen).not.toContain('❯ ◯ First');
+      expect(screen).toContain('❯ ◯ Last');
+
+      // Navigate down (should loop back to First, skipping separator)
+      events.keypress('down');
+      screen = getScreen();
+      expect(screen).toContain('❯ ◯ First');
+      expect(screen).not.toContain('❯ ◯ Last');
+    });
+
+    it('should preserve selections when navigating through separators', async () => {
+      const { events, getScreen } = await render(checkboxSearch, {
+        message: 'Select items',
+        choices: [
+          { value: 'item1', name: 'Item 1' },
+          new Separator('--- Group ---'),
+          { value: 'item2', name: 'Item 2' },
+          { value: 'item3', name: 'Item 3' },
+        ],
+      });
+
+      // Select first item
+      events.keypress('tab');
+      let screen = getScreen();
+      expect(screen).toContain('❯ ◉ Item 1');
+
+      // Navigate to Item 2 and select it
+      events.keypress('down'); // Skip separator, go to Item 2
+      screen = getScreen();
+      expect(screen).toContain('❯ ◯ Item 2');
+      expect(screen).toContain('◉ Item 1'); // Should still be selected
+
+      events.keypress('tab');
+      screen = getScreen();
+      expect(screen).toContain('❯ ◉ Item 2');
+      expect(screen).toContain('◉ Item 1'); // Should still be selected
+
+      // Navigate back up - selections should be preserved
+      events.keypress('up');
+      screen = getScreen();
+      expect(screen).toContain('❯ ◉ Item 1');
+      expect(screen).toContain('◉ Item 2'); // Should still be selected
+    });
+  });
 });
