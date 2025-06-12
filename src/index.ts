@@ -344,6 +344,9 @@ export default createPrompt(
       return [];
     });
 
+    // Store the active item value instead of active index
+    const [activeItemValue, setActiveItemValue] = useState<Value | null>(null);
+
     // Compute filtered items based on search term and filtering logic
     const filteredItems = useMemo(() => {
       // Async source mode - use allItems directly (source handles filtering)
@@ -380,7 +383,45 @@ export default createPrompt(
       return result;
     }, [allItems, searchTerm, config.source, config.filter]);
 
-    const [active, setActive] = useState<number>(0);
+    // Compute active index from activeItemValue
+    const active = useMemo(() => {
+      if (activeItemValue === null) {
+        // No active item set, default to first selectable
+        const firstSelectableIndex = filteredItems.findIndex((item) =>
+          isSelectable(item),
+        );
+        return firstSelectableIndex !== -1 ? firstSelectableIndex : 0;
+      }
+      
+      // Find the item with the active value
+      const activeIndex = filteredItems.findIndex(
+        (item) =>
+          !Separator.isSeparator(item) &&
+          (item as NormalizedChoice<Value>).value === activeItemValue,
+      );
+      
+      if (activeIndex !== -1) {
+        return activeIndex;
+      }
+      
+      // Active item not found in filtered list, default to first selectable
+      const firstSelectableIndex = filteredItems.findIndex((item) =>
+        isSelectable(item),
+      );
+      return firstSelectableIndex !== -1 ? firstSelectableIndex : 0;
+    }, [filteredItems, activeItemValue]);
+
+    // Update activeItemValue when active index changes (e.g., when filtering results in auto-focus)
+    useEffect(() => {
+      const activeItem = filteredItems[active];
+      if (activeItem && !Separator.isSeparator(activeItem)) {
+        const currentActiveValue = (activeItem as NormalizedChoice<Value>).value;
+        if (activeItemValue !== currentActiveValue) {
+          setActiveItemValue(currentActiveValue);
+        }
+      }
+    }, [active, filteredItems, activeItemValue]);
+
     const [errorMsg, setError] = useState<string>();
 
     // Handle async source - load data based on search term
@@ -428,37 +469,6 @@ export default createPrompt(
     useEffect(() => {
       allItemsRef.current = allItems;
     }, [allItems]);
-
-    // Reset active index when filtered items change, but preserve cursor position during selection toggles
-    useEffect(() => {
-      // Don't reset cursor position if we're just toggling selection on the same items
-      // Only reset when the actual set of filtered items changes (not their selection state)
-      const currentFilteredValues = filteredItems
-        .filter((item) => !Separator.isSeparator(item))
-        .map((item) => (item as NormalizedChoice<Value>).value);
-
-      const activeItem = filteredItems[active];
-      const activeValue =
-        activeItem && !Separator.isSeparator(activeItem)
-          ? (activeItem as NormalizedChoice<Value>).value
-          : null;
-
-      // If the currently active item is still in the filtered list, preserve its position
-      if (activeValue && currentFilteredValues.includes(activeValue)) {
-        const newActiveIndex = filteredItems.findIndex(
-          (item) =>
-            !Separator.isSeparator(item) &&
-            (item as NormalizedChoice<Value>).value === activeValue,
-        );
-        if (newActiveIndex !== -1) {
-          setActive(newActiveIndex);
-          return;
-        }
-      }
-
-      // Otherwise reset to 0 (when filtering actually changes the set of items)
-      setActive(0);
-    }, [filteredItems, active]);
 
     // Keyboard event handling
     useKeypress((key, rl) => {
@@ -515,7 +525,11 @@ export default createPrompt(
           );
         }
 
-        setActive(selectableIndexes[nextSelectableIndex] || 0);
+        const nextSelectableItem = filteredItems[nextSelectableIndex];
+        if (nextSelectableItem && isSelectable(nextSelectableItem)) {
+          setActiveItemValue(nextSelectableItem.value);
+        }
+
         return;
       }
 
@@ -526,6 +540,9 @@ export default createPrompt(
         const activeItem = filteredItems[active];
         if (activeItem && isSelectable(activeItem)) {
           const activeValue = (activeItem as NormalizedChoice<Value>).value;
+
+          // Set this as the active item value so cursor position is preserved
+          setActiveItemValue(activeValue);
 
           setAllItems(
             allItems.map((item) => {

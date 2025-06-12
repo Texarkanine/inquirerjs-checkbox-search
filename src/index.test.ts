@@ -378,6 +378,163 @@ describe('checkbox-search prompt', () => {
       // Should stay at last item (no wrap)
       expect(screen).toEqual(lastScreen);
     });
+
+    it('should maintain cursor position on selected item when clearing search filter', async () => {
+      const { events, getScreen } = await render(checkboxSearch, {
+        message: 'Select frameworks',
+        choices: [
+          { value: 'react', name: 'React' },
+          { value: 'vue', name: 'Vue.js' },
+          { value: 'angular', name: 'Angular' },
+          { value: 'svelte', name: 'Svelte' },
+        ],
+      });
+
+      // Initial state - cursor should be on first item (React)
+      let screen = getScreen();
+      expect(screen).toContain('React');
+      expect(screen).toContain('Vue.js');
+      expect(screen).toContain('Angular');
+      expect(screen).toContain('Svelte');
+
+      // Filter to show only Vue.js
+      events.type('vue');
+      screen = getScreen();
+      expect(screen).toContain('Vue.js');
+      expect(screen).not.toContain('React');
+      expect(screen).not.toContain('Angular');
+      expect(screen).not.toContain('Svelte');
+
+      // Select Vue.js (cursor should be on it since it's the only filtered item)
+      events.keypress('tab');
+      screen = getScreen();
+      expect(screen).toContain('◉'); // Vue.js should be selected
+
+      // Clear the search filter with escape
+      events.keypress('escape');
+      screen = getScreen();
+
+      // All items should be visible again
+      expect(screen).toContain('React');
+      expect(screen).toContain('Vue.js');
+      expect(screen).toContain('Angular');
+      expect(screen).toContain('Svelte');
+
+      // Vue.js should still be selected
+      expect(screen).toContain('◉');
+
+      // CRITICAL: The cursor should still be focused on Vue.js, not jumped to React
+      // We can verify this by checking that Vue.js has the cursor indicator
+      const lines = screen.split('\n');
+      const vueLine = lines.find((line: string) => line.includes('Vue.js'));
+      expect(vueLine).toContain('❯'); // Cursor should be on Vue.js line
+
+      // React should NOT have the cursor
+      const reactLine = lines.find((line: string) => line.includes('React'));
+      expect(reactLine).not.toContain('❯');
+    });
+
+    it('should maintain cursor position on focused item when clearing search filter', async () => {
+      const { events, getScreen } = await render(checkboxSearch, {
+        message: 'Select frameworks',
+        choices: [
+          { value: 'react', name: 'React' },
+          { value: 'vue', name: 'Vue.js' },
+          { value: 'angular', name: 'Angular' },
+          { value: 'svelte', name: 'Svelte' },
+        ],
+      });
+
+      // Filter to show items containing 'a' (Angular should be visible)
+      events.type('ang');
+      let screen = getScreen();
+      expect(screen).toContain('Angular');
+      expect(screen).not.toContain('React');
+      expect(screen).not.toContain('Vue.js');
+      expect(screen).not.toContain('Svelte');
+
+      // The cursor should automatically be on Angular since it's the only filtered item
+      // DON'T select it - just leave cursor focused on it
+
+      // Clear the search filter with escape
+      events.keypress('escape');
+      screen = getScreen();
+
+      // All items should be visible again
+      expect(screen).toContain('React');
+      expect(screen).toContain('Vue.js');
+      expect(screen).toContain('Angular');
+      expect(screen).toContain('Svelte');
+
+      // No items should be selected (we never pressed tab)
+      expect(screen).not.toContain('◉');
+
+      // CRITICAL: The cursor should still be focused on Angular, not jumped back to React
+      const lines = screen.split('\n');
+      const angularLine = lines.find((line: string) =>
+        line.includes('Angular'),
+      );
+      expect(angularLine).toContain('❯'); // Cursor should be on Angular line
+
+      // React should NOT have the cursor
+      const reactLine = lines.find((line: string) => line.includes('React'));
+      expect(reactLine).not.toContain('❯');
+    });
+
+    it('should preserve cursor position across multiple filter/clear cycles', async () => {
+      const { events, getScreen } = await render(checkboxSearch, {
+        message: 'Select frameworks',
+        choices: [
+          { value: 'react', name: 'React' },
+          { value: 'vue', name: 'Vue.js' },
+          { value: 'angular', name: 'Angular' },
+          { value: 'svelte', name: 'Svelte' },
+        ],
+      });
+
+      // First cycle: Filter for Svelte and navigate to it
+      events.type('sve');
+      let screen = getScreen();
+      expect(screen).toContain('Svelte');
+      expect(screen).not.toContain('React');
+
+      // Select Svelte
+      events.keypress('tab');
+      screen = getScreen();
+      expect(screen).toContain('◉'); // Svelte should be selected
+
+      // Clear filter - cursor should stay on Svelte
+      events.keypress('escape');
+      screen = getScreen();
+      let lines = screen.split('\n');
+      let svelteLine = lines.find((line: string) => line.includes('Svelte'));
+      expect(svelteLine).toContain('❯'); // Cursor should be on Svelte
+      expect(svelteLine).toContain('◉'); // Svelte should still be selected
+
+      // Second cycle: Filter for Angular
+      events.type('ang');
+      screen = getScreen();
+      expect(screen).toContain('Angular');
+      expect(screen).not.toContain('Svelte'); // Hidden by filter
+      expect(screen).not.toContain('React');
+
+      // Navigate to Angular (don't select it)
+      // Angular should already be focused since it's the only visible item
+
+      // Clear filter again - cursor should move to Angular, Svelte should stay selected
+      events.keypress('escape');
+      screen = getScreen();
+      lines = screen.split('\n');
+
+      const angularLine = lines.find((line: string) =>
+        line.includes('Angular'),
+      );
+      expect(angularLine).toContain('❯'); // Cursor should now be on Angular
+
+      svelteLine = lines.find((line: string) => line.includes('Svelte'));
+      expect(svelteLine).toContain('◉'); // Svelte should still be selected
+      expect(svelteLine).not.toContain('❯'); // But cursor should NOT be on Svelte anymore
+    });
   });
 
   describe('Keyboard navigation', () => {
@@ -920,7 +1077,7 @@ describe('checkbox-search prompt', () => {
     });
   });
 
-  describe('Critical Bug Fixes', () => {
+  describe('Regression Tests', () => {
     it('should not add tab characters to search text when toggling selections', async () => {
       const { events, getScreen } = await render(checkboxSearch, {
         message: 'Select items',
