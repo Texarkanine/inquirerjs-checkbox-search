@@ -13,19 +13,19 @@ Addressing CodeRabbit's feedback from PR #6, implementing fixes in order of impa
 ### 1. **CRITICAL**: Fix Arrow-Key Navigation Bug with Separators
 
 - **Priority**: HIGH - Critical bug affecting core functionality
-- **Status**: 🟡 In Progress
+- **Status**: ✅ **COMPLETED**
 - **Description**: Arrow-key navigation selects wrong items when separators exist due to index confusion
 - **Steps**:
   - [x] Create example demonstrating the bug with separators
-  - [ ] Write failing tests for navigation with separators
-  - [ ] Fix index calculation in navigation logic
-  - [ ] Verify all tests pass
-  - [ ] Git commit the fix
+  - [x] Write failing tests for navigation with separators
+  - [x] Fix index calculation in navigation logic
+  - [x] Verify all tests pass
+  - [x] Git commit the fix
 
 ### 1.5. **CRITICAL**: Fix Cursor Visibility Issue
 
 - **Priority**: HIGH - Visual/UX issue affecting all prompts
-- **Status**: 🔴 Not Started
+- **Status**: 🟡 In Progress
 - **Description**: Cursor is visible during prompt when it should be hidden (like other inquirer prompts)
 - **Steps**:
   - [ ] Import ansi-escapes from @inquirer/core

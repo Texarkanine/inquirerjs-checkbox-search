@@ -16,7 +16,7 @@ import {
 import type { PartialDeep } from '@inquirer/type';
 import colors from 'yoctocolors-cjs';
 import figures from '@inquirer/figures';
-// import ansiEscapes from 'ansi-escapes';
+import ansiEscapes from 'ansi-escapes';
 
 /**
  * Theme configuration for the checkbox-search prompt
@@ -417,6 +417,17 @@ export default createPrompt(
     }, [active, filteredItems, activeItemValue]);
 
     const [errorMsg, setError] = useState<string>();
+
+    // Hide cursor on mount, show on unmount (like other inquirer prompts)
+    useEffect(() => {
+      // Hide cursor when prompt starts
+      process.stdout.write(ansiEscapes.cursorHide);
+      
+      // Show cursor when prompt ends (cleanup function)
+      return () => {
+        process.stdout.write(ansiEscapes.cursorShow);
+      };
+    }, []);
 
     // Handle async source - load data based on search term
     useEffect(() => {
