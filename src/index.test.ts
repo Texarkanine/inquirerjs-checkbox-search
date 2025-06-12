@@ -1,6 +1,9 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render } from '@inquirer/testing';
-import checkboxSearch, { Separator } from './index.js';
+import checkboxSearch, {
+  Separator,
+  calculateDynamicPageSize,
+} from './index.js';
 
 describe('checkbox-search prompt', () => {
   describe('Basic functionality', () => {
@@ -1564,7 +1567,7 @@ describe('checkbox-search prompt', () => {
     });
   });
 
-  describe('Terminal height scaling', () => {
+  describe('Page sizing', () => {
     it('should use fixed pageSize when pageSize is specified', async () => {
       const manyChoices = Array.from({ length: 20 }, (_, i) => ({
         value: `item${i}`,
@@ -1584,175 +1587,150 @@ describe('checkbox-search prompt', () => {
       expect(screen).not.toContain('Item 5'); // Should not show 6th item
     });
 
-    it('should calculate dynamic pageSize based on terminal height when pageSize is not specified', async () => {
-      // Skip this test if process.stdout.rows doesn't exist (non-TTY environments)
-      if (!('rows' in process.stdout)) {
-        console.log(
-          'Skipping test: process.stdout.rows not available in this environment',
-        );
-        return;
-      }
-
-      const manyChoices = Array.from({ length: 50 }, (_, i) => ({
-        value: `item${i}`,
-        name: `Item ${i}`,
-      }));
-
-      // Mock process.stdout.rows to simulate a terminal with specific height
-      const rowsSpy = vi
-        .spyOn(process.stdout, 'rows', 'get')
-        .mockReturnValue(30);
-
-      try {
-        const { getScreen } = await render(checkboxSearch, {
-          message: 'Select items',
-          choices: manyChoices,
-          // No pageSize specified - should auto-size
-        });
-
-        const screen = getScreen();
-        // Should show more than default 7 items since terminal height is 30
-        // Expected calculation: ~24 lines available for items (30 - 6 for UI elements)
-        expect(screen).toContain('Item 0');
-        expect(screen).toContain('Item 20'); // Should show many more items
-      } finally {
-        // Restore original behavior
-        rowsSpy.mockRestore();
-      }
-    });
-
-    it('should fallback to default pageSize (7) when terminal height is not available', async () => {
-      // Skip this test if process.stdout.rows doesn't exist (non-TTY environments)
-      if (!('rows' in process.stdout)) {
-        console.log(
-          'Skipping test: process.stdout.rows not available in this environment',
-        );
-        return;
-      }
-
-      const manyChoices = Array.from({ length: 20 }, (_, i) => ({
-        value: `item${i}`,
-        name: `Item ${i}`,
-      }));
-
-      // Mock process.stdout.rows as undefined to simulate no terminal info
-      const rowsSpy = vi
-        .spyOn(process.stdout, 'rows', 'get')
-        .mockReturnValue(undefined as any);
-
-      try {
-        const { getScreen } = await render(checkboxSearch, {
-          message: 'Select items',
-          choices: manyChoices,
-          // No pageSize specified - should auto-size with fallback 7
-        });
-
-        const screen = getScreen();
-        // Should fallback to 7 when terminal height unavailable
-        expect(screen).toContain('Item 0');
-        expect(screen).toContain('Item 6');
-        expect(screen).not.toContain('Item 7'); // Should not show 8th item
-      } finally {
-        // Restore original behavior
-        rowsSpy.mockRestore();
-      }
-    });
-
-    it('should handle small terminal heights gracefully', async () => {
-      // Skip this test if process.stdout.rows doesn't exist (non-TTY environments)
-      if (!('rows' in process.stdout)) {
-        console.log(
-          'Skipping test: process.stdout.rows not available in this environment',
-        );
-        return;
-      }
-
-      const manyChoices = Array.from({ length: 20 }, (_, i) => ({
-        value: `item${i}`,
-        name: `Item ${i}`,
-      }));
-
-      // Mock very small terminal height
-      const rowsSpy = vi
-        .spyOn(process.stdout, 'rows', 'get')
-        .mockReturnValue(8); // Very small terminal
-
-      try {
-        const { getScreen } = await render(checkboxSearch, {
-          message: 'Select items',
-          choices: manyChoices,
-          // No pageSize specified - should auto-size
-        });
-
-        const screen = getScreen();
-        // Should show at least minimum number of items (e.g., 2-3)
-        expect(screen).toContain('Item 0');
-        expect(screen).toContain('Item 1');
-        // Should not show too many items given small terminal
-        expect(screen).not.toContain('Item 5');
-      } finally {
-        // Restore original behavior
-        rowsSpy.mockRestore();
-      }
-    });
-
-    it('should handle large terminal heights appropriately', async () => {
-      // Skip this test if process.stdout.rows doesn't exist (non-TTY environments)
-      if (!('rows' in process.stdout)) {
-        console.log(
-          'Skipping test: process.stdout.rows not available in this environment',
-        );
-        return;
-      }
-
-      const manyChoices = Array.from({ length: 100 }, (_, i) => ({
-        value: `item${i}`,
-        name: `Item ${i}`,
-      }));
-
-      // Mock very large terminal height
-      const rowsSpy = vi
-        .spyOn(process.stdout, 'rows', 'get')
-        .mockReturnValue(100); // Very large terminal
-
-      try {
-        const { getScreen } = await render(checkboxSearch, {
-          message: 'Select items',
-          choices: manyChoices,
-          // No pageSize specified - should auto-size
-        });
-
-        const screen = getScreen();
-        // Should show many items but not all of them
-        expect(screen).toContain('Item 0');
-        expect(screen).toContain('Item 49'); // Should show many items (up to max page size of 50)
-        // Should still paginate, not show all 100 items
-        expect(screen).not.toContain('Item 50'); // Beyond our max page size cap of 50
-        expect(screen).not.toContain('Item 99');
-      } finally {
-        // Restore original behavior
-        rowsSpy.mockRestore();
-      }
-    });
-
-    it('should use default auto-sizing behavior when no pageSize is specified', async () => {
+    it('should use auto-sizing when no pageSize is specified', async () => {
       const manyChoices = Array.from({ length: 15 }, (_, i) => ({
         value: `item${i}`,
         name: `Item ${i}`,
       }));
 
-      // Test with default terminal size (should be auto-sizing)
+      // Test with default auto-sizing behavior
       const { getScreen } = await render(checkboxSearch, {
         message: 'Select items',
         choices: manyChoices,
-        // No pageSize specified - should auto-size based on terminal
+        // No pageSize specified - should auto-size
       });
 
       const screen = getScreen();
-      // Should show items (exact count depends on terminal height)
+      // Should show items (exact count depends on calculateDynamicPageSize)
       expect(screen).toContain('Item 0');
-      // Should show more than just the first few if terminal is reasonable size
-      expect(screen).toMatch(/Item [5-9]|Item 1[0-4]/); // Should show items 5-14
+      // Should show multiple items (more than just first few)
+      expect(screen).toMatch(/Item [2-9]|Item 1[0-4]/);
+    });
+  });
+
+  describe('calculateDynamicPageSize', () => {
+    const originalRows = process.stdout.rows;
+    const originalIsTTY = process.stdout.isTTY;
+
+    afterEach(() => {
+      // Restore original values
+      Object.defineProperty(process.stdout, 'rows', {
+        value: originalRows,
+        configurable: true,
+      });
+      Object.defineProperty(process.stdout, 'isTTY', {
+        value: originalIsTTY,
+        configurable: true,
+      });
+    });
+
+    it('should return fallback when terminal height is not available', () => {
+      // Mock process.stdout.rows as undefined
+      Object.defineProperty(process.stdout, 'rows', {
+        value: undefined,
+        configurable: true,
+      });
+
+      const result = calculateDynamicPageSize(7);
+      expect(result).toBe(7);
+    });
+
+    it('should return fallback when terminal height is zero or negative', () => {
+      Object.defineProperty(process.stdout, 'rows', {
+        value: 0,
+        configurable: true,
+      });
+
+      let result = calculateDynamicPageSize(5);
+      expect(result).toBe(5);
+
+      Object.defineProperty(process.stdout, 'rows', {
+        value: -1,
+        configurable: true,
+      });
+
+      result = calculateDynamicPageSize(10);
+      expect(result).toBe(10);
+    });
+
+    it('should calculate page size correctly for normal terminal heights', () => {
+      // Test with terminal height of 30
+      Object.defineProperty(process.stdout, 'rows', {
+        value: 30,
+        configurable: true,
+      });
+
+      const result = calculateDynamicPageSize(7);
+      // 30 - 6 (reserved) = 24, capped at max 50, min 2
+      expect(result).toBe(24);
+    });
+
+    it('should enforce minimum page size for very small terminals', () => {
+      // Test with very small terminal
+      Object.defineProperty(process.stdout, 'rows', {
+        value: 5,
+        configurable: true,
+      });
+
+      const result = calculateDynamicPageSize(7);
+      // 5 - 6 = -1, but enforced minimum is 2
+      expect(result).toBe(2);
+    });
+
+    it('should enforce maximum page size for very large terminals', () => {
+      // Test with very large terminal
+      Object.defineProperty(process.stdout, 'rows', {
+        value: 200,
+        configurable: true,
+      });
+
+      const result = calculateDynamicPageSize(7);
+      // 200 - 6 = 194, but capped at maximum 50
+      expect(result).toBe(50);
+    });
+
+    it('should handle errors gracefully and return fallback', () => {
+      // Create a scenario where accessing rows throws an error
+      Object.defineProperty(process.stdout, 'rows', {
+        get() {
+          throw new Error('Access denied');
+        },
+        configurable: true,
+      });
+
+      const result = calculateDynamicPageSize(8);
+      expect(result).toBe(8);
+    });
+
+    it('should calculate correctly for edge case terminal sizes', () => {
+      // Test boundary conditions
+
+      // Terminal height exactly at reserved lines
+      Object.defineProperty(process.stdout, 'rows', {
+        value: 6,
+        configurable: true,
+      });
+
+      let result = calculateDynamicPageSize(7);
+      expect(result).toBe(2); // Min enforced
+
+      // Terminal height just above reserved lines
+      Object.defineProperty(process.stdout, 'rows', {
+        value: 8,
+        configurable: true,
+      });
+
+      result = calculateDynamicPageSize(7);
+      expect(result).toBe(2); // 8 - 6 = 2
+
+      // Terminal height that results in exactly max page size
+      Object.defineProperty(process.stdout, 'rows', {
+        value: 56, // 56 - 6 = 50
+        configurable: true,
+      });
+
+      result = calculateDynamicPageSize(7);
+      expect(result).toBe(50);
     });
   });
 

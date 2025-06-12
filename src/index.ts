@@ -236,7 +236,7 @@ function defaultFilter<Value>(
  * @param fallbackPageSize - Default page size to use if terminal height is not available
  * @returns Calculated page size
  */
-function calculateDynamicPageSize(fallbackPageSize: number): number {
+export function calculateDynamicPageSize(fallbackPageSize: number): number {
   try {
     // Get terminal height from process.stdout.rows
     const terminalHeight = process.stdout.rows;
