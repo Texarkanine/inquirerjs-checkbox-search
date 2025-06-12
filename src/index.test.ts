@@ -1689,4 +1689,130 @@ describe('checkbox-search prompt', () => {
       expect(appleChoiceLine).not.toContain('**Red fruit**');
     });
   });
+
+  describe('Phantom Input Bug Reproduction', () => {
+    it('should handle "j" key input properly (control test)', async () => {
+      const { events, getScreen } = await render(checkboxSearch, {
+        message: 'Select fruits',
+        choices: [
+          { value: 'jackfruit', name: 'Jackfruit' },
+          { value: 'apple', name: 'Apple' },
+          { value: 'banana', name: 'Banana' },
+        ],
+      });
+
+      // Type "j" - should add to search term
+      events.type('j');
+
+      let screen = getScreen();
+      console.log('J KEY SCREEN OUTPUT:', screen);
+      expect(screen).toContain('j'); // Should show "j" in search term
+      expect(screen).toContain('Jackfruit'); // Should filter to jackfruit
+      expect(screen).not.toContain('Apple');
+      expect(screen).not.toContain('Banana');
+    });
+
+    it('should handle simple "k" key input without any tab selections', async () => {
+      const { events, getScreen } = await render(checkboxSearch, {
+        message: 'Select fruits',
+        choices: [
+          { value: 'kiwi', name: 'Kiwi' },
+          { value: 'apple', name: 'Apple' },
+          { value: 'banana', name: 'Banana' },
+        ],
+      });
+
+      // Type "k" - should add to search term, not navigate
+      events.type('k');
+
+      let screen = getScreen();
+      console.log('K KEY SCREEN OUTPUT:', screen);
+      expect(screen).toContain('k'); // Should show "k" in search term
+      expect(screen).toContain('Kiwi'); // Should filter to kiwi
+      expect(screen).not.toContain('Apple');
+      expect(screen).not.toContain('Banana');
+    });
+
+    it('should handle search input properly after tab selections', async () => {
+      const { events, getScreen } = await render(checkboxSearch, {
+        message: 'Select fruits',
+        choices: [
+          { value: 'apple', name: 'Apple' },
+          { value: 'watermelon', name: 'Watermelon' },
+          { value: 'melon', name: 'Melon' },
+          { value: 'orange', name: 'Orange' },
+        ],
+      });
+
+      // 1. tab (select first item)
+      events.keypress('tab');
+
+      // 2. down arrow
+      events.keypress('down');
+
+      // 3. tab (select 2nd item)
+      events.keypress('tab');
+
+      // 4. type "mel" (filters to melons)
+      events.type('mel');
+
+      let screen = getScreen();
+      expect(screen).toContain('mel'); // Should show search term
+      expect(screen).toContain('Watermelon');
+      expect(screen).toContain('Melon');
+      expect(screen).not.toContain('Apple');
+      expect(screen).not.toContain('Orange');
+
+      // 5. Test backspace behavior - should delete "l" on first backspace
+      events.keypress('backspace');
+
+      screen = getScreen();
+      expect(screen).toContain('me'); // Should show "me" after deleting "l"
+
+      // Verify it's working properly - should only require one backspace per character
+      events.keypress('backspace');
+
+      screen = getScreen();
+      expect(screen).toContain('m'); // Should show "m" after deleting "e"
+    });
+
+    it('should handle multiple tab selections without corrupting search state', async () => {
+      const { events, getScreen } = await render(checkboxSearch, {
+        message: 'Select fruits',
+        choices: [
+          { value: 'apple', name: 'Apple' },
+          { value: 'banana', name: 'Banana' },
+          { value: 'cherry', name: 'Cherry' },
+          { value: 'date', name: 'Date' },
+        ],
+      });
+
+      // Make multiple tab selections
+      events.keypress('tab'); // Select Apple
+      events.keypress('down');
+      events.keypress('tab'); // Select Banana
+      events.keypress('down');
+      events.keypress('tab'); // Select Cherry
+
+      // Now type a search term
+      events.type('d');
+
+      let screen = getScreen();
+      expect(screen).toContain('d'); // Should show "d" immediately
+      expect(screen).toContain('Date');
+      expect(screen).not.toContain('Apple');
+      expect(screen).not.toContain('Banana');
+      expect(screen).not.toContain('Cherry');
+
+      // Verify backspace works properly
+      events.keypress('backspace');
+
+      screen = getScreen();
+      expect(screen).not.toContain('d'); // Search term should be empty
+      expect(screen).toContain('Apple');
+      expect(screen).toContain('Banana');
+      expect(screen).toContain('Cherry');
+      expect(screen).toContain('Date');
+    });
+  });
 });

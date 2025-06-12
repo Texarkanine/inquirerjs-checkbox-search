@@ -392,18 +392,18 @@ export default createPrompt(
         );
         return firstSelectableIndex !== -1 ? firstSelectableIndex : 0;
       }
-      
+
       // Find the item with the active value
       const activeIndex = filteredItems.findIndex(
         (item) =>
           !Separator.isSeparator(item) &&
           (item as NormalizedChoice<Value>).value === activeItemValue,
       );
-      
+
       if (activeIndex !== -1) {
         return activeIndex;
       }
-      
+
       // Active item not found in filtered list, default to first selectable
       const firstSelectableIndex = filteredItems.findIndex((item) =>
         isSelectable(item),
@@ -415,7 +415,8 @@ export default createPrompt(
     useEffect(() => {
       const activeItem = filteredItems[active];
       if (activeItem && !Separator.isSeparator(activeItem)) {
-        const currentActiveValue = (activeItem as NormalizedChoice<Value>).value;
+        const currentActiveValue = (activeItem as NormalizedChoice<Value>)
+          .value;
         if (activeItemValue !== currentActiveValue) {
           setActiveItemValue(currentActiveValue);
         }
@@ -498,9 +499,12 @@ export default createPrompt(
         return;
       }
 
-      // Handle navigation
-      if (isUpKey(key) || isDownKey(key)) {
-        const direction = isUpKey(key) ? -1 : 1;
+      // Handle navigation - ONLY actual arrow keys (not vim j/k keys)
+      // This follows the official inquirer.js search approach
+      if (key.name === 'up' || key.name === 'down') {
+        rl.clearLine(0); // Clean readline state before navigation
+
+        const direction = key.name === 'up' ? -1 : 1;
         const selectableIndexes = filteredItems
           .map((item, index) => ({ item, index }))
           .filter(({ item }) => isSelectable(item))
@@ -702,7 +706,8 @@ export default createPrompt(
     }
 
     let searchLine = '';
-    if (config.source || searchTerm || status === 'loading') {
+    // Always show search line when search functionality is available (static choices or async source)
+    if (config.source || config.choices || searchTerm || status === 'loading') {
       const searchPrefix = status === 'loading' ? 'Loading...' : 'Search:';
       const styledTerm = searchTerm ? theme.style.searchTerm(searchTerm) : '';
       searchLine = `\n${searchPrefix} ${styledTerm}`;
