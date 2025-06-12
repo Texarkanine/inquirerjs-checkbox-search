@@ -424,12 +424,16 @@ export default createPrompt(
 
     // Hide cursor on mount, show on unmount (like other inquirer prompts)
     useEffect(() => {
-      // Hide cursor when prompt starts
-      process.stdout.write(ansiEscapes.cursorHide);
+      // Hide cursor when prompt starts (only in TTY environments)
+      if (process.stdout.isTTY) {
+        process.stdout.write(ansiEscapes.cursorHide);
+      }
 
       // Show cursor when prompt ends (cleanup function)
       return () => {
-        process.stdout.write(ansiEscapes.cursorShow);
+        if (process.stdout.isTTY) {
+          process.stdout.write(ansiEscapes.cursorShow);
+        }
       };
     }, []);
 
@@ -712,8 +716,8 @@ export default createPrompt(
     const message = theme.style.message(config.message, status);
     let helpTip = '';
 
-    if (theme.helpMode === 'always') {
-      if (config.instructions) {
+    if (theme.helpMode === 'always' && config.instructions !== false) {
+      if (typeof config.instructions === 'string') {
         helpTip = `\n${theme.style.help(`(${config.instructions})`)}`;
       } else {
         const tips: string[] = ['Tab to select', 'Enter to submit'];

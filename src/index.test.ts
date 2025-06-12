@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render } from '@inquirer/testing';
 import checkboxSearch, { Separator } from './index.js';
 
@@ -66,6 +66,24 @@ describe('checkbox-search prompt', () => {
       const screen = getScreen();
       expect(screen).toContain('tibbity-tab to select');
       expect(screen).toContain('entery-denter to submit');
+    });
+
+    it('should hide help instructions when instructions is false', async () => {
+      const { getScreen } = await render(checkboxSearch, {
+        message: 'Select options',
+        choices: ['Option 1', 'Option 2'],
+        instructions: false,
+      });
+
+      const screen = getScreen();
+      expect(screen).toContain('Select options');
+      expect(screen).toContain('Option 1');
+      expect(screen).toContain('Option 2');
+
+      // Should NOT contain default help text when instructions is false
+      expect(screen).not.toContain('Tab to select');
+      expect(screen).not.toContain('Enter to submit');
+      expect(screen).not.toContain('(Tab to select, Enter to submit)');
     });
   });
 
@@ -1573,11 +1591,9 @@ describe('checkbox-search prompt', () => {
       }));
 
       // Mock process.stdout.rows to simulate a terminal with specific height
-      const originalRows = process.stdout.rows;
-      Object.defineProperty(process.stdout, 'rows', {
-        value: 30,
-        configurable: true,
-      });
+      const rowsSpy = vi
+        .spyOn(process.stdout, 'rows', 'get')
+        .mockReturnValue(30);
 
       try {
         const { getScreen } = await render(checkboxSearch, {
@@ -1592,13 +1608,8 @@ describe('checkbox-search prompt', () => {
         expect(screen).toContain('Item 0');
         expect(screen).toContain('Item 20'); // Should show many more items
       } finally {
-        // Restore original value
-        if (originalRows !== undefined) {
-          Object.defineProperty(process.stdout, 'rows', {
-            value: originalRows,
-            configurable: true,
-          });
-        }
+        // Restore original behavior
+        rowsSpy.mockRestore();
       }
     });
 
@@ -1609,11 +1620,9 @@ describe('checkbox-search prompt', () => {
       }));
 
       // Mock process.stdout.rows as undefined to simulate no terminal info
-      const originalRows = process.stdout.rows;
-      Object.defineProperty(process.stdout, 'rows', {
-        value: undefined,
-        configurable: true,
-      });
+      const rowsSpy = vi
+        .spyOn(process.stdout, 'rows', 'get')
+        .mockReturnValue(undefined as any);
 
       try {
         const { getScreen } = await render(checkboxSearch, {
@@ -1628,18 +1637,8 @@ describe('checkbox-search prompt', () => {
         expect(screen).toContain('Item 6');
         expect(screen).not.toContain('Item 7'); // Should not show 8th item
       } finally {
-        // Restore original value
-        if (originalRows !== undefined) {
-          Object.defineProperty(process.stdout, 'rows', {
-            value: originalRows,
-            configurable: true,
-          });
-        } else {
-          Object.defineProperty(process.stdout, 'rows', {
-            value: undefined,
-            configurable: true,
-          });
-        }
+        // Restore original behavior
+        rowsSpy.mockRestore();
       }
     });
 
@@ -1650,11 +1649,9 @@ describe('checkbox-search prompt', () => {
       }));
 
       // Mock very small terminal height
-      const originalRows = process.stdout.rows;
-      Object.defineProperty(process.stdout, 'rows', {
-        value: 8, // Very small terminal
-        configurable: true,
-      });
+      const rowsSpy = vi
+        .spyOn(process.stdout, 'rows', 'get')
+        .mockReturnValue(8); // Very small terminal
 
       try {
         const { getScreen } = await render(checkboxSearch, {
@@ -1670,13 +1667,8 @@ describe('checkbox-search prompt', () => {
         // Should not show too many items given small terminal
         expect(screen).not.toContain('Item 5');
       } finally {
-        // Restore original value
-        if (originalRows !== undefined) {
-          Object.defineProperty(process.stdout, 'rows', {
-            value: originalRows,
-            configurable: true,
-          });
-        }
+        // Restore original behavior
+        rowsSpy.mockRestore();
       }
     });
 
@@ -1687,11 +1679,9 @@ describe('checkbox-search prompt', () => {
       }));
 
       // Mock very large terminal height
-      const originalRows = process.stdout.rows;
-      Object.defineProperty(process.stdout, 'rows', {
-        value: 100, // Very large terminal
-        configurable: true,
-      });
+      const rowsSpy = vi
+        .spyOn(process.stdout, 'rows', 'get')
+        .mockReturnValue(100); // Very large terminal
 
       try {
         const { getScreen } = await render(checkboxSearch, {
@@ -1708,13 +1698,8 @@ describe('checkbox-search prompt', () => {
         expect(screen).not.toContain('Item 50'); // Beyond our max page size cap of 50
         expect(screen).not.toContain('Item 99');
       } finally {
-        // Restore original value
-        if (originalRows !== undefined) {
-          Object.defineProperty(process.stdout, 'rows', {
-            value: originalRows,
-            configurable: true,
-          });
-        }
+        // Restore original behavior
+        rowsSpy.mockRestore();
       }
     });
 
@@ -2164,6 +2149,131 @@ describe('checkbox-search prompt', () => {
       screen = getScreen();
       expect(screen).toContain('❯ ◉ Item 1');
       expect(screen).toContain('◉ Item 2'); // Should still be selected
+    });
+  });
+});
+
+// Node.js Compatibility Tests - Ensure tests work across Node versions
+describe('Node.js Compatibility', () => {
+  describe('Process.stdout.rows mocking', () => {
+    it('should mock terminal rows safely across Node versions', async () => {
+      // Skip this test if process.stdout.rows doesn't exist (non-TTY environments)
+      if (!('rows' in process.stdout)) {
+        console.log(
+          'Skipping test: process.stdout.rows not available in this environment',
+        );
+        return;
+      }
+
+      const manyChoices = Array.from({ length: 50 }, (_, i) => ({
+        value: `item${i}`,
+        name: `Item ${i}`,
+      }));
+
+      // Use vi.spyOn instead of Object.defineProperty for Node 20+ compatibility
+      const rowsSpy = vi
+        .spyOn(process.stdout, 'rows', 'get')
+        .mockReturnValue(30);
+
+      try {
+        const { getScreen } = await render(checkboxSearch, {
+          message: 'Select items',
+          choices: manyChoices,
+          // No pageSize specified - should auto-size based on mocked terminal height
+        });
+
+        const screen = getScreen();
+        // Should show more than default 7 items since mocked terminal height is 30
+        expect(screen).toContain('Item 0');
+        expect(screen).toContain('Item 20'); // Should show many more items
+
+        // Verify the spy was used
+        expect(rowsSpy).toHaveBeenCalled();
+      } finally {
+        // Restore original behavior
+        rowsSpy.mockRestore();
+      }
+    });
+  });
+});
+
+// TTY Detection Tests - Prevent crashes in non-TTY environments
+describe('TTY Detection', () => {
+  describe('Cursor operations', () => {
+    it('should not crash when stdout is not a TTY', async () => {
+      // Mock non-TTY environment
+      const originalIsTTY = process.stdout.isTTY;
+      const writeSpy = vi
+        .spyOn(process.stdout, 'write')
+        .mockImplementation(() => true);
+
+      Object.defineProperty(process.stdout, 'isTTY', {
+        value: false,
+        configurable: true,
+      });
+
+      try {
+        const { getScreen } = await render(checkboxSearch, {
+          message: 'Select items',
+          choices: ['Apple', 'Banana'],
+        });
+
+        // Should render successfully without crashing
+        const screen = getScreen();
+        expect(screen).toContain('Select items');
+        expect(screen).toContain('Apple');
+        expect(screen).toContain('Banana');
+
+        // Should not have written cursor escape sequences in non-TTY environment
+        expect(writeSpy).not.toHaveBeenCalledWith(
+          expect.stringContaining('\u001b[?25l'),
+        ); // cursorHide
+      } finally {
+        // Restore original values
+        Object.defineProperty(process.stdout, 'isTTY', {
+          value: originalIsTTY,
+          configurable: true,
+        });
+        writeSpy.mockRestore();
+      }
+    });
+
+    it('should write cursor sequences when stdout is a TTY', async () => {
+      // Mock TTY environment
+      const originalIsTTY = process.stdout.isTTY;
+      const writeSpy = vi
+        .spyOn(process.stdout, 'write')
+        .mockImplementation(() => true);
+
+      Object.defineProperty(process.stdout, 'isTTY', {
+        value: true,
+        configurable: true,
+      });
+
+      try {
+        const { getScreen } = await render(checkboxSearch, {
+          message: 'Select items',
+          choices: ['Apple', 'Banana'],
+        });
+
+        // Should render successfully
+        const screen = getScreen();
+        expect(screen).toContain('Select items');
+        expect(screen).toContain('Apple');
+        expect(screen).toContain('Banana');
+
+        // Should have written cursor hide sequence in TTY environment
+        expect(writeSpy).toHaveBeenCalledWith(
+          expect.stringContaining('\u001b[?25l'),
+        ); // cursorHide
+      } finally {
+        // Restore original values
+        Object.defineProperty(process.stdout, 'isTTY', {
+          value: originalIsTTY,
+          configurable: true,
+        });
+        writeSpy.mockRestore();
+      }
     });
   });
 });
