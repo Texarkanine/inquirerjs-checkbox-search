@@ -422,7 +422,7 @@ export default createPrompt(
     useEffect(() => {
       // Hide cursor when prompt starts
       process.stdout.write(ansiEscapes.cursorHide);
-      
+
       // Show cursor when prompt ends (cleanup function)
       return () => {
         process.stdout.write(ansiEscapes.cursorShow);
@@ -626,8 +626,14 @@ export default createPrompt(
       }
     });
 
-    // Track the current description for the active item
-    let currentDescription: string | undefined;
+    // Calculate the active item's description using useMemo for better React patterns
+    const activeDescription = useMemo(() => {
+      const activeItem = filteredItems[active];
+      if (activeItem && !Separator.isSeparator(activeItem)) {
+        return (activeItem as NormalizedChoice<Value>).description;
+      }
+      return undefined;
+    }, [active, filteredItems]);
 
     // Create renderItem function that's reactive to current state
     const renderItem = useMemo(() => {
@@ -668,8 +674,7 @@ export default createPrompt(
         let text = (item as NormalizedChoice<Value>).name;
         if (isActive) {
           text = theme.style.highlight(text);
-          // Capture the description of the active item to display at bottom
-          currentDescription = (item as NormalizedChoice<Value>).description;
+          // NOTE: Description is now calculated via useMemo, not side-effect mutation
         } else if ((item as NormalizedChoice<Value>).disabled) {
           text = theme.style.disabled(text);
         }
@@ -740,8 +745,8 @@ export default createPrompt(
 
     // Add description of active item at the bottom (like original inquirer.js)
     let descriptionLine = '';
-    if (currentDescription) {
-      descriptionLine = `\n${theme.style.description(currentDescription)}`;
+    if (activeDescription) {
+      descriptionLine = `\n${theme.style.description(activeDescription)}`;
     }
 
     return `${prefix} ${message}${helpTip}${searchLine}${errorLine}${content}${descriptionLine}`;
