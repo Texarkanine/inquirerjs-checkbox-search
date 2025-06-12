@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 
 // Import from built distribution
-import checkboxSearch from '../dist/esm/index.js';
+import checkboxSearch, { Separator } from '../dist/esm/index.js';
 
 // 🍎 REAL Fruit Database with ONLY actual emoji for real fruits!
 const fruits = [
-  // 🍎 Core fruit emoji (actual emoji for real fruits)
+  // 🍎 Classic Fruits Section
+  new Separator('🍎 Classic Fruits'),
   { name: 'Apple', value: 'apple', emoji: '🍎' },
   { name: 'Green Apple', value: 'green-apple', emoji: '🍏' },
   { name: 'Banana', value: 'banana', emoji: '🍌' },
@@ -14,33 +15,39 @@ const fruits = [
   { name: 'Watermelon', value: 'watermelon', emoji: '🍉' },
   { name: 'Melon', value: 'melon', emoji: '🍈' },
   { name: 'Grape', value: 'grape', emoji: '🍇' },
+
+  // 🍓 Berries & Stone Fruits
+  new Separator('🍓 Berries & Stone Fruits'),
   { name: 'Strawberry', value: 'strawberry', emoji: '🍓' },
   { name: 'Cherry', value: 'cherry', emoji: '🍒' },
   { name: 'Peach', value: 'peach', emoji: '🍑' },
+  { name: 'Blueberry', value: 'blueberry', emoji: '🫐' },
+
+  // 🍍 Tropical Fruits
+  new Separator('🍍 Tropical Fruits'),
   { name: 'Pear', value: 'pear', emoji: '🍐' },
   { name: 'Pineapple', value: 'pineapple', emoji: '🍍' },
   { name: 'Kiwi', value: 'kiwi', emoji: '🥝' },
   { name: 'Mango', value: 'mango', emoji: '🥭' },
   { name: 'Avocado', value: 'avocado', emoji: '🥑' },
   { name: 'Coconut', value: 'coconut', emoji: '🥥' },
-  { name: 'Blueberry', value: 'blueberry', emoji: '🫐' },
-  { name: 'Olive', value: 'olive', emoji: '🫒' },
 
-  // 🍅 The tomato joke (since it has its own emoji!)
+  // 🍅 Botanical Surprises
+  new Separator('🍅 Botanical Surprises'),
   {
     name: 'Tomato',
     value: 'tomato',
     emoji: '🍅',
     description: 'Technically a fruit! 😉🍅',
   },
-
-  // 🌶️ Other "vegetables" that are botanically fruits (with real emoji)
   { name: 'Eggplant', value: 'eggplant', emoji: '🍆' },
   { name: 'Bell Pepper', value: 'bell-pepper', emoji: '🫑' },
   { name: 'Hot Pepper', value: 'hot-pepper', emoji: '🌶️' },
   { name: 'Cucumber', value: 'cucumber', emoji: '🥒' },
+  { name: 'Olive', value: 'olive', emoji: '🫒' },
 
-  // 🌰 Nuts (technically fruits with real emoji)
+  // 🌰 Nuts & Seeds
+  new Separator('🌰 Nuts & Seeds'),
   { name: 'Chestnut', value: 'chestnut', emoji: '🌰' },
   {
     name: 'Peanut',
@@ -56,12 +63,18 @@ console.log('Search for fruits and use Tab to select them.\n');
 
 const selectedFruits = await checkboxSearch({
   message: '🔍 Search and select your favorite fruits:',
-  choices: fruits.map((fruit) => ({
-    name: fruit.name,
-    value: fruit.value,
-    description:
-      fruit.description || `Add delicious ${fruit.emoji} to your basket`,
-  })),
+  choices: fruits.map((fruit) => {
+    // Keep separators as-is, only transform fruit objects
+    if (fruit.separator !== undefined) {
+      return fruit; // This is a Separator
+    }
+    return {
+      name: fruit.name,
+      value: fruit.value,
+      description:
+        fruit.description || `Add delicious ${fruit.emoji} to your basket`,
+    };
+  }),
 
   // 🎨 Enhanced theming for the authentic fruit experience
   theme: {
