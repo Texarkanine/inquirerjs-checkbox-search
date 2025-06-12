@@ -8,8 +8,6 @@ import {
   useMemo,
   usePrefix,
   makeTheme,
-  isUpKey,
-  isDownKey,
   isEnterKey,
   Separator,
   type Theme,
@@ -475,7 +473,8 @@ export default createPrompt(
     useKeypress((key, rl) => {
       // Helper function to update search term in both readline and React state
       const updateSearchTerm = (newTerm: string) => {
-        rl.line = newTerm;
+        rl.clearLine(0);
+        rl.write(newTerm);
         setSearchTerm(newTerm);
       };
       // Allow search input even during loading, but block other actions

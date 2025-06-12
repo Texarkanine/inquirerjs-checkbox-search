@@ -2,6 +2,7 @@
 dist/
 coverage/
 .tshy/
+.tshy-build/
 package-inspect/
 
 # Dependencies

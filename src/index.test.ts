@@ -1757,7 +1757,7 @@ describe('checkbox-search prompt', () => {
       events.type('mel');
 
       let screen = getScreen();
-      expect(screen).toContain('mel'); // Should show search term
+      expect(screen).toContain('Search: mel'); // Should show search term
       expect(screen).toContain('Watermelon');
       expect(screen).toContain('Melon');
       expect(screen).not.toContain('Apple');
@@ -1767,13 +1767,15 @@ describe('checkbox-search prompt', () => {
       events.keypress('backspace');
 
       screen = getScreen();
-      expect(screen).toContain('me'); // Should show "me" after deleting "l"
+      expect(screen).toContain('Search: me'); // Should show "me" after deleting "l"
+      expect(screen).not.toContain('Search: mel');
 
       // Verify it's working properly - should only require one backspace per character
       events.keypress('backspace');
 
       screen = getScreen();
-      expect(screen).toContain('m'); // Should show "m" after deleting "e"
+      expect(screen).toContain('Search: m'); // Should show "m" after deleting "e"
+      expect(screen).not.toContain('Search: me');
     });
 
     it('should handle multiple tab selections without corrupting search state', async () => {
