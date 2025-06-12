@@ -16,7 +16,7 @@ import {
 import type { PartialDeep } from '@inquirer/type';
 import colors from 'yoctocolors-cjs';
 import figures from '@inquirer/figures';
-import ansiEscapes from 'ansi-escapes';
+// import ansiEscapes from 'ansi-escapes';
 
 /**
  * Theme configuration for the checkbox-search prompt
@@ -258,13 +258,8 @@ function calculateDynamicPageSize(fallbackPageSize: number): number {
     // Calculate available lines for choices
     const availableLines = Math.max(terminalHeight - reservedLines, 2);
 
-    // Cap the maximum page size to prevent overwhelming display
-    const maxPageSize = Math.min(availableLines, 50);
-
-    // Ensure minimum page size for usability
-    const minPageSize = 2;
-
-    return Math.max(minPageSize, Math.min(maxPageSize, availableLines));
+    // Ensure minimum page size for usability and cap maximum to prevent overwhelming display
+    return Math.max(2, Math.min(availableLines, 50));
   } catch {
     // If there's any error accessing terminal dimensions, fallback gracefully
     return fallbackPageSize;
@@ -736,7 +731,7 @@ export default createPrompt(
       descriptionLine = `\n${theme.style.description(currentDescription)}`;
     }
 
-    return `${prefix} ${message}${helpTip}${searchLine}${errorLine}${content}${descriptionLine}${ansiEscapes.cursorHide}`;
+    return `${prefix} ${message}${helpTip}${searchLine}${errorLine}${content}${descriptionLine}`;
   },
 );
 

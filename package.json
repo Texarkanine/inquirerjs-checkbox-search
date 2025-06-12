@@ -64,7 +64,7 @@
   ],
   "scripts": {
     "build": "tshy",
-    "clean": "rimraf dist .tshy package-inspect coverage src/node_modules",
+    "clean": "rimraf dist .tshy .tshy-build package-inspect coverage src/node_modules",
     "dev": "tshy --watch",
     "lint": "eslint . --ext .ts --fix",
     "lint:check": "eslint . --ext .ts",
@@ -84,7 +84,6 @@
     "@inquirer/core": "^10.1.13",
     "@inquirer/figures": "^1.0.12",
     "@inquirer/type": "^3.0.7",
-    "ansi-escapes": "^4.3.2",
     "yoctocolors-cjs": "^2.1.2"
   },
   "devDependencies": {
@@ -93,15 +92,15 @@
     "@types/node": "^20.0.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
-    "@vitest/coverage-v8": "^2.0.0",
-    "@vitest/ui": "^2.0.0",
+    "@vitest/coverage-v8": "^3.2.3",
+    "@vitest/ui": "^3.2.3",
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^9.0.0",
     "prettier": "^3.0.0",
     "rimraf": "^6.0.0",
     "tshy": "^3.0.2",
     "typescript": "^5.6.0",
-    "vitest": "^2.0.0"
+    "vitest": "^3.2.3"
   },
   "engines": {
     "node": ">=18"

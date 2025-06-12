@@ -1635,7 +1635,10 @@ describe('checkbox-search prompt', () => {
             configurable: true,
           });
         } else {
-          delete (process.stdout as any).rows;
+          Object.defineProperty(process.stdout, 'rows', {
+            value: undefined,
+            configurable: true,
+          });
         }
       }
     });
