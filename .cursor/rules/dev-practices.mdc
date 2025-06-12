@@ -14,3 +14,10 @@ alwaysApply: true
     * example: `npx vitest run -t "should maintain selections across filtering"`
 
 The `--reporter=verbose` option doesn't do anything; don't use it with tests.
+
+## Code Quality
+
+**ONLY** use the following methods to run code quality checks:
+
+1. lint: `npm run lint:check` to see problems, or `npm run lint` to potentially fix problems too
+2. formatting: `npm run format:check` to see problems, or `npm run format` to potentially fix problems too

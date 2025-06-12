@@ -299,15 +299,16 @@ export default createPrompt(
       default: defaultValues = emptyArray,
     } = config;
 
-    // Calculate effective page size (memoized to avoid recalculation on every render)
+    // Calculate effective page size (memoized with terminal size tracking)
     // If pageSize is specified, use it as fixed size
-    // If not specified, use auto-sizing with fallback 7
+    // If not specified, use auto-sizing that recalculates when terminal resizes
+    const terminalHeight = process.stdout.rows; // Track terminal size for memoization
     const pageSize = useMemo(
       () =>
         configPageSize !== undefined
           ? configPageSize // Fixed page size
           : calculateDynamicPageSize(7), // Auto page size with fallback 7
-      [configPageSize],
+      [configPageSize, terminalHeight], // Recalculate when config OR terminal size changes
     );
 
     const theme = makeTheme<CheckboxSearchTheme>(
