@@ -65,19 +65,19 @@ console.log('Selected:', selected);
 
 ### Options
 
-| Property       | Type                                                                                | Required | Description                                            |
-| -------------- | ----------------------------------------------------------------------------------- | -------- | ------------------------------------------------------ |
-| `message`      | `string`                                                                            | Yes      | The question to ask                                    |
-| `choices`      | `Array<Choice \| string \| Separator>`                                              | No\*     | Static list of choices                                 |
-| `source`       | `(term?: string, opt: { signal: AbortSignal }) => Promise<Array<Choice \| string>>` | No\*     | Async function for dynamic choices                     |
-| `pageSize`     | `number`                                                                            | No       | Number of choices to display per page (default: 7)     |
-| `loop`         | `boolean`                                                                           | No       | Whether to loop around when navigating (default: true) |
-| `required`     | `boolean`                                                                           | No       | Require at least one selection (default: false)        |
-| `validate`     | `(selection: Array<Choice>) => boolean \| string \| Promise<string \| boolean>`     | No       | Custom validation function                             |
-| `instructions` | `string \| boolean`                                                                 | No       | Custom instructions text or false to hide              |
-| `theme`        | `Theme`                                                                             | No       | Custom theme configuration                             |
-| `default`      | `Array<Value>`                                                                      | No       | Initially selected values                              |
-| `filter`       | `(items: Array<Choice>, term: string) => Array<Choice>`                             | No       | Custom filter function                                 |
+| Property       | Type                                                                                | Required | Description                                              |
+| -------------- | ----------------------------------------------------------------------------------- | -------- | -------------------------------------------------------- |
+| `message`      | `string`                                                                            | Yes      | The question to ask                                      |
+| `choices`      | `Array<Choice \| string \| Separator>`                                              | No\*     | Static list of choices                                   |
+| `source`       | `(term?: string, opt: { signal: AbortSignal }) => Promise<Array<Choice \| string>>` | No\*     | Async function for dynamic choices                       |
+| `pageSize`     | `number`                                                                            | No       | Fixed number of choices to display. If not specified, auto-sizes based on terminal height (fallback: 7) |
+| `loop`         | `boolean`                                                                           | No       | Whether to loop around when navigating (default: true)   |
+| `required`     | `boolean`                                                                           | No       | Require at least one selection (default: false)          |
+| `validate`     | `(selection: Array<Choice>) => boolean \| string \| Promise<string \| boolean>`     | No       | Custom validation function                               |
+| `instructions` | `string \| boolean`                                                                 | No       | Custom instructions text or false to hide                |
+| `theme`        | `Theme`                                                                             | No       | Custom theme configuration                               |
+| `default`      | `Array<Value>`                                                                      | No       | Initially selected values                                |
+| `filter`       | `(items: Array<Choice>, term: string) => Array<Choice>`                             | No       | Custom filter function                                   |
 
 \*Either `choices` or `source` must be provided.
 
@@ -126,6 +126,36 @@ type CheckboxSearchTheme = {
 | <kbd>Tab</kbd>            | Toggle selection of current option |
 | <kbd>Escape</kbd>         | Clear search filter                |
 | <kbd>Enter</kbd>          | Confirm selection                  |
+
+## Auto Page Sizing
+
+The `autoPageSize` option allows the prompt to automatically scale the number of displayed choices based on your terminal height, providing a better user experience across different terminal sizes.
+
+```javascript
+import checkboxSearch from 'inquirerjs-checkbox-search';
+
+const result = await checkboxSearch({
+  message: 'Select your preferences',
+  choices: manyChoices, // Large list of choices
+  autoPageSize: true, // Automatically scale to terminal height
+  pageSize: 7, // Fallback size if terminal height unavailable
+});
+```
+
+### How it works:
+
+- **Terminal Detection**: Uses `process.stdout.rows` to detect terminal height
+- **Smart Calculation**: Reserves space for UI elements (prompt, search, help, etc.)
+- **Safe Bounds**: Enforces minimum (2) and maximum (50) page sizes
+- **Graceful Fallback**: Uses fixed `pageSize` if terminal dimensions unavailable
+- **Backward Compatible**: Disabled by default (`autoPageSize: false`)
+
+### Example scenarios:
+
+- **Small terminal (10 rows)**: Shows ~4 choices
+- **Medium terminal (30 rows)**: Shows ~24 choices
+- **Large terminal (100 rows)**: Capped at 50 choices max
+- **No terminal info**: Falls back to `pageSize` setting
 
 ## Advanced Features
 

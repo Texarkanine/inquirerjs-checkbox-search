@@ -234,6 +234,46 @@ function defaultFilter<Value>(
 }
 
 /**
+ * Calculate dynamic page size based on terminal height
+ * @param fallbackPageSize - Default page size to use if terminal height is not available
+ * @returns Calculated page size
+ */
+function calculateDynamicPageSize(fallbackPageSize: number): number {
+  try {
+    // Get terminal height from process.stdout.rows
+    const terminalHeight = process.stdout.rows;
+
+    if (!terminalHeight || terminalHeight < 1) {
+      // Fallback to static page size if terminal height is not available
+      return fallbackPageSize;
+    }
+
+    // Reserve space for UI elements:
+    // - 1 line for the prompt message
+    // - 1 line for help instructions
+    // - 1 line for search input (if present)
+    // - 1 line for error messages (if present)
+    // - 1 line for description (if present)
+    // - 1 line for buffer/spacing
+    const reservedLines = 6;
+
+    // Calculate available lines for choices
+    const availableLines = Math.max(terminalHeight - reservedLines, 2);
+
+    // Cap the maximum page size to prevent overwhelming display
+    const maxPageSize = Math.min(availableLines, 50);
+
+    // Ensure minimum page size for usability
+    const minPageSize = 2;
+
+    return Math.max(minPageSize, Math.min(maxPageSize, availableLines));
+  } catch {
+    // If there's any error accessing terminal dimensions, fallback gracefully
+    return fallbackPageSize;
+  }
+}
+
+/**
  * Main checkbox-search prompt implementation
  *
  * A multi-select prompt with text filtering/search capability that combines
@@ -259,12 +299,20 @@ export default createPrompt(
 
     // Configuration with defaults
     const {
-      pageSize = 7,
+      pageSize: configPageSize,
       loop = true,
       required,
       validate = () => true,
       default: defaultValues = emptyArray,
     } = config;
+
+    // Calculate effective page size
+    // If pageSize is specified, use it as fixed size
+    // If not specified, use auto-sizing with fallback 7
+    const pageSize =
+      configPageSize !== undefined
+        ? configPageSize // Fixed page size
+        : calculateDynamicPageSize(7); // Auto page size with fallback 7
 
     const theme = makeTheme<CheckboxSearchTheme>(
       checkboxSearchTheme,
@@ -474,7 +522,7 @@ export default createPrompt(
       // Handle selection toggle with tab key
       if (key.name === 'tab') {
         const preservedSearchTerm = searchTerm;
-        
+
         const activeItem = filteredItems[active];
         if (activeItem && isSelectable(activeItem)) {
           const activeValue = (activeItem as NormalizedChoice<Value>).value;
@@ -490,10 +538,9 @@ export default createPrompt(
             }),
           );
         }
-        
 
         updateSearchTerm(preservedSearchTerm);
-        
+
         // return to prevent tab from affecting search text:
         // Readline's tab completion in @inquirer/core can modify rl.line, adding spaces to the search text
         return;
@@ -629,8 +676,12 @@ export default createPrompt(
     let helpTip = '';
 
     if (theme.helpMode === 'always') {
-      const tips: string[] = ['Tab to select', 'Enter to submit'];
-      helpTip = `\n${theme.style.help(`(${tips.join(', ')})`)}`;
+      if (config.instructions) {
+        helpTip = `\n${theme.style.help(`(${config.instructions})`)}`;
+      } else {
+        const tips: string[] = ['Tab to select', 'Enter to submit'];
+        helpTip = `\n${theme.style.help(`(${tips.join(', ')})`)}`;
+      }
     }
 
     let searchLine = '';

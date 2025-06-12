@@ -96,9 +96,6 @@ const selectedFruits = await checkboxSearch({
     },
   },
 
-  // Custom page size for better viewing
-  pageSize: 10,
-
   // Custom help instructions
   instructions:
     'Type to search • Tab to select • Enter to confirm • ↑↓ Navigate',

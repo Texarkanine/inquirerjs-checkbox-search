@@ -389,14 +389,14 @@ describe('checkbox-search prompt', () => {
       // Press tab to select/toggle the highlighted choice (JavaScript)
       events.keypress('tab');
       screen = getScreen();
-      
+
       // Should show JavaScript as selected (checked)
       expect(screen).toContain('◉'); // Should show checked item
-      
+
       // Search term should still be 'java', NOT autocompleted to 'JavaScript'
       expect(screen).toContain('java'); // Original search term preserved
       expect(screen).toContain('JavaScript'); // Still shows the filtered choice
-      
+
       // Should NOT show any tab characters in search
       expect(screen).not.toMatch(/Search:.*\t/);
     });
@@ -928,16 +928,16 @@ describe('checkbox-search prompt', () => {
       // Press tab to select/toggle item - should NOT add tab character to search
       events.keypress('tab');
       screen = getScreen();
-      
+
       // Verify selection happened
       expect(screen).toContain('◉'); // Should show Apple is selected
-      
+
       // Critical: Search term should still be 'app', NOT 'app\t' or 'app    ' (spaces from tab)
       expect(screen).toContain('app'); // Should still show original search term
       expect(screen).not.toMatch(/app\s+\t/); // Should not contain tab character after 'app'
       expect(screen).not.toMatch(/Search:.*\t/); // Should not contain tab character in search line
       expect(screen).not.toMatch(/app\s{2,}/); // Should not contain multiple spaces after 'app' (from tab conversion)
-      
+
       // Type more text - should work normally
       events.type('le');
       screen = getScreen();
@@ -949,21 +949,19 @@ describe('checkbox-search prompt', () => {
     it('should detect readline tab-to-spaces conversion bug', async () => {
       const { events, getScreen } = await render(checkboxSearch, {
         message: 'Select items',
-        choices: [
-          { value: 'test', name: 'Test Item' },
-        ],
+        choices: [{ value: 'test', name: 'Test Item' }],
       });
 
       // Type 'te', press tab, type 'st' - should result in 'test', not 'te    st' (spaces from tab)
       events.type('te');
       events.keypress('tab'); // This should toggle selection, not add spaces to search
       events.type('st');
-      
+
       let screen = getScreen();
-      
+
       // Should show selection happened (Test Item matches "test" search)
       expect(screen).toContain('◉'); // Test Item should be selected
-      
+
       // Search should be 'test', not 'te    st' or similar with spaces
       expect(screen).toContain('test'); // Should show clean concatenated search
       expect(screen).not.toMatch(/te\s+st/); // Should NOT have spaces between te and st
@@ -1170,6 +1168,196 @@ describe('checkbox-search prompt', () => {
 
       // Active item should show custom highlight
       expect(screen).toContain('<<Apple>>');
+    });
+  });
+
+  describe('Terminal height scaling', () => {
+    it('should use fixed pageSize when pageSize is specified', async () => {
+      const manyChoices = Array.from({ length: 20 }, (_, i) => ({
+        value: `item${i}`,
+        name: `Item ${i}`,
+      }));
+
+      const { getScreen } = await render(checkboxSearch, {
+        message: 'Select items',
+        choices: manyChoices,
+        pageSize: 5, // Fixed page size
+      });
+
+      const screen = getScreen();
+      // Should show exactly 5 items (fixed pageSize)
+      expect(screen).toContain('Item 0');
+      expect(screen).toContain('Item 4');
+      expect(screen).not.toContain('Item 5'); // Should not show 6th item
+    });
+
+    it('should calculate dynamic pageSize based on terminal height when pageSize is not specified', async () => {
+      const manyChoices = Array.from({ length: 50 }, (_, i) => ({
+        value: `item${i}`,
+        name: `Item ${i}`,
+      }));
+
+      // Mock process.stdout.rows to simulate a terminal with specific height
+      const originalRows = process.stdout.rows;
+      Object.defineProperty(process.stdout, 'rows', {
+        value: 30,
+        configurable: true,
+      });
+
+      try {
+        const { getScreen } = await render(checkboxSearch, {
+          message: 'Select items',
+          choices: manyChoices,
+          // No pageSize specified - should auto-size
+        });
+
+        const screen = getScreen();
+        // Should show more than default 7 items since terminal height is 30
+        // Expected calculation: ~24 lines available for items (30 - 6 for UI elements)
+        expect(screen).toContain('Item 0');
+        expect(screen).toContain('Item 20'); // Should show many more items
+      } finally {
+        // Restore original value
+        if (originalRows !== undefined) {
+          Object.defineProperty(process.stdout, 'rows', {
+            value: originalRows,
+            configurable: true,
+          });
+        }
+      }
+    });
+
+    it('should fallback to default pageSize (7) when terminal height is not available', async () => {
+      const manyChoices = Array.from({ length: 20 }, (_, i) => ({
+        value: `item${i}`,
+        name: `Item ${i}`,
+      }));
+
+      // Mock process.stdout.rows as undefined to simulate no terminal info
+      const originalRows = process.stdout.rows;
+      Object.defineProperty(process.stdout, 'rows', {
+        value: undefined,
+        configurable: true,
+      });
+
+      try {
+        const { getScreen } = await render(checkboxSearch, {
+          message: 'Select items',
+          choices: manyChoices,
+          // No pageSize specified - should auto-size with fallback 7
+        });
+
+        const screen = getScreen();
+        // Should fallback to 7 when terminal height unavailable
+        expect(screen).toContain('Item 0');
+        expect(screen).toContain('Item 6');
+        expect(screen).not.toContain('Item 7'); // Should not show 8th item
+      } finally {
+        // Restore original value
+        if (originalRows !== undefined) {
+          Object.defineProperty(process.stdout, 'rows', {
+            value: originalRows,
+            configurable: true,
+          });
+        } else {
+          delete (process.stdout as any).rows;
+        }
+      }
+    });
+
+    it('should handle small terminal heights gracefully', async () => {
+      const manyChoices = Array.from({ length: 20 }, (_, i) => ({
+        value: `item${i}`,
+        name: `Item ${i}`,
+      }));
+
+      // Mock very small terminal height
+      const originalRows = process.stdout.rows;
+      Object.defineProperty(process.stdout, 'rows', {
+        value: 8, // Very small terminal
+        configurable: true,
+      });
+
+      try {
+        const { getScreen } = await render(checkboxSearch, {
+          message: 'Select items',
+          choices: manyChoices,
+          // No pageSize specified - should auto-size
+        });
+
+        const screen = getScreen();
+        // Should show at least minimum number of items (e.g., 2-3)
+        expect(screen).toContain('Item 0');
+        expect(screen).toContain('Item 1');
+        // Should not show too many items given small terminal
+        expect(screen).not.toContain('Item 5');
+      } finally {
+        // Restore original value
+        if (originalRows !== undefined) {
+          Object.defineProperty(process.stdout, 'rows', {
+            value: originalRows,
+            configurable: true,
+          });
+        }
+      }
+    });
+
+    it('should handle large terminal heights appropriately', async () => {
+      const manyChoices = Array.from({ length: 100 }, (_, i) => ({
+        value: `item${i}`,
+        name: `Item ${i}`,
+      }));
+
+      // Mock very large terminal height
+      const originalRows = process.stdout.rows;
+      Object.defineProperty(process.stdout, 'rows', {
+        value: 100, // Very large terminal
+        configurable: true,
+      });
+
+      try {
+        const { getScreen } = await render(checkboxSearch, {
+          message: 'Select items',
+          choices: manyChoices,
+          // No pageSize specified - should auto-size
+        });
+
+        const screen = getScreen();
+        // Should show many items but not all of them
+        expect(screen).toContain('Item 0');
+        expect(screen).toContain('Item 49'); // Should show many items (up to max page size of 50)
+        // Should still paginate, not show all 100 items
+        expect(screen).not.toContain('Item 50'); // Beyond our max page size cap of 50
+        expect(screen).not.toContain('Item 99');
+      } finally {
+        // Restore original value
+        if (originalRows !== undefined) {
+          Object.defineProperty(process.stdout, 'rows', {
+            value: originalRows,
+            configurable: true,
+          });
+        }
+      }
+    });
+
+    it('should use default auto-sizing behavior when no pageSize is specified', async () => {
+      const manyChoices = Array.from({ length: 15 }, (_, i) => ({
+        value: `item${i}`,
+        name: `Item ${i}`,
+      }));
+
+      // Test with default terminal size (should be auto-sizing)
+      const { getScreen } = await render(checkboxSearch, {
+        message: 'Select items',
+        choices: manyChoices,
+        // No pageSize specified - should auto-size based on terminal
+      });
+
+      const screen = getScreen();
+      // Should show items (exact count depends on terminal height)
+      expect(screen).toContain('Item 0');
+      // Should show more than just the first few if terminal is reasonable size
+      expect(screen).toMatch(/Item [5-9]|Item 1[0-4]/); // Should show items 5-14
     });
   });
 
