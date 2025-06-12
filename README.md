@@ -10,36 +10,9 @@ This prompt combines the functionality of `@inquirer/checkbox` and `@inquirer/se
 
 ## Installation
 
-<table>
-<tr>
-  <th>npm</th>
-  <th>yarn</th>
-  <th>pnpm</th>
-</tr>
-<tr>
-<td>
-
-```sh
-npm install inquirerjs-checkbox-search
-```
-
-</td>
-<td>
-
-```sh
-yarn add inquirerjs-checkbox-search
-```
-
-</td>
-<td>
-
-```sh
-pnpm add inquirerjs-checkbox-search
-```
-
-</td>
-</tr>
-</table>
+- **npm**: `npm install inquirerjs-checkbox-search`
+- **yarn**: `yarn add inquirerjs-checkbox-search`
+- **pnpm**: `pnpm add inquirerjs-checkbox-search`
 
 ## Usage
 
