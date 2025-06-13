@@ -13,11 +13,14 @@ Set Theme "Catppuccin Mocha"
 Set Padding 20
 Set PlaybackSpeed 1.0
 
+# Setup
+Hide
 Type "node examples/basic.js"
 Enter
 Sleep 1s
-
 # Wait for the prompt to appear, then interact with it
+Show
+
 # The basic example shows a multi-select with React, Vue, Angular, etc.
 
 # First, let's search for "react" to filter

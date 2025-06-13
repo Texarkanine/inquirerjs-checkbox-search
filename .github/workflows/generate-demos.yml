@@ -2,14 +2,16 @@ name: Generate Demo GIFs
 
 on:
   pull_request:
-    branches: [main]
+    branches:
+      - main
     paths: 
       - 'examples/**'
       - 'demos/**'
       - 'src/**'
       - '.github/workflows/generate-demos.yml'
   push:
-    branches: [main]
+    branches:
+      - main
     paths: 
       - 'examples/**'
       - 'demos/**'
@@ -82,41 +84,28 @@ jobs:
             echo "✅ New demo GIF created"
           fi
       
-      - name: Determine workflow context
+      - name: Determine release-please context
         id: context
         run: |
+          # Check commit message for release-please pattern (works for both PRs and commits)
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            # Check if this is a release-please PR
-            pr_title="${{ github.event.pull_request.title }}"
-            pr_author="${{ github.event.pull_request.user.login }}"
-            
-            if [[ "$pr_title" =~ ^chore\(main\): ]]; then
-              echo "is_release_pr=true" >> $GITHUB_OUTPUT
-              echo "is_pr=true" >> $GITHUB_OUTPUT
-              echo "🔍 Detected release-please PR"
-            else
-              echo "is_release_pr=false" >> $GITHUB_OUTPUT
-              echo "is_pr=true" >> $GITHUB_OUTPUT
-              echo "🔍 Regular PR detected"
-            fi
+            commit_message="${{ github.event.pull_request.title }}"
+            echo "is_pr=true" >> $GITHUB_OUTPUT
           else
-            echo "is_pr=false" >> $GITHUB_OUTPUT
-            echo "is_release_pr=false" >> $GITHUB_OUTPUT
-            echo "🔍 Push to main detected"
-            
-            # Check if this push was from a release-please merge
             commit_message="${{ github.event.head_commit.message }}"
-            if [[ "$commit_message" =~ ^chore\(main\): ]]; then
-              echo "is_release_commit=true" >> $GITHUB_OUTPUT
-              echo "🔍 Release commit detected"
-            else
-              echo "is_release_commit=false" >> $GITHUB_OUTPUT
-              echo "🔍 Regular commit detected"
-            fi
+            echo "is_pr=false" >> $GITHUB_OUTPUT
+          fi
+          
+          if [[ "$commit_message" =~ ^chore\(main\): ]]; then
+            echo "is_release_please=true" >> $GITHUB_OUTPUT
+            echo "🔍 Release-please detected: $commit_message"
+          else
+            echo "is_release_please=false" >> $GITHUB_OUTPUT
+            echo "🔍 Regular change detected: $commit_message"
           fi
       
-      - name: Handle release-please PR (fail if demo changed)
-        if: steps.context.outputs.is_release_pr == 'true' && steps.check_changes.outputs.demo_changed == 'true'
+      - name: Handle release-please with demo changes (fail build)
+        if: steps.context.outputs.is_release_please == 'true' && steps.context.outputs.is_pr == 'true' && steps.check_changes.outputs.demo_changed == 'true'
         run: |
           echo "❌ ERROR: Demo GIF has changed in release-please PR!"
           echo "Demo changes should not be included in release PRs."
@@ -124,7 +113,7 @@ jobs:
           exit 1
       
       - name: Comment on regular PR if demo changed
-        if: steps.context.outputs.is_pr == 'true' && steps.context.outputs.is_release_pr == 'false' && steps.check_changes.outputs.demo_changed == 'true'
+        if: steps.context.outputs.is_pr == 'true' && steps.context.outputs.is_release_please == 'false' && steps.check_changes.outputs.demo_changed == 'true'
         uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ github.event.pull_request.number }}
@@ -163,7 +152,7 @@ jobs:
           retention-days: 30
       
       - name: Commit demo changes (release commits only)
-        if: steps.context.outputs.is_pr == 'false' && (steps.context.outputs.is_release_commit == 'true' || github.event.inputs.force_regenerate == 'true') && steps.check_changes.outputs.demo_changed == 'true'
+        if: steps.context.outputs.is_pr == 'false' && (steps.context.outputs.is_release_please == 'true' || github.event.inputs.force_regenerate == 'true') && steps.check_changes.outputs.demo_changed == 'true'
         run: |
           echo "🚀 Committing demo changes for release..."
           
@@ -219,7 +208,4 @@ jobs:
           echo "- Event: ${{ github.event_name }}"
           echo "- Demo changed: ${{ steps.check_changes.outputs.demo_changed }}"
           echo "- Is PR: ${{ steps.context.outputs.is_pr }}"
-          echo "- Is release PR: ${{ steps.context.outputs.is_release_pr }}"
-          if [ "${{ steps.context.outputs.is_pr }}" = "false" ]; then
-            echo "- Is release commit: ${{ steps.context.outputs.is_release_commit }}"
-          fi 
+          echo "- Is release-please: ${{ steps.context.outputs.is_release_please }}" 

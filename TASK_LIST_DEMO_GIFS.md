@@ -1,7 +1,67 @@
 # Demo GIF Generation Task List
 
 ## Project Context
-Creating demo GIF files using **VHS Docker image** (`ghcr.io/charmbracelet/vhs`) to showcase the inquirerjs-checkbox-search examples in the README header. This will be CI-only since we don't have Docker locally.
+Creating demo GIF files using **VHS Docker image** (`ghcr.io/charmbracelet/vhs`) to showcase the inquirerjs-checkbox-search examples with a sophisticated CI/CD workflow.
+
+## Current Status
+🎉 **COMPREHENSIVE CI/CD IMPLEMENTED!** - Advanced workflow with PR detection, release automation, and deterministic builds!
+
+## 🚀 What We Built
+
+### **Core Infrastructure**
+✅ **Official VHS Docker Base** - `FROM ghcr.io/charmbracelet/vhs:latest` + Node.js  
+✅ **Organized Structure** - `demos/Dockerfile`, `demos/basic.tape`  
+✅ **npm Script Patterns** - `npm run demo:generate:basic`  
+✅ **Deterministic Builds** - SOURCE_DATE_EPOCH, consistent settings  
+
+### **Sophisticated CI/CD Workflow**
+
+#### **🔍 PR Workflows (into main):**
+- **Release-Please PRs**: Generate demo, **FAIL BUILD** if changed (no commits)
+- **Regular PRs**: Generate demo, **auto-comment with warning** if changed using [peter-evans/create-or-update-comment](https://github.com/marketplace/actions/create-or-update-comment)
+- **Artifact Upload**: Always upload generated demos for review
+
+#### **📦 Release Workflows (commits to main):**
+- **Release Commits**: Auto-generate and commit demos if changed
+- **3-Try Retry Logic**: Handles git conflicts with exponential backoff
+- **Smart Detection**: Identifies release-please commits by `chore(main):` pattern
+
+#### **🎯 Key Features:**
+- **Change Detection**: Binary comparison of demo GIFs
+- **Context-Aware**: Different behavior for PRs vs releases vs manual triggers
+- **Robust Error Handling**: Retry loops, proper error messages
+- **Rich Feedback**: Detailed PR comments with technical details
+
+## Commits History
+- `d23aafd` - "feat: Custom Docker image with Node.js + VHS for real demo recording" 
+- `8d91c23` - "fix(docker): Remove ttyd dependency, add ffmpeg and chromium for VHS"
+- `13c338a` - "fix(docker): Install VHS from GitHub releases instead of broken install script"
+- `d60f5c0` - "refactor: Use official VHS Docker image as base, add npm script pattern" ⭐
+- `f3b793a` - "refactor: Move Dockerfile to demos/ directory for better organization"
+- `df55613` - "feat: Comprehensive demo CI/CD workflow with PR detection and auto-commits" 🎉
+
+## Workflow Behavior Summary
+
+| Event Type | Demo Changed? | Action |
+|------------|---------------|--------|
+| **Regular PR** | ❌ No | ✅ Pass silently |
+| **Regular PR** | ✅ Yes | ⚠️ Post warning comment + upload artifacts |
+| **Release PR** | ❌ No | ✅ Pass silently |
+| **Release PR** | ✅ Yes | ❌ **FAIL BUILD** (demos should be updated separately) |
+| **Release Commit** | ❌ No | ✅ Pass silently |
+| **Release Commit** | ✅ Yes | 🤖 Auto-commit updated demos (with retry) |
+| **Manual Trigger** | ✅ Yes | 🤖 Force commit demos |
+
+## Testing Status
+🔄 **Ready for Testing** - Pushed commit `df55613`, monitoring CI behavior
+
+**Monitor**: https://github.com/Texarkanine/inquirerjs-checkbox-search/actions
+
+## Future Enhancements
+- [ ] Add more demo variations (search-filtering.tape, custom-theme.tape)
+- [ ] Implement demo comparison previews in PR comments
+- [ ] Add demo validation tests
+- [ ] Create demo template system for different use cases
 
 ## Scope Analysis
 - **Primary Goal**: Create a header demo GIF for the `basic.js` example
@@ -115,9 +175,6 @@ jobs:
 - **Risk**: CI permissions issues → **Mitigation**: Use `GITHUB_TOKEN` for commits  
 - **Risk**: Docker container issues → **Mitigation**: Use official VHS image as-is
 - **Risk**: File path issues → **Mitigation**: Use absolute paths in tape files
-
-## Current Status
-🎉 **WORKING!** - Demo generation successful! Now implementing advanced CI/CD workflow
 
 ## REVISED PLAN: Custom Docker Image with Node.js + VHS
 
