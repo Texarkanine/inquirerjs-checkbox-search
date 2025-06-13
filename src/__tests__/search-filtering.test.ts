@@ -32,11 +32,11 @@ describe('Search and filtering', () => {
     });
 
     // Type search term
-    await events.type('rea');
+    await events.type('app');
     const screen = getScreen();
 
-    // Should show only items containing "rea" (case-insensitive)
-    expect(screen).not.toContain('Apple');
+    // Should show only items containing "app" (case-insensitive)
+    expect(screen).toContain('Apple');
     expect(screen).not.toContain('Banana');
     expect(screen).not.toContain('Cherry');
     expect(screen).not.toContain('Date');
