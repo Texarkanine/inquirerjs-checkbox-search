@@ -150,7 +150,7 @@ jobs:
           fi
 
           # Set the preview content using heredoc syntax
-          echo "preview_content<<EOF" >> $GITHUB_OUTPUT
+          echo "preview_content=<<EOF" >> $GITHUB_OUTPUT
           echo "$PREVIEW_CONTENT" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
