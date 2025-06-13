@@ -19,14 +19,6 @@ on:
       - '.github/workflows/generate-demos.yml'
   workflow_dispatch:
     inputs:
-      examples:
-        description: 'Examples to generate demos for (comma-separated)'
-        required: false
-        default: 'basic'
-        type: choice
-        options:
-          - 'basic'
-          # Add more as tape files are created
       header_example:
         description: 'Which example to use as header.gif'
         required: false
@@ -69,40 +61,33 @@ jobs:
       - name: Create output directory
         run: mkdir -p docs/img
       
-      - name: Determine examples to generate
-        id: examples
+      - name: Determine header example
+        id: header
         run: |
           # Use input parameter if provided (workflow_dispatch), otherwise default to 'basic'
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            EXAMPLES="${{ github.event.inputs.examples }}"
             HEADER_EXAMPLE="${{ github.event.inputs.header_example }}"
           else
-            EXAMPLES="basic"
             HEADER_EXAMPLE="basic"
           fi
           
-          echo "examples=$EXAMPLES" >> $GITHUB_OUTPUT
-          echo "header_example=$HEADER_EXAMPLE" >> $GITHUB_OUTPUT
-          echo "🎬 Will generate demos for: $EXAMPLES"
-          echo "🎯 Will use '$HEADER_EXAMPLE' as header.gif"
+          echo "example=$HEADER_EXAMPLE" >> $GITHUB_OUTPUT
+          echo "🎯 Will generate '$HEADER_EXAMPLE' demo as header.gif"
       
-      - name: Generate demo GIFs
+      - name: Generate demo GIF
         run: |
           # Set deterministic timestamp for consistent builds
           export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
           
-          # Generate each requested example
-          IFS=',' read -ra EXAMPLE_ARRAY <<< "${{ steps.examples.outputs.examples }}"
-          for example in "${EXAMPLE_ARRAY[@]}"; do
-            example=$(echo "$example" | xargs)  # trim whitespace
-            echo "🎬 Generating demo for: $example"
-            npm run "demo:generate:$example"
-          done
+          # Generate the chosen example
+          EXAMPLE="${{ steps.header.outputs.example }}"
+          echo "🎬 Generating demo for: $EXAMPLE"
+          npm run "demo:generate:$EXAMPLE"
       
-      - name: Create header GIF from chosen demo
+      - name: Create header GIF from demo
         run: |
-          HEADER_EXAMPLE="${{ steps.examples.outputs.header_example }}"
-          SOURCE_FILE="docs/img/${HEADER_EXAMPLE}-demo.gif"
+          EXAMPLE="${{ steps.header.outputs.example }}"
+          SOURCE_FILE="docs/img/${EXAMPLE}-demo.gif"
           
           if [ -f "$SOURCE_FILE" ]; then
             cp "$SOURCE_FILE" docs/img/header.gif
@@ -228,15 +213,15 @@ jobs:
             1. Review the demo GIF preview above
             2. Ensure the demo accurately shows the intended functionality
             3. If the demo looks correct, this is expected and the PR can proceed
-            4. If the demo is incorrect, please update the demo configuration in `demos/${{ steps.examples.outputs.header_example }}.tape`
+            4. If the demo is incorrect, please update the demo configuration in `demos/${{ steps.header.outputs.example }}.tape`
             
             <details>
             <summary>🔍 Technical Details</summary>
             
             The demo was generated from commit `${{ github.sha }}` using:
-            - VHS tape file: `demos/${{ steps.examples.outputs.header_example }}.tape`
-            - Example: `examples/${{ steps.examples.outputs.header_example }}.js`
-            - Docker image: Built from `demos/Dockerfile`
+            - VHS tape file: [`demos/${{ steps.header.outputs.example }}.tape`](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/demos/${{ steps.header.outputs.example }}.tape)
+            - Example: [`examples/${{ steps.header.outputs.example }}.js`](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/examples/${{ steps.header.outputs.example }}.js)
+            - Docker image: Built from [`demos/Dockerfile`](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/demos/Dockerfile)
             
             </details>' || '## ✅ Demo GIF Reviewed and Stable
             
