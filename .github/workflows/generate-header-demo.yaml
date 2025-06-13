@@ -57,9 +57,26 @@ jobs:
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      
-      - name: Create output directory
-        run: mkdir -p docs/img
+
+      - name: Determine release-please context
+        id: context
+        run: |
+          # Check commit message for release-please pattern (works for both PRs and commits)
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            commit_message="${{ github.event.pull_request.title }}"
+            echo "is_pr=true" >> $GITHUB_OUTPUT
+          else
+            commit_message="${{ github.event.head_commit.message }}"
+            echo "is_pr=false" >> $GITHUB_OUTPUT
+          fi
+          
+          if [[ "$commit_message" =~ ^chore\(main\): ]]; then
+            echo "is_release_please=true" >> $GITHUB_OUTPUT
+            echo "🔍 Release-please detected: $commit_message"
+          else
+            echo "is_release_please=false" >> $GITHUB_OUTPUT
+            echo "🔍 Regular change detected: $commit_message"
+          fi
       
       - name: Determine header example
         id: header
@@ -149,26 +166,6 @@ jobs:
             # Show what changed for debugging
             echo "📊 Git status:"
             git status --porcelain docs/img/header.gif
-          fi
-      
-      - name: Determine release-please context
-        id: context
-        run: |
-          # Check commit message for release-please pattern (works for both PRs and commits)
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            commit_message="${{ github.event.pull_request.title }}"
-            echo "is_pr=true" >> $GITHUB_OUTPUT
-          else
-            commit_message="${{ github.event.head_commit.message }}"
-            echo "is_pr=false" >> $GITHUB_OUTPUT
-          fi
-          
-          if [[ "$commit_message" =~ ^chore\(main\): ]]; then
-            echo "is_release_please=true" >> $GITHUB_OUTPUT
-            echo "🔍 Release-please detected: $commit_message"
-          else
-            echo "is_release_please=false" >> $GITHUB_OUTPUT
-            echo "🔍 Regular change detected: $commit_message"
           fi
       
       - name: Handle release-please with demo changes (fail build)
