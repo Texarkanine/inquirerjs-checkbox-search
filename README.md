@@ -2,10 +2,7 @@
 
 A multi-select prompt with text filtering/search capability for [inquirer.js](https://github.com/SBoudrias/Inquirer.js).
 
-<video autoplay loop muted playsinline width="100%">
-  <source src="docs/img/header.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+<img src="docs/img/header.gif" alt="Demo showing inquirerjs-checkbox-search in action" width="100%">
 
 This prompt combines the functionality of `@inquirer/checkbox` and `@inquirer/search`, allowing you to:
 
