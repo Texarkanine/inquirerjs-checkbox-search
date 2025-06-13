@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v0.2.1...v0.3.0) (2025-06-13)
+
+
+### Features
+
+* add advanced PageSize configuration with auto-buffering support ([#10](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/10)) ([18cc792](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/18cc79274fff69dc1e0efd653f98e91aee5d0c42))
+
 ## [0.2.1](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v0.2.0...v0.2.1) (2025-06-13)
 
 
