@@ -10,10 +10,19 @@ RUN apt-get update && apt-get install -y \
     ffmpeg \
     chromium \
     fonts-liberation \
+    wget \
     && rm -rf /var/lib/apt/lists/*
 
-# Install VHS
-RUN curl -fsSL https://vhs.charm.sh | bash
+# Install VHS from GitHub releases
+RUN ARCH=$(dpkg --print-architecture) && \
+    if [ "$ARCH" = "amd64" ]; then VHS_ARCH="x86_64"; \
+    elif [ "$ARCH" = "arm64" ]; then VHS_ARCH="arm64"; \
+    else VHS_ARCH="x86_64"; fi && \
+    wget -O /tmp/vhs.tar.gz "https://github.com/charmbracelet/vhs/releases/latest/download/vhs_Linux_${VHS_ARCH}.tar.gz" && \
+    tar -xzf /tmp/vhs.tar.gz -C /tmp && \
+    mv /tmp/vhs /usr/local/bin/vhs && \
+    chmod +x /usr/local/bin/vhs && \
+    rm -rf /tmp/vhs.tar.gz /tmp/vhs
 
 # Set working directory
 WORKDIR /workspace
