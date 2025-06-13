@@ -1,0 +1,59 @@
+name: Cleanup Demo Images
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  cleanup-demo-image:
+    name: "Remove PR Demo Image"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Remove demo image from orphan branch
+        run: |
+          echo "🧹 Cleaning up demo image for closed PR #${{ github.event.pull_request.number }}"
+          
+          # Configure git
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          # Check if demo-images branch exists
+          if git ls-remote --heads origin demo-images | grep -q demo-images; then
+            echo "📁 Switching to demo-images branch"
+            git fetch origin demo-images
+            git checkout demo-images
+            
+            # Check if PR image exists
+            PR_IMAGE="pr-${{ github.event.pull_request.number }}-header.gif"
+            if [ -f "$PR_IMAGE" ]; then
+              echo "🗑️ Removing $PR_IMAGE"
+              git rm "$PR_IMAGE"
+              
+              if git commit -m "Remove demo image for closed PR #${{ github.event.pull_request.number }}"; then
+                git push origin demo-images
+                echo "✅ Successfully removed demo image"
+              else
+                echo "⚠️ No changes to commit (image already removed)"
+              fi
+            else
+              echo "📷 No demo image found for PR #${{ github.event.pull_request.number }}"
+            fi
+          else
+            echo "📁 demo-images branch does not exist"
+          fi
+
+      - name: Summary
+        run: |
+          echo "## 🧹 Demo Image Cleanup Summary"
+          echo "- PR: #${{ github.event.pull_request.number }}"
+          echo "- Action: ${{ github.event.action }}"
+          echo "- Image: pr-${{ github.event.pull_request.number }}-header.gif" 
