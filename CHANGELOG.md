@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v0.2.0...v0.2.1) (2025-06-13)
+
+
+### Bug Fixes
+
+* **tests:** resolve test race conditions and improve reliability ([#8](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/8)) ([2f74b08](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/2f74b08b095b45deec80ed5096af2473549a1f1e))
+
 ## [0.2.0](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v0.1.2...v0.2.0) (2025-06-13)
 
 
