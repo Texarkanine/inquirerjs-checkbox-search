@@ -170,10 +170,14 @@ jobs:
             *This comment will be updated if demo changes are detected in future commits.*' }}
           reactions: ${{ steps.check_changes.outputs.demo_changed == 'true' && 'eyes' || 'hooray' }}
       
-      - name: Commit demo changes (any push to main)
+      - name: Commit demo changes (normal commits to main only)
         if: |
           steps.context.outputs.is_pr == 'false' && 
-          steps.check_changes.outputs.demo_changed == 'true'
+          steps.check_changes.outputs.demo_changed == 'true' && 
+          (
+            steps.context.outputs.is_release_please == 'false' ||
+            github.event.inputs.force_regenerate == 'true'
+          )
         run: |
           echo "🚀 Committing demo changes..."
           
