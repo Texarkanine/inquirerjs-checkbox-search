@@ -1,4 +1,4 @@
-name: Generate Header Demo GIF
+name: Header Demo GIF
 
 on:
   pull_request:
@@ -38,6 +38,7 @@ concurrency:
 
 jobs:
   generate-header-demo:
+    name: "Generate"
     runs-on: ubuntu-latest
     permissions:
       contents: write
