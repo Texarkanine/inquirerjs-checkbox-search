@@ -68,6 +68,13 @@ jobs:
           export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
           npm run demo:generate:basic
       
+      - name: Upload demo artifacts (always upload regardless of changes)
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-gifs-${{ github.run_id }}
+          path: docs/img/*.gif
+          retention-days: 30
+      
       - name: Check if demo changed
         id: check_changes
         run: |
@@ -163,17 +170,12 @@ jobs:
             *This comment will be updated if demo changes are detected in future commits.*' }}
           reactions: ${{ steps.check_changes.outputs.demo_changed == 'true' && 'eyes' || 'hooray' }}
       
-      - name: Upload demo artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: demo-gifs-${{ github.run_id }}
-          path: docs/img/*.gif
-          retention-days: 30
-      
-      - name: Commit demo changes (release commits only)
-        if: steps.context.outputs.is_pr == 'false' && (steps.context.outputs.is_release_please == 'true' || github.event.inputs.force_regenerate == 'true') && steps.check_changes.outputs.demo_changed == 'true'
+      - name: Commit demo changes (any push to main)
+        if: |
+          steps.context.outputs.is_pr == 'false' && 
+          steps.check_changes.outputs.demo_changed == 'true'
         run: |
-          echo "🚀 Committing demo changes for release..."
+          echo "🚀 Committing demo changes..."
           
           # Configure git
           git config --local user.email "action@github.com"
@@ -227,4 +229,4 @@ jobs:
           echo "- Event: ${{ github.event_name }}"
           echo "- Demo changed: ${{ steps.check_changes.outputs.demo_changed }}"
           echo "- Is PR: ${{ steps.context.outputs.is_pr }}"
-          echo "- Is release-please: ${{ steps.context.outputs.is_release_please }}" 
+          echo "- Is release-please: ${{ steps.context.outputs.is_release_please }}"
