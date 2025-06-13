@@ -19,8 +19,8 @@ on:
       - '.github/workflows/generate-demos.yml'
   workflow_dispatch:
     inputs:
-      force_regenerate:
-        description: 'Force regenerate all demos'
+      commit_updates:
+        description: 'Commit updates back to branch?'
         required: false
         default: 'false'
 
@@ -176,7 +176,7 @@ jobs:
           steps.check_changes.outputs.demo_changed == 'true' && 
           (
             steps.context.outputs.is_release_please == 'false' ||
-            github.event.inputs.force_regenerate == 'true'
+            github.event.inputs.commit_updates == 'true'
           )
         run: |
           echo "🚀 Committing demo changes..."
