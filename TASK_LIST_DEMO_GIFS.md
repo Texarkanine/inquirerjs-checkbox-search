@@ -117,7 +117,7 @@ jobs:
 - **Risk**: File path issues → **Mitigation**: Use absolute paths in tape files
 
 ## Current Status
-🟡 **Fixed Docker Build Issue** - Removed problematic ttyd dependency, testing updated image
+🟢 **Much Better Approach** - Using official VHS Docker image as base, just adding Node.js!
 
 ## REVISED PLAN: Custom Docker Image with Node.js + VHS
 
@@ -174,9 +174,15 @@ jobs:
 ✅ **Updated npm Scripts** - Local development with `npm run demo:generate`
 
 **Commits**: 
-- `d23aafd` - "feat: Custom Docker image with Node.js + VHS for real demo recording"
+- `d23aafd` - "feat: Custom Docker image with Node.js + VHS for real demo recording" 
 - `8d91c23` - "fix(docker): Remove ttyd dependency, add ffmpeg and chromium for VHS"
+- `13c338a` - "fix(docker): Install VHS from GitHub releases instead of broken install script"
+- `d60f5c0` - "refactor: Use official VHS Docker image as base, add npm script pattern" ⭐
 
-**Issue Fixed**: The `ttyd` package wasn't available in Debian bookworm repos. Replaced with `ffmpeg` and `chromium` which are the actual dependencies VHS needs for headless recording.
+**Much Better Solution**: Instead of trying to build VHS from scratch, we now:
+- `FROM ghcr.io/charmbracelet/vhs:latest` (official image with all dependencies!)
+- Just add Node.js 18 on top of it
+- Use proper npm script patterns: `npm run demo:generate:basic`
+- CI calls npm scripts instead of raw docker commands
 
 **CI Status**: Monitor at https://github.com/Texarkanine/inquirerjs-checkbox-search/actions 
