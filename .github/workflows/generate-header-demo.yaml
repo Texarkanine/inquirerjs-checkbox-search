@@ -181,7 +181,7 @@ jobs:
             if git push origin demo-images; then
               # Construct the raw URL for inline display
               IMAGE_URL="https://raw.githubusercontent.com/${{ github.repository }}/demo-images/$PR_IMAGE"
-              PREVIEW_CONTENT="<video autoplay loop muted playsinline><source src=\"$IMAGE_URL\" type=\"video/webm\"></video>"
+              PREVIEW_CONTENT="![demo image]($IMAGE_URL)"
               echo "✅ Uploaded to demo-images branch: $PR_IMAGE"
               echo "🔗 Video URL: $IMAGE_URL"
             else

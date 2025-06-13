@@ -7,7 +7,7 @@ Output docs/img/basic-demo.webm
 # Terminal appearance settings for deterministic output
 Set FontSize 14
 Set Width 750
-Set Height 200
+Set Height 300
 Set TypingSpeed 100ms
 Set Theme "Catppuccin Mocha"
 Set Padding 20
