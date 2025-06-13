@@ -26,4 +26,4 @@ COPY . .
 RUN npm run build
 
 # Default command runs VHS with the provided tape file
-ENTRYPOINT ["vhs"] 
+ENTRYPOINT ["vhs"]
