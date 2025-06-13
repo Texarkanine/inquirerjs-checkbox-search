@@ -186,9 +186,9 @@ jobs:
               # Construct the raw URL for inline display
               IMAGE_URL="https://raw.githubusercontent.com/${{ github.repository }}/demo-images/$PR_IMAGE"
               PREVIEW_CONTENT="<video autoplay loop muted playsinline width=\"100%\">
-  <source src=\"$IMAGE_URL\" type=\"video/mp4\">
-  Your browser does not support the video tag.
-</video>"
+                <source src=\"$IMAGE_URL\" type=\"video/mp4\">
+                Your browser does not support the video tag.
+              </video>"
               echo "✅ Uploaded to demo-images branch: $PR_IMAGE"
               echo "🔗 Video URL: $IMAGE_URL"
             else

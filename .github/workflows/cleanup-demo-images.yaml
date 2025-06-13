@@ -93,7 +93,7 @@ jobs:
           else
             DAYS_OLD="30"  # Default for scheduled runs
           fi
-          
+
           echo "🧹 Cleaning up demo images older than $DAYS_OLD days"
 
           # Configure git
