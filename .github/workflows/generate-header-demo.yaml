@@ -138,35 +138,52 @@ jobs:
             FILE_SIZE=$(stat -f%z "docs/img/header.gif" 2>/dev/null || stat -c%s "docs/img/header.gif")
             echo "Header GIF size: ${FILE_SIZE} bytes"
             
-            # Create gist with the image
-            GIST_RESPONSE=$(curl -s -X POST \
-              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-              -H "Accept: application/vnd.github.v3+json" \
-              https://api.github.com/gists \
-              -d "{
-                \"description\": \"Demo image for ${{ github.repository }} PR #${{ github.event.pull_request.number }}\",
-                \"public\": true,
-                \"files\": {
-                  \"pr-${{ github.event.pull_request.number }}-header.gif\": {
-                    \"content\": \"$IMAGE_B64\",
-                    \"encoding\": \"base64\"
-                  }
-                }
-              }")
-            
-            # Check if gist creation was successful
-            GIST_ID=$(echo "$GIST_RESPONSE" | jq -r '.id // empty')
-            if [ -n "$GIST_ID" ] && [ "$GIST_ID" != "null" ]; then
-              # Construct the raw URL for the image
-              IMAGE_URL="https://gist.githubusercontent.com/${{ github.actor }}/${GIST_ID}/raw/pr-${{ github.event.pull_request.number }}-header.gif"
-              PREVIEW_CONTENT="![Header Demo GIF](${IMAGE_URL})"
-              echo "✅ Uploaded to gist: $GIST_ID"
-              echo "🔗 Image URL: $IMAGE_URL"
-            else
-              echo "❌ Failed to create gist"
-              echo "Response: $GIST_RESPONSE"
-              PREVIEW_CONTENT="❌ Failed to upload demo image to gist. GIF available in [artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-            fi
+                                      # Try gist first, fall back to repo if GIST_TOKEN not available
+             if [ -n "${{ secrets.GIST_TOKEN }}" ]; then
+               echo "🔄 Trying gist upload..."
+               # Create gist with the image
+               GIST_RESPONSE=$(curl -s -X POST \
+                 -H "Authorization: token ${{ secrets.GIST_TOKEN }}" \
+                 -H "Accept: application/vnd.github.v3+json" \
+                 https://api.github.com/gists \
+                 -d "{
+                   \"description\": \"Demo image for ${{ github.repository }} PR #${{ github.event.pull_request.number }}\",
+                   \"public\": true,
+                   \"files\": {
+                     \"pr-${{ github.event.pull_request.number }}-header.gif\": {
+                       \"content\": \"$IMAGE_B64\",
+                       \"encoding\": \"base64\"
+                     }
+                   }
+                 }")
+               
+               # Check if gist creation was successful
+               GIST_ID=$(echo "$GIST_RESPONSE" | jq -r '.id // empty')
+               if [ -n "$GIST_ID" ] && [ "$GIST_ID" != "null" ]; then
+                 # Construct the raw URL for the image
+                 IMAGE_URL="https://gist.githubusercontent.com/${{ github.actor }}/${GIST_ID}/raw/pr-${{ github.event.pull_request.number }}-header.gif"
+                 PREVIEW_CONTENT="![Header Demo GIF](${IMAGE_URL})"
+                 echo "✅ Uploaded to gist: $GIST_ID"
+                 echo "🔗 Image URL: $IMAGE_URL"
+               else
+                 echo "❌ Failed to create gist: $GIST_RESPONSE"
+                 GIST_FAILED=true
+               fi
+             else
+               echo "⚠️ GIST_TOKEN not configured, skipping gist upload"
+               GIST_FAILED=true
+             fi
+             
+             # Fall back to artifact link if gist failed
+             if [ "$GIST_FAILED" = "true" ]; then
+               PREVIEW_CONTENT="📦 Demo GIF available in [workflow artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+               
+               **To view the demo:**
+               1. Click the artifacts link above
+               2. Download \`demo-gifs-${{ github.run_id }}\`
+               3. Open \`header.gif\`"
+               echo "📦 Using artifact fallback"
+             fi
           else
             PREVIEW_CONTENT="❌ Header GIF generation failed"
             echo "❌ No header.gif file found"
