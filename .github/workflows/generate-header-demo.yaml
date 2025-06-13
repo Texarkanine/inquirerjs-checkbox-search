@@ -142,6 +142,7 @@ jobs:
             
             # Save current state and get commit SHA (safer than branch name with slashes)
             CURRENT_SHA="${{ github.sha }}"
+            CURRENT_BRANCH="${{ github.head_ref || github.ref_name }}"
             git add . && git stash || true
             
             # Create or switch to demo-images orphan branch
