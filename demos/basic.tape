@@ -2,7 +2,7 @@
 # Records the actual inquirerjs-checkbox-search basic example running
 
 # Output settings
-Output docs/img/basic-demo.gif
+Output docs/img/basic-demo.webm
 
 # Terminal appearance settings for deterministic output
 Set FontSize 14

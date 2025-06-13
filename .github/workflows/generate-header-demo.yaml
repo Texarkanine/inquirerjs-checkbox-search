@@ -20,7 +20,7 @@ on:
   workflow_dispatch:
     inputs:
       header_example:
-        description: 'Which example to use as header.gif'
+        description: 'Which example to use as header.webm'
         required: false
         default: 'basic'
         type: choice
@@ -164,8 +164,12 @@ jobs:
              PR_IMAGE="pr-${{ github.event.pull_request.number }}-header.gif"
              git checkout "$CURRENT_SHA" -- docs/img/header.gif
              cp "docs/img/header.gif" "$PR_IMAGE"
+             
+             # Clean up the temporary file to avoid adding it to the orphan branch
+             rm -f docs/img/header.gif
+             rm -rf docs/  # Remove the entire docs directory if it's empty
             
-            # Add and commit the image
+            # Add and commit ONLY the PR-specific image
             git add "$PR_IMAGE"
             if git commit -m "Add demo image for PR #${{ github.event.pull_request.number }}"; then
               echo "📷 Added new demo image"
