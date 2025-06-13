@@ -7,7 +7,9 @@ FROM node:18-slim
 RUN apt-get update && apt-get install -y \
     curl \
     ca-certificates \
-    ttyd \
+    ffmpeg \
+    chromium \
+    fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 
 # Install VHS
@@ -30,6 +32,11 @@ RUN npm run build
 
 # Ensure VHS can find our built files
 ENV PATH="/workspace/node_modules/.bin:$PATH"
+
+# Set environment variables for headless operation
+ENV DISPLAY=:99
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 # Default command runs VHS with the provided tape file
 ENTRYPOINT ["vhs"] 
