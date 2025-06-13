@@ -9,7 +9,7 @@ describe('Object value reference equality', () => {
     const objectValue = { id: 42, nested: { data: 'test' } };
     const primitiveValue = 'string-value';
 
-    const { answer, events } = await render(checkboxSearch<any>, {
+    const { answer, events } = await render(checkboxSearch<string | object | any[]>, {
       message: 'Select items',
       choices: [
         { value: arrayValue, name: 'Array Choice' },
@@ -41,7 +41,7 @@ describe('Object value reference equality', () => {
     expect(result[0]).toContain('item4'); // Should reflect the change
 
     objectValue.id = 99;
-    expect((result[1] as any).id).toBe(99); // Should reflect the change
+    expect((result[1] as typeof objectValue).id).toBe(99); // Should reflect the change
   });
 
   it('should maintain object references through filtering operations', async () => {
