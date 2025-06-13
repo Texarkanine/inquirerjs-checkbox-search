@@ -112,13 +112,24 @@ jobs:
           echo "Please update the demo in a separate PR before the release."
           exit 1
       
-      - name: Comment on regular PR if demo changed
-        if: steps.context.outputs.is_pr == 'true' && steps.context.outputs.is_release_please == 'false' && steps.check_changes.outputs.demo_changed == 'true'
-        uses: peter-evans/create-or-update-comment@v4
+      - name: Find existing demo comment
+        if: steps.context.outputs.is_pr == 'true' && steps.context.outputs.is_release_please == 'false'
+        uses: peter-evans/find-comment@v3
+        id: find_comment
         with:
           issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: 'Demo GIF Changed'
+      
+      - name: Comment on demo changes
+        if: steps.context.outputs.is_pr == 'true' && steps.context.outputs.is_release_please == 'false'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ steps.find_comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          edit-mode: replace
           body: |
-            ## ⚠️ Demo GIF Changed - Review Required
+            ${{ steps.check_changes.outputs.demo_changed == 'true' && '## ⚠️ Demo GIF Changed - Review Required
             
             This PR includes changes that affect the demo GIF output. 
             
@@ -141,8 +152,16 @@ jobs:
             - Example: `examples/basic.js`
             - Docker image: Built from `demos/Dockerfile`
             
-            </details>
-          reactions: 'eyes'
+            </details>' || '## ✅ Demo GIF Reviewed and Stable
+            
+            The demo GIF is now stable and matches the current functionality.
+            
+            ### Status:
+            - 🎬 `docs/img/basic-demo.gif` is up-to-date
+            - ✅ No further demo review required for this PR
+            
+            *This comment will be updated if demo changes are detected in future commits.*' }}
+          reactions: ${{ steps.check_changes.outputs.demo_changed == 'true' && 'eyes' || 'hooray' }}
       
       - name: Upload demo artifacts
         uses: actions/upload-artifact@v4
