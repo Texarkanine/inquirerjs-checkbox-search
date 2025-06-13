@@ -139,14 +139,11 @@ jobs:
              # Try gist first, fall back to repo if GIST_TOKEN not available
              if [ -n "${{ secrets.GIST_TOKEN }}" ]; then
                echo "🔄 Trying gist upload..."
-                # Read raw binary data and JSON-escape it directly with jq
-                RAW_CONTENT=$(jq -Rs < "docs/img/header.gif")
-                
-                # Use jq to properly construct JSON payload with raw binary data
+                # Create JSON payload using jq with file input to avoid argument length limits
                 JSON_PAYLOAD=$(jq -n \
                   --arg description "Demo image for ${{ github.repository }} PR #${{ github.event.pull_request.number }}" \
                   --arg filename "pr-${{ github.event.pull_request.number }}-header.gif" \
-                  --argjson content "$RAW_CONTENT" \
+                  --rawfile content "docs/img/header.gif" \
                   '{
                     description: $description,
                     public: true,
