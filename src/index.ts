@@ -237,33 +237,35 @@ function defaultFilter<Value>(
  * @returns Calculated page size
  */
 export function calculateDynamicPageSize(fallbackPageSize: number): number {
+  let rawPageSize: number;
+
   try {
     // Get terminal height from process.stdout.rows
     const terminalHeight = process.stdout.rows;
 
     if (!terminalHeight || terminalHeight < 1) {
       // Fallback to static page size if terminal height is not available
-      return fallbackPageSize;
+      rawPageSize = fallbackPageSize;
+    } else {
+      // Reserve space for UI elements:
+      // - 1 line for the prompt message
+      // - 1 line for help instructions
+      // - 1 line for search input (if present)
+      // - 1 line for error messages (if present)
+      // - 1 line for description (if present)
+      // - 1 line for buffer/spacing
+      const reservedLines = 6;
+
+      // Calculate available lines for choices
+      rawPageSize = terminalHeight - reservedLines;
     }
-
-    // Reserve space for UI elements:
-    // - 1 line for the prompt message
-    // - 1 line for help instructions
-    // - 1 line for search input (if present)
-    // - 1 line for error messages (if present)
-    // - 1 line for description (if present)
-    // - 1 line for buffer/spacing
-    const reservedLines = 6;
-
-    // Calculate available lines for choices
-    const availableLines = Math.max(terminalHeight - reservedLines, 2);
-
-    // Ensure minimum page size for usability and cap maximum to prevent overwhelming display
-    return Math.max(2, Math.min(availableLines, 50));
   } catch {
     // If there's any error accessing terminal dimensions, fallback gracefully
-    return Math.max(2, Math.min(fallbackPageSize, 50));
+    rawPageSize = fallbackPageSize;
   }
+
+  // Ensure minimum page size for usability and cap maximum to prevent overwhelming display
+  return Math.max(2, Math.min(rawPageSize, 50));
 }
 
 /**

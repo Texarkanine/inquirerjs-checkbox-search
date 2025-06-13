@@ -2,6 +2,22 @@ import { describe, it, expect } from 'vitest';
 import { render } from '@inquirer/testing';
 import checkboxSearch from '../index.js';
 
+// Utility function to wait for a condition to be true with polling
+async function waitForCondition(
+  condition: () => boolean,
+  timeout = 1000,
+  interval = 10,
+): Promise<void> {
+  const startTime = Date.now();
+
+  while (!condition()) {
+    if (Date.now() - startTime > timeout) {
+      throw new Error(`Condition not met within ${timeout}ms`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, interval));
+  }
+}
+
 describe('Edge cases', () => {
   it('should handle empty choices array', async () => {
     const { getScreen } = await render(checkboxSearch, {
@@ -33,6 +49,7 @@ describe('Edge cases', () => {
 
     // Search should work with large dataset
     await events.type('100');
+    await waitForCondition(() => getScreen().includes('Item 100'));
     const searchScreen = getScreen();
     expect(searchScreen).toContain('Item 100');
     expect(searchScreen).not.toContain('Item 200');
@@ -54,6 +71,7 @@ describe('Edge cases', () => {
 
     // Search to filter results
     await events.type('100');
+    await waitForCondition(() => getScreen().includes('Item 100'));
     screen = getScreen();
     expect(screen).toContain('Item 100');
     expect(screen).not.toContain('Item 0');
@@ -76,6 +94,13 @@ describe('Edge cases', () => {
 
     // Search with emoji
     await events.type('🚀');
+    await waitForCondition(() => {
+      const currentScreen = getScreen();
+      return (
+        currentScreen.includes('🚀 Rocket') &&
+        !currentScreen.includes('Iñtërnâtiônàlizætiøn')
+      );
+    });
     screen = getScreen();
     expect(screen).toContain('🚀 Rocket');
     expect(screen).not.toContain('Iñtërnâtiônàlizætiøn');
@@ -84,6 +109,13 @@ describe('Edge cases', () => {
     await events.keypress('backspace');
     await events.keypress('backspace'); // Emoji might need multiple backspaces
     await events.type('Iñt');
+    await waitForCondition(() => {
+      const currentScreen = getScreen();
+      return (
+        currentScreen.includes('Iñtërnâtiônàlizætiøn') &&
+        !currentScreen.includes('🚀 Rocket')
+      );
+    });
     screen = getScreen();
     expect(screen).toContain('Iñtërnâtiônàlizætiøn');
     expect(screen).not.toContain('🚀 Rocket');

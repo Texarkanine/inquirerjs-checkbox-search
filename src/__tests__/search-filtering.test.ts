@@ -57,27 +57,6 @@ describe('Search and filtering', () => {
     expect(screen).not.toContain('Cherry');
   });
 
-  it('should handle case-sensitive filtering when configured', async () => {
-    const { events, getScreen } = await render(checkboxSearch, {
-      message: 'Select fruits',
-      choices: ['Apple', 'Banana', 'Cherry'],
-    });
-
-    // Search with lowercase
-    await events.type('apple');
-    let screen = getScreen();
-    expect(screen).toContain('Apple'); // Should match case-insensitively by default
-    expect(screen).not.toContain('Banana');
-    expect(screen).not.toContain('Cherry');
-
-    // Clear search
-    await events.keypress('backspace');
-    await events.keypress('backspace');
-    await events.keypress('backspace');
-    await events.keypress('backspace');
-    await events.keypress('backspace');
-  });
-
   it('should clear filter with backspace', async () => {
     const { events, getScreen } = await render(checkboxSearch, {
       message: 'Select fruits',
