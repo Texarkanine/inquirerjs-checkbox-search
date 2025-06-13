@@ -1,4 +1,4 @@
-name: Generate Demo GIFs
+name: Generate Header Demo GIF
 
 on:
   pull_request:
@@ -8,7 +8,7 @@ on:
       - 'examples/**'
       - 'demos/**'
       - 'src/**'
-      - '.github/workflows/generate-demos.yml'
+      - '.github/workflows/generate-header-demo.yml'
   push:
     branches:
       - main
@@ -16,7 +16,7 @@ on:
       - 'examples/**'
       - 'demos/**'
       - 'src/**'
-      - '.github/workflows/generate-demos.yml'
+      - '.github/workflows/generate-header-demo.yml'
   workflow_dispatch:
     inputs:
       header_example:
@@ -33,7 +33,7 @@ on:
         default: 'false'
 
 jobs:
-  generate-demos:
+  generate-header-demo:
     runs-on: ubuntu-latest
     permissions:
       contents: write
