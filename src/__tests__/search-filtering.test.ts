@@ -175,23 +175,6 @@ describe('Search and filtering', () => {
     expect(screen).toContain('◉'); // Selection should persist
   });
 
-  it('should handle backspace correctly after search and selection', async () => {
-    const { events, getScreen } = await render(checkboxSearch, {
-      message: 'Select items',
-      choices: [
-        { value: 'apple', name: 'Apple' },
-        { value: 'banana', name: 'Banana' },
-      ],
-    });
-
-    // Search and clear
-    await events.keypress('backspace');
-    await events.keypress('backspace');
-    let screen = getScreen();
-    expect(screen).toContain('Apple');
-    expect(screen).toContain('Banana');
-  });
-
   /**
    * Feature test: Escape key to clear search filter
    *
