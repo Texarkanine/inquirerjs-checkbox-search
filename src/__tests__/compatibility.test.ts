@@ -40,7 +40,9 @@ describe('Node.js Compatibility', () => {
           // Should show more than default 7 items since mocked terminal height is 30
           expect(screen).toContain('Item 0');
           // Expect at least 10 choices to be visible (more flexible than hard-coding Item 20)
-          const itemCount = screen.split('\n').filter(l => /Item \d+/.test(l)).length;
+          const itemCount = screen
+            .split('\n')
+            .filter((l) => /Item \d+/.test(l)).length;
           expect(itemCount).toBeGreaterThan(10);
 
           // Verify the spy was used

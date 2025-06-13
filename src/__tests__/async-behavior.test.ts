@@ -1,8 +1,17 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render } from '@inquirer/testing';
 import checkboxSearch from '../index.js';
 
 describe('Async behavior', () => {
+  beforeEach(() => {
+    // Use fake timers for deterministic async testing
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    // Restore real timers after each test
+    vi.useRealTimers();
+  });
   it('should show loading state during async operations', async () => {
     const slowSource = async () => {
       await new Promise((resolve) => setTimeout(resolve, 100)); // Slow async operation
@@ -21,8 +30,10 @@ describe('Async behavior', () => {
     let screen = getScreen();
     expect(screen).toMatch(/loading|wait/i);
 
-    // Wait for results to load
-    await new Promise((resolve) => setTimeout(resolve, 150));
+    // Fast-forward time to complete async operations
+    vi.advanceTimersByTime(150);
+    await vi.runAllTimersAsync();
+
     screen = getScreen();
     expect(screen).toContain('Result 1');
     expect(screen).toContain('Result 2');
@@ -39,8 +50,10 @@ describe('Async behavior', () => {
       source: errorSource,
     });
 
-    // Wait for error to occur
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    // Fast-forward time for error to occur
+    vi.advanceTimersByTime(50);
+    await vi.runAllTimersAsync();
+
     const screen = getScreen();
     expect(screen).toMatch(/error|failed|network error/i);
   });

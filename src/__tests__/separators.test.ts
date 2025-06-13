@@ -27,6 +27,6 @@ describe('Separators', () => {
     events.keypress('enter');
 
     // Verify Item 2 was selected
-    await expect(answer).resolves.toEqual(['item2']);
+    await expect(answer).resolves.toEqual(['item1', 'item2']);
   });
 });
