@@ -160,14 +160,18 @@ jobs:
               git commit -m "Initialize demo-images branch"
             fi
             
-             # Copy the demo image with deterministic name
+             # Copy the demo image with deterministic name using a temp directory
              PR_IMAGE="pr-${{ github.event.pull_request.number }}-header.webm"
-             git checkout "$CURRENT_SHA" -- docs/img/header.webm
-             cp "docs/img/header.webm" "$PR_IMAGE"
              
-             # Clean up the temporary file to avoid adding it to the orphan branch
-             rm -f docs/img/header.webm
-             rm -rf docs/  # Remove the entire docs directory if it's empty
+             # Create a temporary directory to avoid polluting orphan branch
+             mkdir -p /tmp/header-extract
+             git checkout "$CURRENT_SHA" -- docs/img/header.webm
+             mv docs/img/header.webm /tmp/header-extract/
+             rm -rf docs/  # Remove entire docs directory from orphan branch
+             
+             # Copy from temp location to final name
+             cp /tmp/header-extract/header.webm "$PR_IMAGE"
+             rm -rf /tmp/header-extract
             
             # Add and commit ONLY the PR-specific image
             git add "$PR_IMAGE"
