@@ -33,7 +33,7 @@ describe('Async behavior', () => {
     // Fast-forward time to complete async operations
     vi.advanceTimersByTime(150);
     await vi.runAllTimersAsync();
-
+    
     screen = getScreen();
     expect(screen).toContain('Result 1');
     expect(screen).toContain('Result 2');
@@ -53,7 +53,7 @@ describe('Async behavior', () => {
     // Fast-forward time for error to occur
     vi.advanceTimersByTime(50);
     await vi.runAllTimersAsync();
-
+    
     const screen = getScreen();
     expect(screen).toMatch(/error|failed|network error/i);
   });
@@ -90,13 +90,14 @@ describe('Async behavior', () => {
 
     // Type quickly to trigger multiple requests
     events.type('a');
-    await new Promise((resolve) => setTimeout(resolve, 10)); // Allow first request to start
+    vi.advanceTimersByTime(10); // Allow first request to start
     events.type('b');
-    await new Promise((resolve) => setTimeout(resolve, 10)); // Allow second request to start
+    vi.advanceTimersByTime(10); // Allow second request to start
     events.type('c');
 
-    // Wait for requests to complete
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    // Fast-forward time for requests to complete
+    vi.advanceTimersByTime(100);
+    await vi.runAllTimersAsync();
 
     const screen = getScreen();
     // Should only show results from the latest request
