@@ -6,7 +6,7 @@ on:
 
 jobs:
   cleanup-demo-image:
-    name: "Remove PR Demo Image"
+    name: 'Remove PR Demo Image'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -21,11 +21,11 @@ jobs:
       - name: Remove demo image from orphan branch
         run: |
           echo "🧹 Cleaning up demo image for closed PR #${{ github.event.pull_request.number }}"
-          
+
           # Configure git
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          
+
           # Check if demo-images branch exists
           if git ls-remote --heads origin demo-images | grep -q demo-images; then
             echo "📁 Switching to demo-images branch"
@@ -56,4 +56,4 @@ jobs:
           echo "## 🧹 Demo Image Cleanup Summary"
           echo "- PR: #${{ github.event.pull_request.number }}"
           echo "- Action: ${{ github.event.action }}"
-          echo "- Image: pr-${{ github.event.pull_request.number }}-header.gif" 
+          echo "- Image: pr-${{ github.event.pull_request.number }}-header.gif"
