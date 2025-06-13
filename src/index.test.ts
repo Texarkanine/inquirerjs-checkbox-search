@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { render } from '@inquirer/testing';
 import checkboxSearch, {
   Separator,
@@ -1609,45 +1609,57 @@ describe('checkbox-search prompt', () => {
   });
 
   describe('calculateDynamicPageSize', () => {
-    const originalRows = process.stdout.rows;
     const originalIsTTY = process.stdout.isTTY;
+    const originalRows = (process.stdout as any).rows;
+    const hasOriginalRows = 'rows' in process.stdout;
+
+    beforeEach(() => {
+      // Ensure process.stdout.rows exists so we can spy on it
+      if (!hasOriginalRows) {
+        Object.defineProperty(process.stdout, 'rows', {
+          value: 24, // Default value for CI environments
+          writable: true,
+          configurable: true,
+        });
+      }
+    });
 
     afterEach(() => {
-      // Restore original values
-      Object.defineProperty(process.stdout, 'rows', {
-        value: originalRows,
-        configurable: true,
-      });
+      // Restore mocks
+      vi.restoreAllMocks();
+
+      // Restore original state
       Object.defineProperty(process.stdout, 'isTTY', {
         value: originalIsTTY,
         configurable: true,
       });
+
+      if (hasOriginalRows) {
+        Object.defineProperty(process.stdout, 'rows', {
+          value: originalRows,
+          configurable: true,
+        });
+      } else {
+        // Remove the property if it didn't exist originally
+        delete (process.stdout as any).rows;
+      }
     });
 
     it('should return fallback when terminal height is not available', () => {
       // Mock process.stdout.rows as undefined
-      Object.defineProperty(process.stdout, 'rows', {
-        value: undefined,
-        configurable: true,
-      });
+      vi.spyOn(process.stdout, 'rows', 'get').mockReturnValue(undefined as any);
 
       const result = calculateDynamicPageSize(7);
       expect(result).toBe(7);
     });
 
     it('should return fallback when terminal height is zero or negative', () => {
-      Object.defineProperty(process.stdout, 'rows', {
-        value: 0,
-        configurable: true,
-      });
+      vi.spyOn(process.stdout, 'rows', 'get').mockReturnValue(0);
 
       let result = calculateDynamicPageSize(5);
       expect(result).toBe(5);
 
-      Object.defineProperty(process.stdout, 'rows', {
-        value: -1,
-        configurable: true,
-      });
+      vi.spyOn(process.stdout, 'rows', 'get').mockReturnValue(-1);
 
       result = calculateDynamicPageSize(10);
       expect(result).toBe(10);
@@ -1655,10 +1667,7 @@ describe('checkbox-search prompt', () => {
 
     it('should calculate page size correctly for normal terminal heights', () => {
       // Test with terminal height of 30
-      Object.defineProperty(process.stdout, 'rows', {
-        value: 30,
-        configurable: true,
-      });
+      vi.spyOn(process.stdout, 'rows', 'get').mockReturnValue(30);
 
       const result = calculateDynamicPageSize(7);
       // 30 - 6 (reserved) = 24, capped at max 50, min 2
@@ -1667,10 +1676,7 @@ describe('checkbox-search prompt', () => {
 
     it('should enforce minimum page size for very small terminals', () => {
       // Test with very small terminal
-      Object.defineProperty(process.stdout, 'rows', {
-        value: 5,
-        configurable: true,
-      });
+      vi.spyOn(process.stdout, 'rows', 'get').mockReturnValue(5);
 
       const result = calculateDynamicPageSize(7);
       // 5 - 6 = -1, but enforced minimum is 2
@@ -1679,10 +1685,7 @@ describe('checkbox-search prompt', () => {
 
     it('should enforce maximum page size for very large terminals', () => {
       // Test with very large terminal
-      Object.defineProperty(process.stdout, 'rows', {
-        value: 200,
-        configurable: true,
-      });
+      vi.spyOn(process.stdout, 'rows', 'get').mockReturnValue(200);
 
       const result = calculateDynamicPageSize(7);
       // 200 - 6 = 194, but capped at maximum 50
@@ -1691,11 +1694,8 @@ describe('checkbox-search prompt', () => {
 
     it('should handle errors gracefully and return fallback', () => {
       // Create a scenario where accessing rows throws an error
-      Object.defineProperty(process.stdout, 'rows', {
-        get() {
-          throw new Error('Access denied');
-        },
-        configurable: true,
+      vi.spyOn(process.stdout, 'rows', 'get').mockImplementation(() => {
+        throw new Error('Access denied');
       });
 
       const result = calculateDynamicPageSize(8);
@@ -1706,28 +1706,19 @@ describe('checkbox-search prompt', () => {
       // Test boundary conditions
 
       // Terminal height exactly at reserved lines
-      Object.defineProperty(process.stdout, 'rows', {
-        value: 6,
-        configurable: true,
-      });
+      vi.spyOn(process.stdout, 'rows', 'get').mockReturnValue(6);
 
       let result = calculateDynamicPageSize(7);
       expect(result).toBe(2); // Min enforced
 
       // Terminal height just above reserved lines
-      Object.defineProperty(process.stdout, 'rows', {
-        value: 8,
-        configurable: true,
-      });
+      vi.spyOn(process.stdout, 'rows', 'get').mockReturnValue(8);
 
       result = calculateDynamicPageSize(7);
       expect(result).toBe(2); // 8 - 6 = 2
 
       // Terminal height that results in exactly max page size
-      Object.defineProperty(process.stdout, 'rows', {
-        value: 56, // 56 - 6 = 50
-        configurable: true,
-      });
+      vi.spyOn(process.stdout, 'rows', 'get').mockReturnValue(56); // 56 - 6 = 50
 
       result = calculateDynamicPageSize(7);
       expect(result).toBe(50);
@@ -2167,41 +2158,58 @@ describe('checkbox-search prompt', () => {
 describe('Node.js Compatibility', () => {
   describe('Process.stdout.rows mocking', () => {
     it('should mock terminal rows safely across Node versions', async () => {
-      // Skip this test if process.stdout.rows doesn't exist (non-TTY environments)
-      if (!('rows' in process.stdout)) {
-        console.log(
-          'Skipping test: process.stdout.rows not available in this environment',
-        );
-        return;
-      }
-
-      const manyChoices = Array.from({ length: 50 }, (_, i) => ({
-        value: `item${i}`,
-        name: `Item ${i}`,
-      }));
-
-      // Use vi.spyOn instead of Object.defineProperty for Node 20+ compatibility
-      const rowsSpy = vi
-        .spyOn(process.stdout, 'rows', 'get')
-        .mockReturnValue(30);
+      const originalRows = (process.stdout as any).rows;
+      const hasOriginalRows = 'rows' in process.stdout;
 
       try {
-        const { getScreen } = await render(checkboxSearch, {
-          message: 'Select items',
-          choices: manyChoices,
-          // No pageSize specified - should auto-size based on mocked terminal height
-        });
+        // Mock process.stdout.rows if it doesn't exist (CI/non-TTY environments)
+        if (!hasOriginalRows) {
+          Object.defineProperty(process.stdout, 'rows', {
+            value: 24, // Default value for CI environments
+            writable: true,
+            configurable: true,
+          });
+        }
 
-        const screen = getScreen();
-        // Should show more than default 7 items since mocked terminal height is 30
-        expect(screen).toContain('Item 0');
-        expect(screen).toContain('Item 20'); // Should show many more items
+        const manyChoices = Array.from({ length: 50 }, (_, i) => ({
+          value: `item${i}`,
+          name: `Item ${i}`,
+        }));
 
-        // Verify the spy was used
-        expect(rowsSpy).toHaveBeenCalled();
+        // Use vi.spyOn instead of Object.defineProperty for Node 20+ compatibility
+        const rowsSpy = vi
+          .spyOn(process.stdout, 'rows', 'get')
+          .mockReturnValue(30);
+
+        try {
+          const { getScreen } = await render(checkboxSearch, {
+            message: 'Select items',
+            choices: manyChoices,
+            // No pageSize specified - should auto-size based on mocked terminal height
+          });
+
+          const screen = getScreen();
+          // Should show more than default 7 items since mocked terminal height is 30
+          expect(screen).toContain('Item 0');
+          expect(screen).toContain('Item 20'); // Should show many more items
+
+          // Verify the spy was used
+          expect(rowsSpy).toHaveBeenCalled();
+        } finally {
+          // Restore spy
+          rowsSpy.mockRestore();
+        }
       } finally {
-        // Restore original behavior
-        rowsSpy.mockRestore();
+        // Restore original state
+        if (hasOriginalRows) {
+          Object.defineProperty(process.stdout, 'rows', {
+            value: originalRows,
+            configurable: true,
+          });
+        } else {
+          // Remove the property if it didn't exist originally
+          delete (process.stdout as any).rows;
+        }
       }
     });
   });
