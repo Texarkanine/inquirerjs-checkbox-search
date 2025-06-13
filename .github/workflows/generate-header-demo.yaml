@@ -38,7 +38,7 @@ concurrency:
 
 jobs:
   generate-header-demo:
-    name: "Generate"
+    name: 'Generate'
     runs-on: ubuntu-latest
     permissions:
       contents: write
