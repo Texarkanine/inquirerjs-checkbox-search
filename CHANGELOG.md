@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.2.0](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v0.1.2...v0.2.0) (2025-06-13)
+
+
+### Features
+
+* **description:** move descriptions from inline to bottom display ([7102295](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/710229536868c42217764faa746cebd94fef308b))
+* **examples:** add separators to examples/fruits.js ([7102295](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/710229536868c42217764faa746cebd94fef308b))
+* **ui:** automatic page sizing based on terminal height ([7102295](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/710229536868c42217764faa746cebd94fef308b))
+
+
+### Bug Fixes
+
+* **deps:** bump vitest to 3.x & remove unused ansi-escapes ([7102295](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/710229536868c42217764faa746cebd94fef308b))
+* **deps:** put ansi-escapes back in explicit deps; we use it ([62be6a0](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/62be6a0d606031473a13caf6a47b375773951da7))
+* **instructions:** 'instructions' were not used in UI ([7102295](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/710229536868c42217764faa746cebd94fef308b))
+* prevent tab key search pollution + enhance UI descriptions ([#6](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/6)) ([7102295](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/710229536868c42217764faa746cebd94fef308b))
+* **separator:** resolve separator navigation bug that caused wrong item selection ([7102295](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/710229536868c42217764faa746cebd94fef308b))
+* **tests:** many test quality improvements ([7102295](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/710229536868c42217764faa746cebd94fef308b))
+* **ui:** do not write to TTY when there is no TTY ([7102295](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/710229536868c42217764faa746cebd94fef308b))
+
 ## [0.1.2](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v0.1.1...v0.1.2) (2025-06-10)
 
 
