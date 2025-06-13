@@ -28,11 +28,8 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Test (with code quality checks)
+      - name: Test (with code quality checks and coverage)
         run: npm run test:ci
-
-      - name: Test with coverage
-        run: npm run test:coverage
 
       - name: Upload coverage to Codecov
         if: matrix.node-version == 20
