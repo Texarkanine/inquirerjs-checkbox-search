@@ -74,8 +74,11 @@ describe('Page sizing', () => {
           configurable: true,
         });
       } else {
-        // Remove the property if it didn't exist originally
-        delete (process.stdout as any).rows;
+        // Property didn't exist originally – remove it cleanly
+        Object.defineProperty(process.stdout, 'rows', {
+          value: undefined,
+          configurable: true,
+        });
       }
     });
 
@@ -88,12 +91,13 @@ describe('Page sizing', () => {
     });
 
     it('should return fallback when terminal height is zero or negative', () => {
-      vi.spyOn(process.stdout, 'rows', 'get').mockReturnValue(0);
+      const rowsSpy = vi.spyOn(process.stdout, 'rows', 'get');
+      rowsSpy.mockReturnValue(0);
 
       let result = calculateDynamicPageSize(5);
       expect(result).toBe(5);
 
-      vi.spyOn(process.stdout, 'rows', 'get').mockReturnValue(-1);
+      rowsSpy.mockReturnValue(-1);
 
       result = calculateDynamicPageSize(10);
       expect(result).toBe(10);
@@ -138,21 +142,22 @@ describe('Page sizing', () => {
 
     it('should calculate correctly for edge case terminal sizes', () => {
       // Test boundary conditions
+      const rowsSpy = vi.spyOn(process.stdout, 'rows', 'get');
 
       // Terminal height exactly at reserved lines
-      vi.spyOn(process.stdout, 'rows', 'get').mockReturnValue(6);
+      rowsSpy.mockReturnValue(6);
 
       let result = calculateDynamicPageSize(7);
       expect(result).toBe(2); // Min enforced
 
       // Terminal height just above reserved lines
-      vi.spyOn(process.stdout, 'rows', 'get').mockReturnValue(8);
+      rowsSpy.mockReturnValue(8);
 
       result = calculateDynamicPageSize(7);
       expect(result).toBe(2); // 8 - 6 = 2
 
       // Terminal height that results in exactly max page size
-      vi.spyOn(process.stdout, 'rows', 'get').mockReturnValue(56); // 56 - 6 = 50
+      rowsSpy.mockReturnValue(56); // 56 - 6 = 50
 
       result = calculateDynamicPageSize(7);
       expect(result).toBe(50);
