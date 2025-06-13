@@ -6,8 +6,8 @@ Output docs/img/basic-demo.gif
 
 # Terminal appearance settings for deterministic output
 Set FontSize 14
-Set Width 1000
-Set Height 600
+Set Width 750
+Set Height 250
 Set TypingSpeed 100ms
 Set Theme "Catppuccin Mocha"
 Set Padding 20
