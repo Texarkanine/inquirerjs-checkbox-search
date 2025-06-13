@@ -260,7 +260,7 @@ jobs:
             <details>
             <summary>🔍 Technical Details</summary>
 
-            The demo was generated from commit `${{ github.sha }}` using:
+            The demo was generated from commit [`${{ github.sha }}`](https://github.com/${{ github.repository }}/commit/${{ github.sha }}) using:
             - VHS tape file: [`demos/${{ steps.header.outputs.example }}.tape`](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/demos/${{ steps.header.outputs.example }}.tape)
             - Example: [`examples/${{ steps.header.outputs.example }}.js`](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/examples/${{ steps.header.outputs.example }}.js)
             - Docker image: Built from [`demos/Dockerfile`](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/demos/Dockerfile)
