@@ -139,8 +139,9 @@ jobs:
              # Try gist first, fall back to repo if GIST_TOKEN not available
              if [ -n "${{ secrets.GIST_TOKEN }}" ]; then
                echo "🔄 Trying gist upload..."
-                # Create JSON payload using jq with file input to avoid argument length limits
-                JSON_PAYLOAD=$(jq -n \
+                # Create JSON payload in temp file to avoid command line length limits
+                TEMP_JSON="/tmp/gist-payload.json"
+                jq -n \
                   --arg description "Demo image for ${{ github.repository }} PR #${{ github.event.pull_request.number }}" \
                   --arg filename "pr-${{ github.event.pull_request.number }}-header.gif" \
                   --rawfile content "docs/img/header.gif" \
@@ -152,14 +153,17 @@ jobs:
                         content: $content
                       }
                     }
-                  }')
+                  }' > "$TEMP_JSON"
                 
                 GIST_RESPONSE=$(curl -s -X POST \
                   -H "Authorization: token ${{ secrets.GIST_TOKEN }}" \
                   -H "Accept: application/vnd.github.v3+json" \
                   -H "Content-Type: application/json" \
                   https://api.github.com/gists \
-                  -d "$JSON_PAYLOAD")
+                  --data @"$TEMP_JSON")
+                
+                # Clean up temp file
+                rm -f "$TEMP_JSON"
                
                # Check if gist creation was successful
                GIST_ID=$(echo "$GIST_RESPONSE" | jq -r '.id // empty')
