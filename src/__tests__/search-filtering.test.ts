@@ -2,6 +2,22 @@ import { describe, it, expect } from 'vitest';
 import { render } from '@inquirer/testing';
 import checkboxSearch from '../index.js';
 
+// Utility function to wait for a condition to be true with polling
+async function waitForCondition(
+  condition: () => boolean,
+  timeout = 1000,
+  interval = 10
+): Promise<void> {
+  const startTime = Date.now();
+  
+  while (!condition()) {
+    if (Date.now() - startTime > timeout) {
+      throw new Error(`Condition not met within ${timeout}ms`);
+    }
+    await new Promise(resolve => setTimeout(resolve, interval));
+  }
+}
+
 describe('Search and filtering', () => {
   it('should filter choices based on search term', async () => {
     const { events, getScreen } = await render(checkboxSearch, {
@@ -236,8 +252,11 @@ describe('Search and filtering', () => {
       source: mockSource,
     });
 
-    // Wait for initial load
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    // Wait for initial load by polling for expected content
+    await waitForCondition(() => {
+      const screen = getScreen();
+      return screen.includes('Item One') && screen.includes('Item Two') && screen.includes('Another Item');
+    });
 
     let screen = getScreen();
     expect(screen).toContain('Item One');
@@ -246,7 +265,12 @@ describe('Search and filtering', () => {
 
     // Search for specific term
     events.type('another');
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    
+    // Wait for search results by polling for expected content
+    await waitForCondition(() => {
+      const screen = getScreen();
+      return !screen.includes('Item One') && !screen.includes('Item Two') && screen.includes('Another Item');
+    });
 
     screen = getScreen();
     expect(screen).not.toContain('Item One');
