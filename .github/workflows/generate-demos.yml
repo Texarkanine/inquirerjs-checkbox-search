@@ -5,6 +5,7 @@ on:
     paths: 
       - 'examples/**'
       - 'demos/**'
+      - 'Dockerfile'
       - '.github/workflows/generate-demos.yml'
   workflow_dispatch:
     inputs:
@@ -25,52 +26,50 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
       
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Build project
-        run: npm run build
+      - name: Build custom VHS Docker image
+        run: |
+          docker build -t vhs-node-demo .
       
       - name: Create output directory
         run: mkdir -p docs/img
       
       - name: Generate basic demo GIF
         run: |
-          echo "🎬 Generating basic demo..."
-          docker run --rm -v $PWD:/vhs ghcr.io/charmbracelet/vhs demos/basic.tape
-          echo "✅ Basic demo generated"
+          docker run --rm \
+            -v ${{ github.workspace }}/docs/img:/workspace/docs/img \
+            vhs-node-demo demos/basic.tape
       
-      - name: Verify GIF was created
+      - name: List generated files
         run: |
+          echo "Generated files:"
+          ls -la docs/img/
           if [ -f "docs/img/basic-demo.gif" ]; then
-            echo "✅ basic-demo.gif created successfully"
-            ls -la docs/img/basic-demo.gif
+            echo "✅ basic-demo.gif generated successfully"
+            echo "File size: $(du -h docs/img/basic-demo.gif)"
           else
-            echo "❌ basic-demo.gif was not created"
+            echo "❌ basic-demo.gif was not generated"
             exit 1
-          fi
-      
-      - name: Commit and push GIFs
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add docs/img/*.gif
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "Update demo GIFs [skip ci]"
-            git push
-            echo "✅ Demo GIFs updated and committed"
           fi
       
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: demo-gifs
-          path: docs/img/*.gif 
+          path: docs/img/*.gif
+          retention-days: 30
+      
+      - name: Commit generated GIFs
+        if: success()
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add docs/img/*.gif
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit --no-gpg-sign -m "docs: Update demo GIFs [skip ci]"
+            git push
+          fi 

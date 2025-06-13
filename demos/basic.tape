@@ -1,43 +1,55 @@
 # VHS Tape File for Basic Example Demo
-# This scripts a terminal session showing the basic checkbox search functionality
+# Records the actual inquirerjs-checkbox-search basic example running
 
 # Output settings
 Output docs/img/basic-demo.gif
 
 # Terminal appearance settings
 Set FontSize 14
-Set Width 800
-Set Height 500
-Set TypingSpeed 80ms
+Set Width 1000
+Set Height 600
+Set TypingSpeed 100ms
 Set Theme "Catppuccin Mocha"
 Set Padding 20
 
-# Clear terminal and run the basic example
+# Clear terminal and show the command we'll run
 Type "clear"
 Enter
 Sleep 500ms
+
+# Show the command prompt
+Type "# Demo: inquirerjs-checkbox-search basic example"
+Enter
 Type "node examples/basic.js"
 Enter
-Sleep 1s
+Sleep 1.5s
 
-# Show the prompt appearing
-Sleep 1s
+# Wait for the prompt to appear, then interact with it
+# The basic example shows a multi-select with React, Vue, Angular, etc.
 
-# Start typing to search for React
+# First, let's search for "react" to filter
 Type "react"
-Sleep 800ms
-Tab
+Sleep 1s
+
+# Select React (should be filtered to show only React)
+Space
 Sleep 500ms
 
-# Navigate down and select Vue
+# Clear the search to show all options again
+Backspace 5
+Sleep 800ms
+
+# Navigate to Vue and select it
+Down Down
+Space
+Sleep 500ms
+
+# Navigate to Angular and select it  
 Down
-Sleep 500ms
-Type "vue"
-Sleep 800ms
-Tab
+Space
 Sleep 500ms
 
-# Confirm selection
+# Submit the selection
 Enter
 Sleep 2s
 

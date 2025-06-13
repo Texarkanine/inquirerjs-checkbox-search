@@ -117,18 +117,52 @@ jobs:
 - **Risk**: File path issues → **Mitigation**: Use absolute paths in tape files
 
 ## Current Status
-🟡 **Testing in CI** - Pushed to GitHub, waiting for workflow results
+🔴 **Need Custom Docker Image** - VHS Docker image lacks Node.js to run our examples
+
+## REVISED PLAN: Custom Docker Image with Node.js + VHS
+
+### The Problem
+- Official VHS Docker image (`ghcr.io/charmbracelet/vhs`) is minimal and doesn't include Node.js
+- We need Node.js to actually run our examples (`node examples/basic.js`)
+- Current approach fails because `node` command doesn't exist in VHS container
+
+### The Solution
+**Build a custom Docker image that contains:**
+1. ✅ Node.js runtime (base: `node:18`)
+2. ✅ VHS installed
+3. ✅ Our project code and dependencies
+4. ✅ Ability to run actual examples
+
+## Revised Tasks
+
+### Phase 1: Custom Docker Image ⚡
+- [x] **1.1** Create `Dockerfile` that extends `node:18`
+- [x] **1.2** Install VHS in the Node.js container
+- [x] **1.3** Copy project files and install dependencies
+- [x] **1.4** Build the project inside the container
+- [ ] **1.5** Test the Dockerfile locally (if possible)
+
+### Phase 2: Update VHS Tape Files ⚡
+- [x] **2.1** Update `demos/basic.tape` to work with the new setup
+- [x] **2.2** Ensure tape file uses correct paths inside container
+- [ ] **2.3** Test that `node examples/basic.js` actually works
+
+### Phase 3: Update CI Workflow ⚡
+- [x] **3.1** Update `.github/workflows/generate-demos.yml`
+- [x] **3.2** Build our custom Docker image in CI
+- [x] **3.3** Run VHS recording inside our custom container
+- [x] **3.4** Extract generated GIFs from container
+- [x] **3.5** Commit results back to repo
+
+### Phase 4: Testing & Validation ⚡
+- [ ] **4.1** Push updated changes and test in CI
+- [ ] **4.2** Debug any Docker build issues
+- [ ] **4.3** Verify actual examples run correctly
+- [ ] **4.4** Validate generated GIF quality
+- [ ] **4.5** Update README with demo GIF
 
 ## Next Actions
-1. Monitor GitHub Actions workflow execution
-2. Debug any issues that arise in CI
-3. Verify the generated GIF quality
-4. Update README with the demo GIF
-
-## What We've Accomplished
-✅ Created VHS tape file for basic example
-✅ Set up GitHub Actions workflow with VHS Docker
-✅ Added npm scripts for local development
-✅ Pushed to GitHub and triggered CI workflow
-
-The workflow is now running at: https://github.com/Texarkanine/inquirerjs-checkbox-search/actions 
+1. **Create Dockerfile** - Node.js base + VHS installation
+2. **Update tape files** - Make sure they work with real examples
+3. **Update CI workflow** - Build custom image and record demos
+4. **Test in CI** - Push and iterate on any issues 

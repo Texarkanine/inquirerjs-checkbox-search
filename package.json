@@ -81,7 +81,8 @@
     "attw": "attw --pack",
     "pkg:inspect": "rimraf package-inspect *.tgz && npm run build && npm pack && mkdir package-inspect && tar -xzf *.tgz -C package-inspect && echo '\\n📦 Package extracted to package-inspect/ for inspection'",
     "prepublishOnly": "npm run clean && npm run build && npm run test:ci && npm run attw",
-    "demo:generate": "docker run --rm -v $PWD:/vhs ghcr.io/charmbracelet/vhs demos/basic.tape",
+    "demo:build": "docker build -t vhs-node-demo .",
+    "demo:generate": "npm run demo:build && docker run --rm -v $PWD/docs/img:/workspace/docs/img vhs-node-demo demos/basic.tape",
     "demo:generate:all": "npm run demo:generate"
   },
   "dependencies": {
