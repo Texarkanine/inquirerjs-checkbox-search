@@ -188,15 +188,15 @@ jobs:
           comment-author: 'github-actions[bot]'
           body-includes: 'Header Demo GIF'
 
-      - name: Comment on demo changes
-        if: steps.context.outputs.is_pr == 'true' && steps.context.outputs.is_release_please == 'false'
+      - name: Comment on demo changes (changed)
+        if: steps.context.outputs.is_pr == 'true' && steps.context.outputs.is_release_please == 'false' && steps.check_changes.outputs.demo_changed == 'true'
         uses: peter-evans/create-or-update-comment@v4
         with:
           comment-id: ${{ steps.find_comment.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
           edit-mode: replace
           body: |
-            ${{ steps.check_changes.outputs.demo_changed == 'true' && '## ⚠️ Header Demo GIF Changed - Review Required
+            ## ⚠️ Header Demo GIF Changed - Review Required
 
             This PR includes changes that affect the demo GIF output. 
 
@@ -223,7 +223,18 @@ jobs:
             - Example: [`examples/${{ steps.header.outputs.example }}.js`](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/examples/${{ steps.header.outputs.example }}.js)
             - Docker image: Built from [`demos/Dockerfile`](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/demos/Dockerfile)
 
-            </details>' || '## ✅ Header Demo GIF Reviewed and Stable
+            </details>
+          reactions: 'eyes'
+
+      - name: Comment on demo changes (stable)
+        if: steps.context.outputs.is_pr == 'true' && steps.context.outputs.is_release_please == 'false' && steps.check_changes.outputs.demo_changed == 'false'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ steps.find_comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          edit-mode: replace
+          body: |
+            ## ✅ Header Demo GIF Reviewed and Stable
 
             The demo GIF is now stable and matches the current functionality.
 
@@ -231,8 +242,8 @@ jobs:
             - 🎬 `docs/img/header.gif` is up-to-date
             - ✅ No further demo review required for this PR
 
-            *This comment will be updated if demo changes are detected in future commits.*' }}
-          reactions: ${{ steps.check_changes.outputs.demo_changed == 'true' && 'eyes' || 'hooray' }}
+            *This comment will be updated if demo changes are detected in future commits.*
+          reactions: 'hooray'
 
       - name: Commit demo changes (normal commits to main only)
         if: |
