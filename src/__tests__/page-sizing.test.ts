@@ -51,9 +51,9 @@ describe('Page sizing', () => {
       // Ensure process.stdout.rows exists so we can spy on it
       if (!hasOriginalRows) {
         Object.defineProperty(process.stdout, 'rows', {
-          value: 24, // Default value for CI environments
-          writable: true,
           configurable: true,
+          enumerable: true,
+          get: () => 24, // Default for CI
         });
       }
     });
