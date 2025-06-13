@@ -140,8 +140,8 @@ jobs:
             git config --local user.email "action@github.com"
             git config --local user.name "GitHub Action"
             
-            # Save current state
-            CURRENT_BRANCH="${{ github.head_ref }}"
+            # Save current state and get commit SHA (safer than branch name with slashes)
+            CURRENT_SHA="${{ github.sha }}"
             git add . && git stash || true
             
             # Create or switch to demo-images orphan branch
@@ -159,10 +159,10 @@ jobs:
               git commit -m "Initialize demo-images branch"
             fi
             
-            # Copy the demo image with deterministic name
-            PR_IMAGE="pr-${{ github.event.pull_request.number }}-header.gif"
-            git checkout "$CURRENT_BRANCH" -- docs/img/header.gif
-            cp "docs/img/header.gif" "$PR_IMAGE"
+             # Copy the demo image with deterministic name
+             PR_IMAGE="pr-${{ github.event.pull_request.number }}-header.gif"
+             git checkout "$CURRENT_SHA" -- docs/img/header.gif
+             cp "docs/img/header.gif" "$PR_IMAGE"
             
             # Add and commit the image
             git add "$PR_IMAGE"
