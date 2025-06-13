@@ -33,7 +33,7 @@ describe('Async behavior', () => {
     // Fast-forward time to complete async operations
     vi.advanceTimersByTime(150);
     await vi.runAllTimersAsync();
-    
+
     screen = getScreen();
     expect(screen).toContain('Result 1');
     expect(screen).toContain('Result 2');
@@ -53,7 +53,7 @@ describe('Async behavior', () => {
     // Fast-forward time for error to occur
     vi.advanceTimersByTime(50);
     await vi.runAllTimersAsync();
-    
+
     const screen = getScreen();
     expect(screen).toMatch(/error|failed|network error/i);
   });

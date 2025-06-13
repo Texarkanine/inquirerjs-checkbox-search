@@ -9,14 +9,17 @@ describe('Object value reference equality', () => {
     const objectValue = { id: 42, nested: { data: 'test' } };
     const primitiveValue = 'string-value';
 
-    const { answer, events } = await render(checkboxSearch<string | object | any[]>, {
-      message: 'Select items',
-      choices: [
-        { value: arrayValue, name: 'Array Choice' },
-        { value: objectValue, name: 'Object Choice' },
-        { value: primitiveValue, name: 'String Choice' },
-      ],
-    });
+    const { answer, events } = await render(
+      checkboxSearch<string | object | any[]>,
+      {
+        message: 'Select items',
+        choices: [
+          { value: arrayValue, name: 'Array Choice' },
+          { value: objectValue, name: 'Object Choice' },
+          { value: primitiveValue, name: 'String Choice' },
+        ],
+      },
+    );
 
     // Select all items
     events.keypress('tab'); // Select array choice
