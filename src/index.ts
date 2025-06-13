@@ -8,8 +8,6 @@ import {
   useMemo,
   usePrefix,
   makeTheme,
-  isUpKey,
-  isDownKey,
   isEnterKey,
   Separator,
   type Theme,
@@ -58,7 +56,7 @@ const checkboxSearchTheme: CheckboxSearchTheme = {
     help: colors.dim,
     highlight: colors.cyan,
     searchTerm: colors.cyan,
-    description: colors.dim,
+    description: colors.cyan,
     disabled: colors.dim,
   },
   helpMode: 'always',
@@ -234,6 +232,41 @@ function defaultFilter<Value>(
 }
 
 /**
+ * Calculate dynamic page size based on terminal height
+ * @param fallbackPageSize - Default page size to use if terminal height is not available
+ * @returns Calculated page size
+ */
+export function calculateDynamicPageSize(fallbackPageSize: number): number {
+  try {
+    // Get terminal height from process.stdout.rows
+    const terminalHeight = process.stdout.rows;
+
+    if (!terminalHeight || terminalHeight < 1) {
+      // Fallback to static page size if terminal height is not available
+      return fallbackPageSize;
+    }
+
+    // Reserve space for UI elements:
+    // - 1 line for the prompt message
+    // - 1 line for help instructions
+    // - 1 line for search input (if present)
+    // - 1 line for error messages (if present)
+    // - 1 line for description (if present)
+    // - 1 line for buffer/spacing
+    const reservedLines = 6;
+
+    // Calculate available lines for choices
+    const availableLines = Math.max(terminalHeight - reservedLines, 2);
+
+    // Ensure minimum page size for usability and cap maximum to prevent overwhelming display
+    return Math.max(2, Math.min(availableLines, 50));
+  } catch {
+    // If there's any error accessing terminal dimensions, fallback gracefully
+    return fallbackPageSize;
+  }
+}
+
+/**
  * Main checkbox-search prompt implementation
  *
  * A multi-select prompt with text filtering/search capability that combines
@@ -259,12 +292,24 @@ export default createPrompt(
 
     // Configuration with defaults
     const {
-      pageSize = 7,
+      pageSize: configPageSize,
       loop = true,
       required,
       validate = () => true,
       default: defaultValues = emptyArray,
     } = config;
+
+    // Calculate effective page size (memoized with terminal size tracking)
+    // If pageSize is specified, use it as fixed size
+    // If not specified, use auto-sizing that recalculates when terminal resizes
+    const terminalHeight = process.stdout.rows; // Track terminal size for memoization
+    const pageSize = useMemo(
+      () =>
+        configPageSize !== undefined
+          ? configPageSize // Fixed page size
+          : calculateDynamicPageSize(7), // Auto page size with fallback 7
+      [configPageSize, terminalHeight], // Recalculate when config OR terminal size changes
+    );
 
     const theme = makeTheme<CheckboxSearchTheme>(
       checkboxSearchTheme,
@@ -295,6 +340,9 @@ export default createPrompt(
       }
       return [];
     });
+
+    // Store the active item value instead of active index
+    const [activeItemValue, setActiveItemValue] = useState<Value | null>(null);
 
     // Compute filtered items based on search term and filtering logic
     const filteredItems = useMemo(() => {
@@ -332,8 +380,62 @@ export default createPrompt(
       return result;
     }, [allItems, searchTerm, config.source, config.filter]);
 
-    const [active, setActive] = useState<number>(0);
+    // Compute active index from activeItemValue
+    const active = useMemo(() => {
+      if (activeItemValue === null) {
+        // No active item set, default to first selectable
+        const firstSelectableIndex = filteredItems.findIndex((item) =>
+          isSelectable(item),
+        );
+        return firstSelectableIndex !== -1 ? firstSelectableIndex : 0;
+      }
+
+      // Find the item with the active value
+      const activeIndex = filteredItems.findIndex(
+        (item) =>
+          !Separator.isSeparator(item) &&
+          (item as NormalizedChoice<Value>).value === activeItemValue,
+      );
+
+      if (activeIndex !== -1) {
+        return activeIndex;
+      }
+
+      // Active item not found in filtered list, default to first selectable
+      const firstSelectableIndex = filteredItems.findIndex((item) =>
+        isSelectable(item),
+      );
+      return firstSelectableIndex !== -1 ? firstSelectableIndex : 0;
+    }, [filteredItems, activeItemValue]);
+
+    // Update activeItemValue when active index changes (e.g., when filtering results in auto-focus)
+    useEffect(() => {
+      const activeItem = filteredItems[active];
+      if (activeItem && !Separator.isSeparator(activeItem)) {
+        const currentActiveValue = (activeItem as NormalizedChoice<Value>)
+          .value;
+        if (activeItemValue !== currentActiveValue) {
+          setActiveItemValue(currentActiveValue);
+        }
+      }
+    }, [active, filteredItems, activeItemValue]);
+
     const [errorMsg, setError] = useState<string>();
+
+    // Hide cursor on mount, show on unmount (like other inquirer prompts)
+    useEffect(() => {
+      // Hide cursor when prompt starts (only in TTY environments)
+      if (process.stdout.isTTY) {
+        process.stdout.write(ansiEscapes.cursorHide);
+      }
+
+      // Show cursor when prompt ends (cleanup function)
+      return () => {
+        if (process.stdout.isTTY) {
+          process.stdout.write(ansiEscapes.cursorShow);
+        }
+      };
+    }, []);
 
     // Handle async source - load data based on search term
     useEffect(() => {
@@ -381,39 +483,14 @@ export default createPrompt(
       allItemsRef.current = allItems;
     }, [allItems]);
 
-    // Reset active index when filtered items change, but preserve cursor position during selection toggles
-    useEffect(() => {
-      // Don't reset cursor position if we're just toggling selection on the same items
-      // Only reset when the actual set of filtered items changes (not their selection state)
-      const currentFilteredValues = filteredItems
-        .filter((item) => !Separator.isSeparator(item))
-        .map((item) => (item as NormalizedChoice<Value>).value);
-
-      const activeItem = filteredItems[active];
-      const activeValue =
-        activeItem && !Separator.isSeparator(activeItem)
-          ? (activeItem as NormalizedChoice<Value>).value
-          : null;
-
-      // If the currently active item is still in the filtered list, preserve its position
-      if (activeValue && currentFilteredValues.includes(activeValue)) {
-        const newActiveIndex = filteredItems.findIndex(
-          (item) =>
-            !Separator.isSeparator(item) &&
-            (item as NormalizedChoice<Value>).value === activeValue,
-        );
-        if (newActiveIndex !== -1) {
-          setActive(newActiveIndex);
-          return;
-        }
-      }
-
-      // Otherwise reset to 0 (when filtering actually changes the set of items)
-      setActive(0);
-    }, [filteredItems, active]);
-
     // Keyboard event handling
     useKeypress((key, rl) => {
+      // Helper function to update search term in both readline and React state
+      const updateSearchTerm = (newTerm: string) => {
+        rl.clearLine(0);
+        rl.write(newTerm);
+        setSearchTerm(newTerm);
+      };
       // Allow search input even during loading, but block other actions
       const isNavigationOrAction =
         key.name === 'up' ||
@@ -431,14 +508,16 @@ export default createPrompt(
 
       // Handle Escape key - clear search term quickly
       if (key.name === 'escape') {
-        rl.line = ''; // Clear readline input first (avoid re-render)
-        setSearchTerm(''); // Then update state
+        updateSearchTerm(''); // Clear both readline and React state
         return;
       }
 
-      // Handle navigation
-      if (isUpKey(key) || isDownKey(key)) {
-        const direction = isUpKey(key) ? -1 : 1;
+      // Handle navigation - ONLY actual arrow keys (not vim j/k keys)
+      // This follows the official inquirer.js search approach
+      if (key.name === 'up' || key.name === 'down') {
+        rl.clearLine(0); // Clean readline state before navigation
+
+        const direction = key.name === 'up' ? -1 : 1;
         const selectableIndexes = filteredItems
           .map((item, index) => ({ item, index }))
           .filter(({ item }) => isSelectable(item))
@@ -463,15 +542,26 @@ export default createPrompt(
           );
         }
 
-        setActive(selectableIndexes[nextSelectableIndex] || 0);
+        // Translate from position inside `selectableIndexes` to the real index
+        const nextFilteredIndex = selectableIndexes[nextSelectableIndex];
+        const nextSelectableItem = filteredItems[nextFilteredIndex];
+        if (nextSelectableItem && isSelectable(nextSelectableItem)) {
+          setActiveItemValue(nextSelectableItem.value);
+        }
+
         return;
       }
 
-      // Handle selection toggle with tab key ONLY - prevent tab from affecting search text
+      // Handle selection toggle with tab key
       if (key.name === 'tab') {
+        const preservedSearchTerm = searchTerm;
+
         const activeItem = filteredItems[active];
         if (activeItem && isSelectable(activeItem)) {
           const activeValue = (activeItem as NormalizedChoice<Value>).value;
+
+          // Set this as the active item value so cursor position is preserved
+          setActiveItemValue(activeValue);
 
           setAllItems(
             allItems.map((item) => {
@@ -484,7 +574,12 @@ export default createPrompt(
             }),
           );
         }
-        return; // Important: return here to prevent tab from being added to search term
+
+        updateSearchTerm(preservedSearchTerm);
+
+        // return to prevent tab from affecting search text:
+        // Readline's tab completion in @inquirer/core can modify rl.line, adding spaces to the search text
+        return;
       }
 
       // Handle submission
@@ -534,9 +629,19 @@ export default createPrompt(
       // Handle all other input as search term updates EXCEPT tab
       // Only update search term for actual typing, not navigation keys
       if (!isNavigationOrAction) {
+        // For general input, only update React state since rl.line is already current
         setSearchTerm(rl.line);
       }
     });
+
+    // Calculate the active item's description using useMemo for better React patterns
+    const activeDescription = useMemo(() => {
+      const activeItem = filteredItems[active];
+      if (activeItem && !Separator.isSeparator(activeItem)) {
+        return (activeItem as NormalizedChoice<Value>).description;
+      }
+      return undefined;
+    }, [active, filteredItems]);
 
     // Create renderItem function that's reactive to current state
     const renderItem = useMemo(() => {
@@ -577,34 +682,22 @@ export default createPrompt(
         let text = (item as NormalizedChoice<Value>).name;
         if (isActive) {
           text = theme.style.highlight(text);
+          // NOTE: Description is now calculated via useMemo, not side-effect mutation
         } else if ((item as NormalizedChoice<Value>).disabled) {
           text = theme.style.disabled(text);
         }
 
         line.push(text);
 
-        // Show disabled reason if item is disabled
+        // Show disabled reason if item is disabled (but no descriptions inline anymore)
         if ((item as NormalizedChoice<Value>).disabled) {
           const disabledReason =
             typeof (item as NormalizedChoice<Value>).disabled === 'string'
               ? ((item as NormalizedChoice<Value>).disabled as string)
               : 'disabled';
           line.push(theme.style.disabled(`(${disabledReason})`));
-        } else if ((item as NormalizedChoice<Value>).description) {
-          const description = (item as NormalizedChoice<Value>).description;
-          // If using custom description styling, give full control to user (no parentheses)
-          // If using default styling, add parentheses for backward compatibility
-          const isUsingCustomDescriptionStyle =
-            config.theme?.style?.description !== undefined;
-
-          if (description) {
-            if (isUsingCustomDescriptionStyle) {
-              line.push(theme.style.description(description));
-            } else {
-              line.push(`(${theme.style.description(description)})`);
-            }
-          }
         }
+        // NOTE: Removed the inline description display - descriptions now appear at bottom
 
         return line.join(' ');
       };
@@ -623,13 +716,18 @@ export default createPrompt(
     const message = theme.style.message(config.message, status);
     let helpTip = '';
 
-    if (theme.helpMode === 'always') {
-      const tips: string[] = ['Tab to select', 'Enter to submit'];
-      helpTip = `\n${theme.style.help(`(${tips.join(', ')})`)}`;
+    if (theme.helpMode === 'always' && config.instructions !== false) {
+      if (typeof config.instructions === 'string') {
+        helpTip = `\n${theme.style.help(`(${config.instructions})`)}`;
+      } else {
+        const tips: string[] = ['Tab to select', 'Enter to submit'];
+        helpTip = `\n${theme.style.help(`(${tips.join(', ')})`)}`;
+      }
     }
 
     let searchLine = '';
-    if (config.source || searchTerm || status === 'loading') {
+    // Always show search line when search functionality is available (static choices or async source)
+    if (config.source || config.choices || searchTerm || status === 'loading') {
       const searchPrefix = status === 'loading' ? 'Loading...' : 'Search:';
       const styledTerm = searchTerm ? theme.style.searchTerm(searchTerm) : '';
       searchLine = `\n${searchPrefix} ${styledTerm}`;
@@ -653,7 +751,13 @@ export default createPrompt(
       content = `\n${page}`;
     }
 
-    return `${prefix} ${message}${helpTip}${searchLine}${errorLine}${content}${ansiEscapes.cursorHide}`;
+    // Add description of active item at the bottom (like original inquirer.js)
+    let descriptionLine = '';
+    if (activeDescription) {
+      descriptionLine = `\n${theme.style.description(activeDescription)}`;
+    }
+
+    return `${prefix} ${message}${helpTip}${searchLine}${errorLine}${content}${descriptionLine}`;
   },
 );
 
