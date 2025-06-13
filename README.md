@@ -3,7 +3,7 @@
 A multi-select prompt with text filtering/search capability for [inquirer.js](https://github.com/SBoudrias/Inquirer.js).
 
 <video autoplay loop muted playsinline width="100%">
-  <source src="docs/img/header.webm" type="video/webm">
+  <source src="docs/img/header.mp4" type="video/mp4">
   Your browser does not support the video tag.
 </video>
 
