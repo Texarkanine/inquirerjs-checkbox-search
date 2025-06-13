@@ -80,7 +80,9 @@
     "typecheck": "tsc --noEmit",
     "attw": "attw --pack",
     "pkg:inspect": "rimraf package-inspect *.tgz && npm run build && npm pack && mkdir package-inspect && tar -xzf *.tgz -C package-inspect && echo '\\n📦 Package extracted to package-inspect/ for inspection'",
-    "prepublishOnly": "npm run clean && npm run build && npm run test:ci && npm run attw"
+    "prepublishOnly": "npm run clean && npm run build && npm run test:ci && npm run attw",
+    "demo:generate": "docker run --rm -v $PWD:/vhs ghcr.io/charmbracelet/vhs demos/basic.tape",
+    "demo:generate:all": "npm run demo:generate"
   },
   "dependencies": {
     "@inquirer/core": "^10.1.13",

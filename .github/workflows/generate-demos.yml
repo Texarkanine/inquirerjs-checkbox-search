@@ -1,0 +1,76 @@
+name: Generate Demo GIFs
+
+on:
+  push:
+    paths: 
+      - 'examples/**'
+      - 'demos/**'
+      - '.github/workflows/generate-demos.yml'
+  workflow_dispatch:
+    inputs:
+      force_regenerate:
+        description: 'Force regenerate all demos'
+        required: false
+        default: 'false'
+
+jobs:
+  generate-demos:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build project
+        run: npm run build
+      
+      - name: Create output directory
+        run: mkdir -p docs/img
+      
+      - name: Generate basic demo GIF
+        run: |
+          echo "🎬 Generating basic demo..."
+          docker run --rm -v $PWD:/vhs ghcr.io/charmbracelet/vhs demos/basic.tape
+          echo "✅ Basic demo generated"
+      
+      - name: Verify GIF was created
+        run: |
+          if [ -f "docs/img/basic-demo.gif" ]; then
+            echo "✅ basic-demo.gif created successfully"
+            ls -la docs/img/basic-demo.gif
+          else
+            echo "❌ basic-demo.gif was not created"
+            exit 1
+          fi
+      
+      - name: Commit and push GIFs
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add docs/img/*.gif
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update demo GIFs [skip ci]"
+            git push
+            echo "✅ Demo GIFs updated and committed"
+          fi
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: demo-gifs
+          path: docs/img/*.gif 
