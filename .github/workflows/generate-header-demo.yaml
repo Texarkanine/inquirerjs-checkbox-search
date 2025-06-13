@@ -133,57 +133,47 @@ jobs:
           if [ -f "docs/img/header.gif" ]; then
             echo "🔄 Uploading header.gif to gist..."
             
-            FILE_SIZE=$(stat -f%z "docs/img/header.gif" 2>/dev/null || stat -c%s "docs/img/header.gif")
+                        FILE_SIZE=$(stat -f%z "docs/img/header.gif" 2>/dev/null || stat -c%s "docs/img/header.gif")
             echo "Header GIF size: ${FILE_SIZE} bytes"
             
              # Try gist first, fall back to repo if GIST_TOKEN not available
              if [ -n "${{ secrets.GIST_TOKEN }}" ]; then
                echo "🔄 Trying gist upload..."
+                # Read raw binary data and JSON-escape it directly with jq
+                RAW_CONTENT=$(jq -Rs < "docs/img/header.gif")
+                
+                # Use jq to properly construct JSON payload with raw binary data
+                JSON_PAYLOAD=$(jq -n \
+                  --arg description "Demo image for ${{ github.repository }} PR #${{ github.event.pull_request.number }}" \
+                  --arg filename "pr-${{ github.event.pull_request.number }}-header.gif" \
+                  --argjson content "$RAW_CONTENT" \
+                  '{
+                    description: $description,
+                    public: true,
+                    files: {
+                      ($filename): {
+                        content: $content
+                      }
+                    }
+                  }')
+                
+                GIST_RESPONSE=$(curl -s -X POST \
+                  -H "Authorization: token ${{ secrets.GIST_TOKEN }}" \
+                  -H "Accept: application/vnd.github.v3+json" \
+                  -H "Content-Type: application/json" \
+                  https://api.github.com/gists \
+                  -d "$JSON_PAYLOAD")
                
-               # Create empty gist first
-               GIST_RESPONSE=$(curl -s -X POST \
-                 -H "Authorization: token ${{ secrets.GIST_TOKEN }}" \
-                 -H "Accept: application/vnd.github.v3+json" \
-                 https://api.github.com/gists \
-                 -d "{
-                   \"description\": \"Demo image for ${{ github.repository }} PR #${{ github.event.pull_request.number }}\",
-                   \"public\": true,
-                   \"files\": {
-                     \"pr-${{ github.event.pull_request.number }}-header.gif\": {
-                       \"content\": \"placeholder\"
-                     }
-                   }
-                 }")
-               
+               # Check if gist creation was successful
                GIST_ID=$(echo "$GIST_RESPONSE" | jq -r '.id // empty')
                if [ -n "$GIST_ID" ] && [ "$GIST_ID" != "null" ]; then
-                 # Now upload the actual binary file using git
-                 git clone "https://${{ secrets.GIST_TOKEN }}@gist.github.com/${GIST_ID}.git" /tmp/gist
-                 cp "docs/img/header.gif" "/tmp/gist/pr-${{ github.event.pull_request.number }}-header.gif"
-                 cd /tmp/gist
-                 git config user.email "action@github.com"
-                 git config user.name "GitHub Action"
-                 git add "pr-${{ github.event.pull_request.number }}-header.gif"
-                 git commit -m "Add demo image"
-                 git push
-                 cd -
-                 rm -rf /tmp/gist
-                 
-                 UPLOAD_SUCCESS=true
-               else
-                 echo "❌ Failed to create gist"
-                 UPLOAD_SUCCESS=false
-               fi
-               
-               # Check if upload was successful
-               if [ "$UPLOAD_SUCCESS" = "true" ]; then
                  # Construct the raw URL for the image
                  IMAGE_URL="https://gist.githubusercontent.com/${{ github.actor }}/${GIST_ID}/raw/pr-${{ github.event.pull_request.number }}-header.gif"
                  PREVIEW_CONTENT="![Header Demo GIF](${IMAGE_URL})"
                  echo "✅ Uploaded to gist: $GIST_ID"
                  echo "🔗 Image URL: $IMAGE_URL"
                else
-                 echo "❌ Failed to upload to gist"
+                 echo "❌ Failed to create gist: $GIST_RESPONSE"
                  GIST_FAILED=true
                fi
              else
