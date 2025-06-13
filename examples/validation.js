@@ -1,5 +1,22 @@
 #!/usr/bin/env node
 
+/**
+ * Validation & Pre-selection Example
+ *
+ * What it demonstrates:
+ * - Input validation (2-4 selections required)
+ * - Pre-selected default options
+ * - Custom validation messages
+ *
+ * Try this:
+ * - Notice Alice and Bob are pre-selected
+ * - Try confirming with only 1 selection (validation error)
+ * - Try selecting more than 4 members (validation error)
+ *
+ * Run it:
+ * node examples/validation.js
+ */
+
 import checkboxSearch from '../dist/esm/index.js';
 
 const teamMembers = [

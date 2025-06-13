@@ -1,5 +1,19 @@
 #!/usr/bin/env node
 
+/**
+ * Search Filtering Example
+ *
+ * What it demonstrates:
+ * - Real-time search filtering
+ * - Larger list of choices (15 countries)
+ * - Custom page size and instructions
+ *
+ * Try this: Type letters to filter countries (e.g., "un" to see "United States" and "United Kingdom")
+ *
+ * Run it:
+ * node examples/search-filtering.js
+ */
+
 import checkboxSearch from '../dist/esm/index.js';
 
 const countries = [

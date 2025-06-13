@@ -1,5 +1,26 @@
 #!/usr/bin/env node
 
+/**
+ * Real Fruit Emoji Demo
+ *
+ * What it demonstrates:
+ * - Rich theming with emojis and custom styling
+ * - Function-based icons that include fruit names
+ * - Multiple separator sections for organization
+ * - Complex choice objects with descriptions
+ * - Extensive theme customization with all available style options
+ * - Botanical surprises (fruits that look like vegetables)
+ *
+ * Try this:
+ * - Search for fruits by name or emoji
+ * - Notice the beautiful emoji fruit salad output
+ * - Try selecting some "vegetables" that are actually fruits (tomato, eggplant, etc.)
+ * - Observe the extensive theming and styling options in action
+ *
+ * Run it:
+ * node examples/fruits.js
+ */
+
 // Import from built distribution
 import checkboxSearch, { Separator } from '../dist/esm/index.js';
 

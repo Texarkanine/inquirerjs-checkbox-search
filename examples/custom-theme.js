@@ -1,5 +1,17 @@
 #!/usr/bin/env node
 
+/**
+ * Custom Theming Example
+ *
+ * What it demonstrates:
+ * - Custom icons (✅, ⬜, 👉)
+ * - Custom styling functions with emojis
+ * - Theme configuration options
+ *
+ * Run it:
+ * node examples/custom-theme.js
+ */
+
 import checkboxSearch from '../dist/esm/index.js';
 
 const fruits = [

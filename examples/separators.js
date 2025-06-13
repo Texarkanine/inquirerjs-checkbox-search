@@ -1,5 +1,22 @@
 #!/usr/bin/env node
 
+/**
+ * Separator Navigation Example
+ *
+ * What it demonstrates:
+ * - Using separators to organize choices into groups
+ * - Proper navigation that skips over separators
+ * - Visual organization of large choice lists
+ *
+ * Try this:
+ * - Use ↑/↓ arrow keys to navigate between selectable items
+ * - Notice how navigation should skip over separators
+ * - If navigation jumps to wrong items, the separator navigation bug is present
+ *
+ * Run it:
+ * node examples/separators.js
+ */
+
 import checkboxSearch, { Separator } from '../dist/esm/index.js';
 
 const choices = [

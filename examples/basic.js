@@ -1,5 +1,17 @@
 #!/usr/bin/env node
 
+/**
+ * Basic Multi-Select Example
+ *
+ * What it demonstrates:
+ * - Basic multi-select functionality
+ * - Simple choice configuration
+ * - Tab to select, Enter to confirm
+ *
+ * Run it:
+ * node examples/basic.js
+ */
+
 import checkboxSearch from '../dist/esm/index.js';
 
 const frameworks = [

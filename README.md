@@ -38,19 +38,19 @@ console.log('Selected:', selected);
 
 ### Options
 
-| Property       | Type                                                                                | Required | Description                                                                                             |
-| -------------- | ----------------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------- |
-| `message`      | `string`                                                                            | Yes      | The question to ask                                                                                     |
-| `choices`      | `Array<Choice \| string \| Separator>`                                              | No\*     | Static list of choices                                                                                  |
-| `source`       | `(term?: string, opt: { signal: AbortSignal }) => Promise<Array<Choice \| string>>` | No\*     | Async function for dynamic choices                                                                      |
-| `pageSize`     | `number`                                                                            | No       | Fixed number of choices to display. If not specified, auto-sizes based on terminal height (fallback: 7) |
-| `loop`         | `boolean`                                                                           | No       | Whether to loop around when navigating (default: true)                                                  |
-| `required`     | `boolean`                                                                           | No       | Require at least one selection (default: false)                                                         |
-| `validate`     | `(selection: Array<Choice>) => boolean \| string \| Promise<string \| boolean>`     | No       | Custom validation function                                                                              |
-| `instructions` | `string \| boolean`                                                                 | No       | Custom instructions text or false to hide                                                               |
-| `theme`        | `Theme`                                                                             | No       | Custom theme configuration                                                                              |
-| `default`      | `Array<Value>`                                                                      | No       | Initially selected values                                                                               |
-| `filter`       | `(items: Array<Choice>, term: string) => Array<Choice>`                             | No       | Custom filter function                                                                                  |
+| Property       | Type                                                                                | Required | Description                                                                                                                                                              |
+| -------------- | ----------------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `message`      | `string`                                                                            | Yes      | The question to ask                                                                                                                                                      |
+| `choices`      | `Array<Choice \| string \| Separator>`                                              | No\*     | Static list of choices                                                                                                                                                   |
+| `source`       | `(term?: string, opt: { signal: AbortSignal }) => Promise<Array<Choice \| string>>` | No\*     | Async function for dynamic choices                                                                                                                                       |
+| `pageSize`     | `number \| PageSizeConfig`                                                          | No       | Page size configuration. Can be a number (fixed size) or PageSizeConfig object for advanced control. If not specified, auto-sizes based on terminal height (fallback: 7) |
+| `loop`         | `boolean`                                                                           | No       | Whether to loop around when navigating (default: true)                                                                                                                   |
+| `required`     | `boolean`                                                                           | No       | Require at least one selection (default: false)                                                                                                                          |
+| `validate`     | `(selection: Array<Choice>) => boolean \| string \| Promise<string \| boolean>`     | No       | Custom validation function                                                                                                                                               |
+| `instructions` | `string \| boolean`                                                                 | No       | Custom instructions text or false to hide                                                                                                                                |
+| `theme`        | `Theme`                                                                             | No       | Custom theme configuration                                                                                                                                               |
+| `default`      | `Array<Value>`                                                                      | No       | Initially selected values                                                                                                                                                |
+| `filter`       | `(items: Array<Choice>, term: string) => Array<Choice>`                             | No       | Custom filter function                                                                                                                                                   |
 
 \*Either `choices` or `source` must be provided.
 
@@ -66,6 +66,33 @@ type Choice<Value = any> = {
   checked?: boolean; // Initially selected
 };
 ```
+
+### PageSize Configuration
+
+The `pageSize` property accepts either a number (for simple fixed sizing) or a `PageSizeConfig` object for advanced control:
+
+```typescript
+type PageSizeConfig = {
+  base?: number; // Starting page size (if not specified, auto-calculated from terminal)
+  max?: number; // Maximum page size (absolute constraint)
+  min?: number; // Minimum page size (absolute constraint, defaults to 1)
+  buffer?: number; // Fixed buffer lines to subtract from page size
+  autoBufferDescriptions?: boolean; // Auto-reserve space for descriptions
+  autoBufferCountsLineWidth?: boolean; // Consider terminal width when counting description lines
+  minBuffer?: number; // Minimum buffer lines (applied after auto/manual buffer)
+};
+```
+
+**Buffer Calculation Process:**
+
+1. Start with base page size (from `base` or auto-calculated)
+2. Calculate buffer:
+   - If `autoBufferDescriptions` is true: Add lines needed for largest description
+   - Otherwise: Add `buffer` value (if specified)
+   - Ensure buffer is at least `minBuffer` (if specified)
+3. Subtract buffer from base page size
+4. Apply `min`/`max` constraints
+5. Ensure final result is at least 1
 
 ### Theme Options
 
@@ -102,21 +129,7 @@ type CheckboxSearchTheme = {
 
 ## Advanced Features
 
-For detailed examples of advanced features, see the [`examples/`](./examples/) directory:
-
-- **[Basic Multi-Select](./examples/basic.js)** - Simple multi-select functionality
-- **[Search Filtering](./examples/search-filtering.js)** - Real-time search with larger lists
-- **[Async Source](./examples/async-source.js)** - Dynamic loading with mock API
-- **[Custom Theme](./examples/custom-theme.js)** - Custom icons and styling
-- **[Validation](./examples/validation.js)** - Input validation and pre-selection
-- **[Custom Filter](./examples/custom-filter.js)** - Fuzzy matching filter
-
-**To run examples:**
-
-1. Build the package: `npm run build`
-2. Run any example: `node examples/basic.js`
-
-See the [examples README](./examples/README.md) for detailed instructions.
+For detailed examples of advanced features, see the [`examples/`](./examples/) directory.
 
 Each example includes detailed comments and demonstrates real-world usage patterns.
 

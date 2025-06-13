@@ -1,6 +1,6 @@
 # Examples
 
-This directory contains working examples that demonstrate different features of the `inquirerjs-checkbox-search` package.
+This directory contains working examples that demonstrate different features of the `inquirerjs-checkbox-search` package. Each example file includes detailed documentation in its header comments explaining what it demonstrates and how to use it.
 
 ## Prerequisites
 
@@ -12,117 +12,20 @@ This directory contains working examples that demonstrate different features of 
 
 ## Running Examples
 
-```bash
-node examples/basic.js
-node examples/search-filtering.js
-# ... etc
-```
-
-## Available Examples
-
-### 1. `basic.js` - Simple Multi-Select
-
-**What it demonstrates:**
-
-- Basic multi-select functionality
-- Simple choice configuration
-- Tab to select, Enter to confirm
-
-**Run it:**
+Run any example using Node.js:
 
 ```bash
 node examples/basic.js
-```
-
-### 2. `search-filtering.js` - Search Filtering
-
-**What it demonstrates:**
-
-- Real-time search filtering
-- Larger list of choices (15 countries)
-- Custom page size and instructions
-
-**Run it:**
-
-```bash
 node examples/search-filtering.js
-```
-
-**Try this:** Type letters to filter countries (e.g., "un" to see "United States" and "United Kingdom")
-
-### 3. `async-source.js` - Async Source Function
-
-**What it demonstrates:**
-
-- Dynamic loading with async source function
-- Loading states and request cancellation
-- Mock API simulation with delay
-
-**Run it:**
-
-```bash
 node examples/async-source.js
-```
-
-**Try this:**
-
-- Wait for initial load (shows popular repos)
-- Type "react" to search for React-related repositories
-- Type quickly to see request cancellation in action
-
-### 4. `custom-theme.js` - Custom Theming
-
-**What it demonstrates:**
-
-- Custom icons (✅, ⬜, 👉)
-- Custom styling functions with emojis
-- Theme configuration options
-
-**Run it:**
-
-```bash
 node examples/custom-theme.js
-```
-
-### 5. `validation.js` - Validation & Pre-selection
-
-**What it demonstrates:**
-
-- Input validation (2-4 selections required)
-- Pre-selected default options
-- Custom validation messages
-
-**Run it:**
-
-```bash
 node examples/validation.js
-```
-
-**Try this:**
-
-- Notice Alice and Bob are pre-selected
-- Try confirming with only 1 selection (validation error)
-- Try selecting more than 4 members (validation error)
-
-### 6. `custom-filter.js` - Custom Filter Function
-
-**What it demonstrates:**
-
-- Custom fuzzy matching filter
-- Enhanced search capabilities
-- Partial character matching
-
-**Run it:**
-
-```bash
 node examples/custom-filter.js
+node examples/pagesize-configuration.js
+node examples/separators.js
+node examples/fruits.js
+node examples/auto-page-size.js
 ```
-
-**Try this:**
-
-- Type "js" to find "JavaScript"
-- Type "py" to find "Python"
-- Type "c" to see C#, C++, etc.
 
 ## Troubleshooting
 
