@@ -75,6 +75,30 @@ jobs:
           path: docs/img/*.gif
           retention-days: 30
       
+      - name: Generate data URL for inline demo display
+        if: steps.context.outputs.is_pr == 'true'
+        id: demo_data_url
+        run: |
+          if [ -f "docs/img/basic-demo.gif" ]; then
+            # Check file size (GitHub comments have limits)
+            FILE_SIZE=$(stat -f%z "docs/img/basic-demo.gif" 2>/dev/null || stat -c%s "docs/img/basic-demo.gif")
+            echo "Demo GIF size: ${FILE_SIZE} bytes"
+            
+            if [ "$FILE_SIZE" -lt 500000 ]; then  # Less than ~500KB
+              # Generate base64 data URL
+              BASE64_DATA=$(base64 -w 0 "docs/img/basic-demo.gif")
+              DATA_URL="data:image/gif;base64,${BASE64_DATA}"
+              echo "data_url=${DATA_URL}" >> $GITHUB_OUTPUT
+              echo "✅ Generated data URL for inline display (${FILE_SIZE} bytes)"
+            else
+              echo "⚠️ Demo GIF too large for inline display (${FILE_SIZE} bytes), using artifact link"
+              echo "data_url=" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "❌ No demo file found"
+            echo "data_url=" >> $GITHUB_OUTPUT
+          fi
+      
       - name: Check if demo changed
         id: check_changes
         run: |
@@ -142,11 +166,15 @@ jobs:
             
             **Please review the generated demo to ensure it accurately represents the new functionality.**
             
+            ### 🎬 Generated Demo Preview:
+            
+            ${{ steps.demo_data_url.outputs.data_url && format('![Demo GIF Preview]({0})', steps.demo_data_url.outputs.data_url) || '📦 Demo GIF available in [artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) (too large for inline display)' }}
+            
             ### Changes Detected:
             - 🎬 `docs/img/basic-demo.gif` has been modified
             
             ### Next Steps:
-            1. Review the demo GIF in the artifacts section below
+            1. Review the demo GIF preview above
             2. Ensure the demo accurately shows the intended functionality
             3. If the demo looks correct, this is expected and the PR can proceed
             4. If the demo is incorrect, please update the demo configuration in `demos/basic.tape`
