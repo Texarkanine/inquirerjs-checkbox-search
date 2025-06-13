@@ -19,6 +19,22 @@ on:
       - '.github/workflows/generate-demos.yml'
   workflow_dispatch:
     inputs:
+      examples:
+        description: 'Examples to generate demos for (comma-separated)'
+        required: false
+        default: 'basic'
+        type: choice
+        options:
+          - 'basic'
+          # Add more as tape files are created
+      header_example:
+        description: 'Which example to use as header.gif'
+        required: false
+        default: 'basic'
+        type: choice
+        options:
+          - 'basic'
+          # Add more as tape files are created
       commit_updates:
         description: 'Commit updates back to branch?'
         required: false
@@ -53,20 +69,48 @@ jobs:
       - name: Create output directory
         run: mkdir -p docs/img
       
-      - name: Backup existing demo (if exists)
+      - name: Determine examples to generate
+        id: examples
         run: |
-          if [ -f "docs/img/basic-demo.gif" ]; then
-            cp docs/img/basic-demo.gif docs/img/basic-demo.gif.backup
-            echo "existing_demo=true" >> $GITHUB_ENV
+          # Use input parameter if provided (workflow_dispatch), otherwise default to 'basic'
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            EXAMPLES="${{ github.event.inputs.examples }}"
+            HEADER_EXAMPLE="${{ github.event.inputs.header_example }}"
           else
-            echo "existing_demo=false" >> $GITHUB_ENV
+            EXAMPLES="basic"
+            HEADER_EXAMPLE="basic"
           fi
+          
+          echo "examples=$EXAMPLES" >> $GITHUB_OUTPUT
+          echo "header_example=$HEADER_EXAMPLE" >> $GITHUB_OUTPUT
+          echo "🎬 Will generate demos for: $EXAMPLES"
+          echo "🎯 Will use '$HEADER_EXAMPLE' as header.gif"
       
-      - name: Generate demo GIF
+      - name: Generate demo GIFs
         run: |
           # Set deterministic timestamp for consistent builds
           export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
-          npm run demo:generate:basic
+          
+          # Generate each requested example
+          IFS=',' read -ra EXAMPLE_ARRAY <<< "${{ steps.examples.outputs.examples }}"
+          for example in "${EXAMPLE_ARRAY[@]}"; do
+            example=$(echo "$example" | xargs)  # trim whitespace
+            echo "🎬 Generating demo for: $example"
+            npm run "demo:generate:$example"
+          done
+      
+      - name: Create header GIF from chosen demo
+        run: |
+          HEADER_EXAMPLE="${{ steps.examples.outputs.header_example }}"
+          SOURCE_FILE="docs/img/${HEADER_EXAMPLE}-demo.gif"
+          
+          if [ -f "$SOURCE_FILE" ]; then
+            cp "$SOURCE_FILE" docs/img/header.gif
+            echo "✅ Created header.gif from $SOURCE_FILE"
+          else
+            echo "❌ Source demo file not found: $SOURCE_FILE"
+            exit 1
+          fi
       
       - name: Upload demo artifacts (always upload regardless of changes)
         uses: actions/upload-artifact@v4
@@ -75,44 +119,51 @@ jobs:
           path: docs/img/*.gif
           retention-days: 30
       
-      - name: Generate data URL for inline demo display
+      - name: Prepare demo preview content
         if: steps.context.outputs.is_pr == 'true'
-        id: demo_data_url
+        id: demo_preview
         run: |
-          if [ -f "docs/img/basic-demo.gif" ]; then
+          if [ -f "docs/img/header.gif" ]; then
             # Check file size (GitHub comments have limits)
-            FILE_SIZE=$(stat -f%z "docs/img/basic-demo.gif" 2>/dev/null || stat -c%s "docs/img/basic-demo.gif")
-            echo "Demo GIF size: ${FILE_SIZE} bytes"
+            FILE_SIZE=$(stat -f%z "docs/img/header.gif" 2>/dev/null || stat -c%s "docs/img/header.gif")
+            echo "Header GIF size: ${FILE_SIZE} bytes"
             
             if [ "$FILE_SIZE" -lt 500000 ]; then  # Less than ~500KB
               # Generate base64 data URL
-              BASE64_DATA=$(base64 -w 0 "docs/img/basic-demo.gif")
+              BASE64_DATA=$(base64 -w 0 "docs/img/header.gif")
               DATA_URL="data:image/gif;base64,${BASE64_DATA}"
-              echo "data_url=${DATA_URL}" >> $GITHUB_OUTPUT
-              echo "✅ Generated data URL for inline display (${FILE_SIZE} bytes)"
+              PREVIEW_CONTENT="![Header GIF Preview](${DATA_URL})"
+              echo "✅ Generated inline data URL (${FILE_SIZE} bytes)"
             else
-              echo "⚠️ Demo GIF too large for inline display (${FILE_SIZE} bytes), using artifact link"
-              echo "data_url=" >> $GITHUB_OUTPUT
+              PREVIEW_CONTENT="📦 Header GIF available in [artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) (too large for inline display)"
+              echo "⚠️ Header GIF too large for inline display (${FILE_SIZE} bytes)"
             fi
           else
-            echo "❌ No demo file found"
-            echo "data_url=" >> $GITHUB_OUTPUT
+            PREVIEW_CONTENT="❌ Header GIF generation failed"
+            echo "❌ No header.gif file found"
           fi
+          
+          # Set the preview content (escape for multiline)
+          {
+            echo "preview_content<<EOF"
+            echo "$PREVIEW_CONTENT"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
       
-      - name: Check if demo changed
+      - name: Check if header GIF changed (using git)
         id: check_changes
         run: |
-          if [ "$existing_demo" = "true" ]; then
-            if ! cmp -s docs/img/basic-demo.gif docs/img/basic-demo.gif.backup; then
-              echo "demo_changed=true" >> $GITHUB_OUTPUT
-              echo "✅ Demo GIF has changed"
-            else
-              echo "demo_changed=false" >> $GITHUB_OUTPUT
-              echo "✅ Demo GIF unchanged"
-            fi
+          # Use git to detect changes - much cleaner!
+          if git diff --quiet docs/img/header.gif; then
+            echo "demo_changed=false" >> $GITHUB_OUTPUT
+            echo "✅ Header GIF unchanged"
           else
             echo "demo_changed=true" >> $GITHUB_OUTPUT
-            echo "✅ New demo GIF created"
+            echo "✅ Header GIF has changed"
+            
+            # Show what changed for debugging
+            echo "📊 Git status:"
+            git status --porcelain docs/img/header.gif
           fi
       
       - name: Determine release-please context
@@ -168,23 +219,23 @@ jobs:
             
             ### 🎬 Generated Demo Preview:
             
-            ${{ steps.demo_data_url.outputs.data_url && format('![Demo GIF Preview]({0})', steps.demo_data_url.outputs.data_url) || '📦 Demo GIF available in [artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) (too large for inline display)' }}
+            ${{ steps.demo_preview.outputs.preview_content }}
             
             ### Changes Detected:
-            - 🎬 `docs/img/basic-demo.gif` has been modified
+            - 🎬 `docs/img/header.gif` has been modified
             
             ### Next Steps:
             1. Review the demo GIF preview above
             2. Ensure the demo accurately shows the intended functionality
             3. If the demo looks correct, this is expected and the PR can proceed
-            4. If the demo is incorrect, please update the demo configuration in `demos/basic.tape`
+            4. If the demo is incorrect, please update the demo configuration in `demos/${{ steps.examples.outputs.header_example }}.tape`
             
             <details>
             <summary>🔍 Technical Details</summary>
             
             The demo was generated from commit `${{ github.sha }}` using:
-            - VHS tape file: `demos/basic.tape`
-            - Example: `examples/basic.js`
+            - VHS tape file: `demos/${{ steps.examples.outputs.header_example }}.tape`
+            - Example: `examples/${{ steps.examples.outputs.header_example }}.js`
             - Docker image: Built from `demos/Dockerfile`
             
             </details>' || '## ✅ Demo GIF Reviewed and Stable
@@ -192,7 +243,7 @@ jobs:
             The demo GIF is now stable and matches the current functionality.
             
             ### Status:
-            - 🎬 `docs/img/basic-demo.gif` is up-to-date
+            - 🎬 `docs/img/header.gif` is up-to-date
             - ✅ No further demo review required for this PR
             
             *This comment will be updated if demo changes are detected in future commits.*' }}
