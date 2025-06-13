@@ -85,9 +85,7 @@
     "demo:docker:run": "docker run --rm -v $PWD/docs/img:/workspace/docs/img vhs-node-demo",
     "demo:generate:basic": "npm run demo:docker:build && npm run demo:docker:run demos/basic.tape",
     "demo:generate:all": "npm run demo:generate:basic",
-    "demo:generate": "npm run demo:generate:basic",
-    "demo:check": "echo 'Checking if demos would change...' && npm run demo:generate:basic",
-    "demo:diff": "echo 'Comparing demo differences...' && if [ -f docs/img/basic-demo.gif.backup ]; then echo 'Backup exists, comparing...'; else echo 'No backup to compare'; fi"
+    "demo:generate": "npm run demo:generate:basic"
   },
   "dependencies": {
     "@inquirer/core": "^10.1.13",

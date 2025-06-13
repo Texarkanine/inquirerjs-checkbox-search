@@ -124,7 +124,7 @@ Creating demo GIF files using **VHS Docker image** (`ghcr.io/charmbracelet/vhs`)
 
 ```tape
 # demos/basic.tape
-Output docs/img/basic-demo.gif
+Output docs/img/basic-demo.webm
 
 # Terminal appearance
 Set FontSize 14
@@ -176,7 +176,7 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add docs/img/*.gif
+          git add docs/img/*.webm
           git commit -m "Update demo GIFs" || exit 0
           git push
 ```

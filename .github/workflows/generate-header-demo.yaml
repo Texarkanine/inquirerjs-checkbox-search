@@ -1,4 +1,4 @@
-name: Header Demo GIF
+name: Header Demo WebM
 
 on:
   pull_request:
@@ -33,7 +33,7 @@ on:
         default: 'false'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-demo-gif
+  group: ${{ github.workflow }}-${{ github.ref }}-demo-webm
   cancel-in-progress: true
 
 jobs:
@@ -94,9 +94,9 @@ jobs:
           fi
 
           echo "example=$HEADER_EXAMPLE" >> $GITHUB_OUTPUT
-          echo "🎯 Will generate '$HEADER_EXAMPLE' demo as header.gif"
+          echo "🎯 Will generate '$HEADER_EXAMPLE' demo as header.webm"
 
-      - name: Generate demo GIF
+      - name: Generate demo WebM
         run: |
           # Set deterministic timestamp for consistent builds
           export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
@@ -106,14 +106,14 @@ jobs:
           echo "🎬 Generating demo for: $EXAMPLE"
           npm run "demo:generate:$EXAMPLE"
 
-      - name: Create header GIF from demo
+      - name: Create header WebM from demo
         run: |
           EXAMPLE="${{ steps.header.outputs.example }}"
-          SOURCE_FILE="docs/img/${EXAMPLE}-demo.gif"
+          SOURCE_FILE="docs/img/${EXAMPLE}-demo.webm"
 
           if [ -f "$SOURCE_FILE" ]; then
-            cp "$SOURCE_FILE" docs/img/header.gif
-            echo "✅ Created header.gif from $SOURCE_FILE"
+            cp "$SOURCE_FILE" docs/img/header.webm
+            echo "✅ Created header.webm from $SOURCE_FILE"
           else
             echo "❌ Source demo file not found: $SOURCE_FILE"
             exit 1
@@ -122,19 +122,19 @@ jobs:
       - name: Upload demo artifacts (always upload regardless of changes)
         uses: actions/upload-artifact@v4
         with:
-          name: demo-gifs-${{ github.run_id }}
-          path: docs/img/*.gif
+          name: demo-webms-${{ github.run_id }}
+          path: docs/img/*.webm
           retention-days: 30
 
       - name: Upload demo to orphan branch and prepare preview
         if: steps.context.outputs.is_pr == 'true'
         id: demo_preview
         run: |
-          if [ -f "docs/img/header.gif" ]; then
-            echo "🔄 Uploading header.gif to demo-images branch..."
+          if [ -f "docs/img/header.webm" ]; then
+            echo "🔄 Uploading header.webm to demo-images branch..."
             
-            FILE_SIZE=$(stat -f%z "docs/img/header.gif" 2>/dev/null || stat -c%s "docs/img/header.gif")
-            echo "Header GIF size: ${FILE_SIZE} bytes"
+            FILE_SIZE=$(stat -f%z "docs/img/header.webm" 2>/dev/null || stat -c%s "docs/img/header.webm")
+            echo "Header WebM size: ${FILE_SIZE} bytes"
             
             # Configure git
             git config --local user.email "action@github.com"
@@ -161,12 +161,12 @@ jobs:
             fi
             
              # Copy the demo image with deterministic name
-             PR_IMAGE="pr-${{ github.event.pull_request.number }}-header.gif"
-             git checkout "$CURRENT_SHA" -- docs/img/header.gif
-             cp "docs/img/header.gif" "$PR_IMAGE"
+             PR_IMAGE="pr-${{ github.event.pull_request.number }}-header.webm"
+             git checkout "$CURRENT_SHA" -- docs/img/header.webm
+             cp "docs/img/header.webm" "$PR_IMAGE"
              
              # Clean up the temporary file to avoid adding it to the orphan branch
-             rm -f docs/img/header.gif
+             rm -f docs/img/header.webm
              rm -rf docs/  # Remove the entire docs directory if it's empty
             
             # Add and commit ONLY the PR-specific image
@@ -181,20 +181,20 @@ jobs:
             if git push origin demo-images; then
               # Construct the raw URL for inline display
               IMAGE_URL="https://raw.githubusercontent.com/${{ github.repository }}/demo-images/$PR_IMAGE"
-              PREVIEW_CONTENT="![Header Demo GIF]($IMAGE_URL)"
+              PREVIEW_CONTENT="<video autoplay loop muted playsinline><source src=\"$IMAGE_URL\" type=\"video/webm\"></video>"
               echo "✅ Uploaded to demo-images branch: $PR_IMAGE"
-              echo "🔗 Image URL: $IMAGE_URL"
+              echo "🔗 Video URL: $IMAGE_URL"
             else
               echo "❌ Failed to push to demo-images branch"
-              PREVIEW_CONTENT="❌ Failed to upload demo image to branch"
+              PREVIEW_CONTENT="❌ Failed to upload demo video to branch"
             fi
             
             # Switch back to original branch
             git checkout "$CURRENT_BRANCH"
             git stash pop 2>/dev/null || true
           else
-            PREVIEW_CONTENT="❌ Header GIF generation failed"
-            echo "❌ No header.gif file found"
+            PREVIEW_CONTENT="❌ Header WebM generation failed"
+            echo "❌ No header.webm file found"
           fi
 
           # Set the preview content using heredoc syntax
@@ -202,26 +202,26 @@ jobs:
           echo "$PREVIEW_CONTENT" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Check if header GIF changed (using git)
+      - name: Check if header WebM changed (using git)
         id: check_changes
         run: |
           # Use git to detect changes - much cleaner!
-          if git diff --quiet docs/img/header.gif; then
+          if git diff --quiet docs/img/header.webm; then
             echo "demo_changed=false" >> $GITHUB_OUTPUT
-            echo "✅ Header GIF unchanged"
+            echo "✅ Header WebM unchanged"
           else
             echo "demo_changed=true" >> $GITHUB_OUTPUT
-            echo "✅ Header GIF has changed"
+            echo "✅ Header WebM has changed"
             
             # Show what changed for debugging
             echo "📊 Git status:"
-            git status --porcelain docs/img/header.gif
+            git status --porcelain docs/img/header.webm
           fi
 
       - name: Handle release-please with demo changes (fail build)
         if: steps.context.outputs.is_release_please == 'true' && steps.context.outputs.is_pr == 'true' && steps.check_changes.outputs.demo_changed == 'true'
         run: |
-          echo "❌ ERROR: Demo GIF has changed in release-please PR!"
+          echo "❌ ERROR: Demo WebM has changed in release-please PR!"
           echo "Demo changes should not be included in release PRs."
           echo "Please update the demo in a separate PR before the release."
           exit 1
@@ -233,7 +233,7 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: 'github-actions[bot]'
-          body-includes: 'Header Demo GIF'
+          body-includes: 'Header Demo WebM'
 
       - name: Comment on demo changes (changed)
         if: steps.context.outputs.is_pr == 'true' && steps.context.outputs.is_release_please == 'false' && steps.check_changes.outputs.demo_changed == 'true'
@@ -243,9 +243,9 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           edit-mode: replace
           body: |
-            ## ⚠️ Header Demo GIF Changed - Review Required
+            ## ⚠️ Header Demo WebM Changed - Review Required
 
-            This PR includes changes that affect the demo GIF output. 
+            This PR includes changes that affect the demo WebM output. 
 
             **Please review the generated demo to ensure it accurately represents the library.**
 
@@ -254,10 +254,10 @@ jobs:
             ${{ steps.demo_preview.outputs.preview_content }}
 
             ### Changes Detected:
-            - 🎬 `docs/img/header.gif` has been modified
+            - 🎬 `docs/img/header.webm` has been modified
 
             ### Next Steps:
-            1. Review the demo GIF preview above
+            1. Review the demo WebM preview above
             2. Ensure the demo accurately shows the intended functionality
             3. If the demo looks correct, this is expected and the PR can proceed
             4. If the demo is incorrect, please update the demo configuration in `demos/${{ steps.header.outputs.example }}.tape`
@@ -281,12 +281,12 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           edit-mode: replace
           body: |
-            ## ✅ Header Demo GIF Reviewed and Stable
+            ## ✅ Header Demo WebM Reviewed and Stable
 
-            The demo GIF is now stable and matches the current functionality.
+            The demo WebM is now stable and matches the current functionality.
 
             ### Status:
-            - 🎬 `docs/img/header.gif` is up-to-date
+            - 🎬 `docs/img/header.webm` is up-to-date
             - ✅ No further demo review required for this PR
 
             *This comment will be updated if demo changes are detected in future commits.*
@@ -322,14 +322,14 @@ jobs:
             npm run demo:generate:basic
             
             # Add and commit
-            git add docs/img/*.gif
+            git add docs/img/*.webm
             
             if git diff --cached --quiet; then
               echo "No changes to commit after regeneration"
               break
             fi
             
-            if git commit --no-gpg-sign -m "docs: Update demo GIFs [skip ci]"; then
+            if git commit --no-gpg-sign -m "docs: Update demo WebMs [skip ci]"; then
               if git push; then
                 echo "✅ Successfully committed and pushed demo changes"
                 break

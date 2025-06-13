@@ -44,7 +44,7 @@ jobs:
             git checkout demo-images
             
             # Check if PR image exists
-            PR_IMAGE="pr-${{ github.event.pull_request.number }}-header.gif"
+            PR_IMAGE="pr-${{ github.event.pull_request.number }}-header.webm"
             if [ -f "$PR_IMAGE" ]; then
               echo "🗑️ Removing $PR_IMAGE"
               git rm "$PR_IMAGE"
@@ -67,7 +67,7 @@ jobs:
           echo "## 🧹 Demo Image Cleanup Summary"
           echo "- PR: #${{ github.event.pull_request.number }}"
           echo "- Action: ${{ github.event.action }}"
-          echo "- Image: pr-${{ github.event.pull_request.number }}-header.gif"
+          echo "- Image: pr-${{ github.event.pull_request.number }}-header.webm"
 
   periodic-cleanup:
     name: 'Periodic Cleanup'
@@ -91,7 +91,7 @@ jobs:
           else
             DAYS_OLD="30"  # Default for scheduled runs
           fi
-          
+
           echo "🧹 Cleaning up demo images older than $DAYS_OLD days"
 
           # Configure git
@@ -106,14 +106,14 @@ jobs:
             
             # Get initial stats
             INITIAL_SIZE=$(du -sb . 2>/dev/null | cut -f1 || echo "0")
-            INITIAL_COUNT=$(ls -1 pr-*-header.gif 2>/dev/null | wc -l || echo "0")
+            INITIAL_COUNT=$(ls -1 pr-*-header.webm 2>/dev/null | wc -l || echo "0")
             
             # Find files to remove (but don't remove them yet)
             CUTOFF_DATE=$(date -d "$DAYS_OLD days ago" +%s)
             FILES_TO_REMOVE=""
             REMOVE_COUNT=0
             
-            for file in pr-*-header.gif; do
+            for file in pr-*-header.webm; do
               if [ -f "$file" ]; then
                 # Get file modification time from git log
                 FILE_TIME=$(git log -1 --format=%ct -- "$file" 2>/dev/null || echo "0")
@@ -131,7 +131,7 @@ jobs:
               
               # Create a list of files to keep (inverse of files to remove)
               KEEP_PATTERN=""
-              for file in pr-*-header.gif README.md; do
+              for file in pr-*-header.webm README.md; do
                 if [ -f "$file" ]; then
                   # Check if this file should be kept
                   SHOULD_KEEP=true
@@ -202,7 +202,7 @@ jobs:
             
             # Report final stats
             FINAL_SIZE=$(du -sb . 2>/dev/null | cut -f1 || echo "0")
-            FINAL_COUNT=$(ls -1 pr-*-header.gif 2>/dev/null | wc -l || echo "0")
+            FINAL_COUNT=$(ls -1 pr-*-header.webm 2>/dev/null | wc -l || echo "0")
             SAVED_BYTES=$((INITIAL_SIZE - FINAL_SIZE))
             
             echo "📊 Cleanup results:"
