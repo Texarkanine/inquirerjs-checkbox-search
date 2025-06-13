@@ -151,7 +151,7 @@ jobs:
           fi
 
           # Set the preview content using heredoc syntax
-          echo "preview_content=<<EOF" >> $GITHUB_OUTPUT
+          echo "preview_content<<EOF" >> $GITHUB_OUTPUT
           echo "$PREVIEW_CONTENT" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
@@ -186,7 +186,7 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: 'github-actions[bot]'
-          body-includes: 'Demo GIF Changed'
+          body-includes: 'Header Demo GIF'
 
       - name: Comment on demo changes
         if: steps.context.outputs.is_pr == 'true' && steps.context.outputs.is_release_please == 'false'
@@ -196,7 +196,7 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           edit-mode: replace
           body: |
-            ${{ steps.check_changes.outputs.demo_changed == 'true' && '## ⚠️ Demo GIF Changed - Review Required
+            ${{ steps.check_changes.outputs.demo_changed == 'true' && '## ⚠️ Header Demo GIF Changed - Review Required
 
             This PR includes changes that affect the demo GIF output. 
 
@@ -223,7 +223,7 @@ jobs:
             - Example: [`examples/${{ steps.header.outputs.example }}.js`](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/examples/${{ steps.header.outputs.example }}.js)
             - Docker image: Built from [`demos/Dockerfile`](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/demos/Dockerfile)
 
-            </details>' || '## ✅ Demo GIF Reviewed and Stable
+            </details>' || '## ✅ Header Demo GIF Reviewed and Stable
 
             The demo GIF is now stable and matches the current functionality.
 
