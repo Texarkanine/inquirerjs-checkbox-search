@@ -1,10 +1,19 @@
 name: Generate Demo GIFs
 
 on:
-  push:
+  pull_request:
+    branches: [main]
     paths: 
       - 'examples/**'
       - 'demos/**'
+      - 'src/**'
+      - '.github/workflows/generate-demos.yml'
+  push:
+    branches: [main]
+    paths: 
+      - 'examples/**'
+      - 'demos/**'
+      - 'src/**'
       - '.github/workflows/generate-demos.yml'
   workflow_dispatch:
     inputs:
@@ -18,12 +27,14 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: write
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
       
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -40,37 +51,175 @@ jobs:
       - name: Create output directory
         run: mkdir -p docs/img
       
-      - name: Generate basic demo GIF
-        run: npm run demo:generate:basic
-      
-      - name: List generated files
+      - name: Backup existing demo (if exists)
         run: |
-          echo "Generated files:"
-          ls -la docs/img/
           if [ -f "docs/img/basic-demo.gif" ]; then
-            echo "✅ basic-demo.gif generated successfully"
-            echo "File size: $(du -h docs/img/basic-demo.gif)"
+            cp docs/img/basic-demo.gif docs/img/basic-demo.gif.backup
+            echo "existing_demo=true" >> $GITHUB_ENV
           else
-            echo "❌ basic-demo.gif was not generated"
-            exit 1
+            echo "existing_demo=false" >> $GITHUB_ENV
           fi
       
-      - name: Upload artifacts
+      - name: Generate demo GIF
+        run: |
+          # Set deterministic timestamp for consistent builds
+          export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
+          npm run demo:generate:basic
+      
+      - name: Check if demo changed
+        id: check_changes
+        run: |
+          if [ "$existing_demo" = "true" ]; then
+            if ! cmp -s docs/img/basic-demo.gif docs/img/basic-demo.gif.backup; then
+              echo "demo_changed=true" >> $GITHUB_OUTPUT
+              echo "✅ Demo GIF has changed"
+            else
+              echo "demo_changed=false" >> $GITHUB_OUTPUT
+              echo "✅ Demo GIF unchanged"
+            fi
+          else
+            echo "demo_changed=true" >> $GITHUB_OUTPUT
+            echo "✅ New demo GIF created"
+          fi
+      
+      - name: Determine workflow context
+        id: context
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            # Check if this is a release-please PR
+            pr_title="${{ github.event.pull_request.title }}"
+            pr_author="${{ github.event.pull_request.user.login }}"
+            
+            if [[ "$pr_title" =~ ^chore\(main\): ]]; then
+              echo "is_release_pr=true" >> $GITHUB_OUTPUT
+              echo "is_pr=true" >> $GITHUB_OUTPUT
+              echo "🔍 Detected release-please PR"
+            else
+              echo "is_release_pr=false" >> $GITHUB_OUTPUT
+              echo "is_pr=true" >> $GITHUB_OUTPUT
+              echo "🔍 Regular PR detected"
+            fi
+          else
+            echo "is_pr=false" >> $GITHUB_OUTPUT
+            echo "is_release_pr=false" >> $GITHUB_OUTPUT
+            echo "🔍 Push to main detected"
+            
+            # Check if this push was from a release-please merge
+            commit_message="${{ github.event.head_commit.message }}"
+            if [[ "$commit_message" =~ ^chore\(main\): ]]; then
+              echo "is_release_commit=true" >> $GITHUB_OUTPUT
+              echo "🔍 Release commit detected"
+            else
+              echo "is_release_commit=false" >> $GITHUB_OUTPUT
+              echo "🔍 Regular commit detected"
+            fi
+          fi
+      
+      - name: Handle release-please PR (fail if demo changed)
+        if: steps.context.outputs.is_release_pr == 'true' && steps.check_changes.outputs.demo_changed == 'true'
+        run: |
+          echo "❌ ERROR: Demo GIF has changed in release-please PR!"
+          echo "Demo changes should not be included in release PRs."
+          echo "Please update the demo in a separate PR before the release."
+          exit 1
+      
+      - name: Comment on regular PR if demo changed
+        if: steps.context.outputs.is_pr == 'true' && steps.context.outputs.is_release_pr == 'false' && steps.check_changes.outputs.demo_changed == 'true'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ## ⚠️ Demo GIF Changed - Review Required
+            
+            This PR includes changes that affect the demo GIF output. 
+            
+            **Please review the generated demo to ensure it accurately represents the new functionality.**
+            
+            ### Changes Detected:
+            - 🎬 `docs/img/basic-demo.gif` has been modified
+            
+            ### Next Steps:
+            1. Review the demo GIF in the artifacts section below
+            2. Ensure the demo accurately shows the intended functionality
+            3. If the demo looks correct, this is expected and the PR can proceed
+            4. If the demo is incorrect, please update the demo configuration in `demos/basic.tape`
+            
+            <details>
+            <summary>🔍 Technical Details</summary>
+            
+            The demo was generated from commit `${{ github.sha }}` using:
+            - VHS tape file: `demos/basic.tape`
+            - Example: `examples/basic.js`
+            - Docker image: Built from `demos/Dockerfile`
+            
+            </details>
+          reactions: 'eyes'
+      
+      - name: Upload demo artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: demo-gifs
+          name: demo-gifs-${{ github.run_id }}
           path: docs/img/*.gif
           retention-days: 30
       
-      - name: Commit generated GIFs
-        if: success()
+      - name: Commit demo changes (release commits only)
+        if: steps.context.outputs.is_pr == 'false' && (steps.context.outputs.is_release_commit == 'true' || github.event.inputs.force_regenerate == 'true') && steps.check_changes.outputs.demo_changed == 'true'
         run: |
+          echo "🚀 Committing demo changes for release..."
+          
+          # Configure git
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add docs/img/*.gif
-          if git diff --cached --quiet; then
-            echo "No changes to commit"
-          else
-            git commit --no-gpg-sign -m "docs: Update demo GIFs [skip ci]"
-            git push
+          
+          # Retry logic for potential conflicts
+          max_retries=3
+          retry_count=0
+          
+          while [ $retry_count -lt $max_retries ]; do
+            echo "Attempt $((retry_count + 1)) of $max_retries"
+            
+            # Fetch latest changes
+            git fetch origin main
+            git reset --hard origin/main
+            
+            # Regenerate demo to ensure we have latest
+            npm run demo:generate:basic
+            
+            # Add and commit
+            git add docs/img/*.gif
+            
+            if git diff --cached --quiet; then
+              echo "No changes to commit after regeneration"
+              break
+            fi
+            
+            if git commit --no-gpg-sign -m "docs: Update demo GIFs [skip ci]"; then
+              if git push; then
+                echo "✅ Successfully committed and pushed demo changes"
+                break
+              else
+                echo "⚠️ Push failed, retrying..."
+                retry_count=$((retry_count + 1))
+                sleep $((retry_count * 2))  # Exponential backoff
+              fi
+            else
+              echo "❌ Commit failed"
+              break
+            fi
+          done
+          
+          if [ $retry_count -eq $max_retries ]; then
+            echo "❌ Failed to commit after $max_retries attempts"
+            exit 1
+          fi
+      
+      - name: Summary
+        run: |
+          echo "## 📊 Demo Generation Summary"
+          echo "- Event: ${{ github.event_name }}"
+          echo "- Demo changed: ${{ steps.check_changes.outputs.demo_changed }}"
+          echo "- Is PR: ${{ steps.context.outputs.is_pr }}"
+          echo "- Is release PR: ${{ steps.context.outputs.is_release_pr }}"
+          if [ "${{ steps.context.outputs.is_pr }}" = "false" ]; then
+            echo "- Is release commit: ${{ steps.context.outputs.is_release_commit }}"
           fi 

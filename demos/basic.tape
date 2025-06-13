@@ -4,13 +4,14 @@
 # Output settings
 Output docs/img/basic-demo.gif
 
-# Terminal appearance settings
+# Terminal appearance settings for deterministic output
 Set FontSize 14
 Set Width 1000
 Set Height 600
 Set TypingSpeed 100ms
 Set Theme "Catppuccin Mocha"
 Set Padding 20
+Set PlaybackSpeed 1.0
 
 Type "node examples/basic.js"
 Enter
