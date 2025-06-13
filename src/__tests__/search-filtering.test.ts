@@ -6,15 +6,15 @@ import checkboxSearch from '../index.js';
 async function waitForCondition(
   condition: () => boolean,
   timeout = 1000,
-  interval = 10
+  interval = 10,
 ): Promise<void> {
   const startTime = Date.now();
-  
+
   while (!condition()) {
     if (Date.now() - startTime > timeout) {
       throw new Error(`Condition not met within ${timeout}ms`);
     }
-    await new Promise(resolve => setTimeout(resolve, interval));
+    await new Promise((resolve) => setTimeout(resolve, interval));
   }
 }
 
@@ -255,7 +255,11 @@ describe('Search and filtering', () => {
     // Wait for initial load by polling for expected content
     await waitForCondition(() => {
       const screen = getScreen();
-      return screen.includes('Item One') && screen.includes('Item Two') && screen.includes('Another Item');
+      return (
+        screen.includes('Item One') &&
+        screen.includes('Item Two') &&
+        screen.includes('Another Item')
+      );
     });
 
     let screen = getScreen();
@@ -265,11 +269,15 @@ describe('Search and filtering', () => {
 
     // Search for specific term
     events.type('another');
-    
+
     // Wait for search results by polling for expected content
     await waitForCondition(() => {
       const screen = getScreen();
-      return !screen.includes('Item One') && !screen.includes('Item Two') && screen.includes('Another Item');
+      return (
+        !screen.includes('Item One') &&
+        !screen.includes('Item Two') &&
+        screen.includes('Another Item')
+      );
     });
 
     screen = getScreen();

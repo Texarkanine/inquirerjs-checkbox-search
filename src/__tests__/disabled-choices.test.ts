@@ -4,7 +4,7 @@ import checkboxSearch from '../index.js';
 
 describe('Disabled choices', () => {
   it('should skip disabled choices during navigation', async () => {
-    const { events, getScreen } = await render(checkboxSearch, {
+    const { events, getScreen, answer } = await render(checkboxSearch, {
       message: 'Select items',
       choices: [
         { value: 'apple', name: 'Apple' },
@@ -23,8 +23,8 @@ describe('Disabled choices', () => {
     events.keypress('tab'); // Should select Cherry, not Banana
     events.keypress('enter');
 
-    // The prompt should not include the disabled item in results
-    // (exact navigation behavior will be verified when implementation is complete)
+    // Verify only Cherry was selected
+    await expect(answer).resolves.toEqual(['cherry']);
   });
 
   it('should display disabled choices with different styling', async () => {

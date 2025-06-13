@@ -61,37 +61,6 @@ describe('Theme customization', () => {
     expect(screen).toContain('⬜ Banana');
   });
 
-  /**
-   * Bug reproduction test: Custom theme style functions not applying
-   *
-   * Custom style functions for highlighting and descriptions weren't being
-   * applied correctly, reverting to default styling.
-   */
-  it('should apply custom theme style functions correctly', async () => {
-    const customHighlight = (text: string) => `<<${text}>>`;
-    const customDescription = (text: string) => `**${text}**`;
-
-    const { getScreen } = await render(checkboxSearch, {
-      message: 'Select items',
-      choices: [
-        { value: 'apple', name: 'Apple', description: 'Red fruit' },
-        { value: 'banana', name: 'Banana', description: 'Yellow fruit' },
-      ],
-      theme: {
-        style: {
-          highlight: customHighlight,
-          description: customDescription,
-        },
-      },
-    });
-
-    const screen = getScreen();
-    // Should show custom highlighted text for active item
-    expect(screen).toContain('<<Apple>>');
-    // Should show custom styled description
-    expect(screen).toContain('**Red fruit**');
-  });
-
   it('should use custom styling functions', async () => {
     const customSearchStyle = (text: string) => `<<${text}>>`;
     const customDescriptionStyle = (text: string) => `**${text}**`;

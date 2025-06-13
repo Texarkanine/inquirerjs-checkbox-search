@@ -10,18 +10,21 @@ describe('Navigation', () => {
     });
 
     let screen = getScreen();
-    expect(screen).toContain('❯'); // cursor should be visible
+    expect(screen).toContain('❯ Apple'); // cursor should be on first item
 
     // Move down
     events.keypress('down');
     screen = getScreen();
-    // Should move cursor to next item (exact check depends on implementation)
-    expect(screen).toContain('❯');
+    // Should move cursor to second item
+    expect(screen).toContain('❯ Banana');
+    expect(screen).not.toContain('❯ Apple');
 
     // Move up
     events.keypress('up');
     screen = getScreen();
-    expect(screen).toContain('❯');
+    // Should move cursor back to first item
+    expect(screen).toContain('❯ Apple');
+    expect(screen).not.toContain('❯ Banana');
   });
 
   it('should handle navigation with filtered results', async () => {

@@ -12,6 +12,8 @@ describe('Validation', () => {
 
     // Try to submit without selecting anything
     events.keypress('enter');
+    // Wait for next tick so validation message has time to render
+    await new Promise((resolve) => setTimeout(resolve, 0));
     let screen = getScreen();
     expect(screen).toMatch(/at least one|required|must select/i);
 

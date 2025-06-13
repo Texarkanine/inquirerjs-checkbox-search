@@ -4,7 +4,7 @@ import checkboxSearch, { Separator } from '../index.js';
 
 describe('Separators', () => {
   it('should handle separators in choice list', async () => {
-    const { events, getScreen } = await render(checkboxSearch, {
+    const { events, getScreen, answer } = await render(checkboxSearch, {
       message: 'Select items',
       choices: [
         { value: 'item1', name: 'Item 1' },
@@ -25,5 +25,8 @@ describe('Separators', () => {
     events.keypress('down'); // Should skip separator and go to Item 2
     events.keypress('tab'); // Select Item 2
     events.keypress('enter');
+
+    // Verify Item 2 was selected
+    await expect(answer).resolves.toEqual(['item2']);
   });
 });
