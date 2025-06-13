@@ -161,7 +161,7 @@ jobs:
             fi
             
              # Copy the demo image with deterministic name using a temp directory
-             PR_IMAGE="pr-${{ github.event.pull_request.number }}-header.webm"
+             PR_IMAGE="${{ github.sha }}-header.webm"
              
              # Create a temporary directory to avoid polluting orphan branch
              mkdir -p /tmp/header-extract

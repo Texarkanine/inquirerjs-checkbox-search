@@ -43,20 +43,22 @@ jobs:
             git fetch origin demo-images
             git checkout demo-images
             
-            # Check if PR image exists
-            PR_IMAGE="pr-${{ github.event.pull_request.number }}-header.webm"
-            if [ -f "$PR_IMAGE" ]; then
-              echo "🗑️ Removing $PR_IMAGE"
-              git rm "$PR_IMAGE"
+            # Get the head commit SHA for this PR to find SHA-based images
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+            SHA_IMAGE="${HEAD_SHA}-header.webm"
+            
+            if [ -f "$SHA_IMAGE" ]; then
+              echo "🗑️ Removing $SHA_IMAGE"
+              git rm "$SHA_IMAGE"
               
-              if git commit -m "Remove demo image for closed PR #${{ github.event.pull_request.number }}"; then
+              if git commit -m "Remove demo image for PR #${{ github.event.pull_request.number }} (commit $HEAD_SHA)"; then
                 git push origin demo-images
                 echo "✅ Successfully removed demo image"
               else
                 echo "⚠️ No changes to commit (image already removed)"
               fi
             else
-              echo "📷 No demo image found for PR #${{ github.event.pull_request.number }}"
+              echo "📷 No demo image found for PR #${{ github.event.pull_request.number }} (commit $HEAD_SHA)"
             fi
           else
             echo "📁 demo-images branch does not exist"
@@ -67,7 +69,7 @@ jobs:
           echo "## 🧹 Demo Image Cleanup Summary"
           echo "- PR: #${{ github.event.pull_request.number }}"
           echo "- Action: ${{ github.event.action }}"
-          echo "- Image: pr-${{ github.event.pull_request.number }}-header.webm"
+          echo "- SHA-based image: ${{ github.event.pull_request.head.sha }}-header.webm"
 
   periodic-cleanup:
     name: 'Periodic Cleanup'
@@ -91,7 +93,7 @@ jobs:
           else
             DAYS_OLD="30"  # Default for scheduled runs
           fi
-
+          
           echo "🧹 Cleaning up demo images older than $DAYS_OLD days"
 
           # Configure git
@@ -106,14 +108,14 @@ jobs:
             
             # Get initial stats
             INITIAL_SIZE=$(du -sb . 2>/dev/null | cut -f1 || echo "0")
-            INITIAL_COUNT=$(ls -1 pr-*-header.webm 2>/dev/null | wc -l || echo "0")
+            INITIAL_COUNT=$(ls -1 *-header.webm 2>/dev/null | wc -l || echo "0")
             
             # Find files to remove (but don't remove them yet)
             CUTOFF_DATE=$(date -d "$DAYS_OLD days ago" +%s)
             FILES_TO_REMOVE=""
             REMOVE_COUNT=0
             
-            for file in pr-*-header.webm; do
+            for file in *-header.webm; do
               if [ -f "$file" ]; then
                 # Get file modification time from git log
                 FILE_TIME=$(git log -1 --format=%ct -- "$file" 2>/dev/null || echo "0")
@@ -131,7 +133,7 @@ jobs:
               
               # Create a list of files to keep (inverse of files to remove)
               KEEP_PATTERN=""
-              for file in pr-*-header.webm README.md; do
+              for file in *-header.webm README.md; do
                 if [ -f "$file" ]; then
                   # Check if this file should be kept
                   SHOULD_KEEP=true
@@ -202,7 +204,7 @@ jobs:
             
             # Report final stats
             FINAL_SIZE=$(du -sb . 2>/dev/null | cut -f1 || echo "0")
-            FINAL_COUNT=$(ls -1 pr-*-header.webm 2>/dev/null | wc -l || echo "0")
+            FINAL_COUNT=$(ls -1 *-header.webm 2>/dev/null | wc -l || echo "0")
             SAVED_BYTES=$((INITIAL_SIZE - FINAL_SIZE))
             
             echo "📊 Cleanup results:"
