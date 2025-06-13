@@ -13,9 +13,9 @@ describe('Node.js Compatibility', () => {
         // Mock process.stdout.rows if it doesn't exist (CI/non-TTY environments)
         if (!hasOriginalRows) {
           Object.defineProperty(process.stdout, 'rows', {
-            value: 24, // Default value for CI environments
-            writable: true,
             configurable: true,
+            enumerable: true,
+            get: () => 24, // Default for CI
           });
         }
 
@@ -51,8 +51,9 @@ describe('Node.js Compatibility', () => {
         // Restore original state
         if (hasOriginalRows) {
           Object.defineProperty(process.stdout, 'rows', {
-            value: originalRows,
             configurable: true,
+            enumerable: true,
+            get: () => originalRows,
           });
         } else {
           // Remove the property if it didn't exist originally
