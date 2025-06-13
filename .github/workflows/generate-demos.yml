@@ -5,7 +5,6 @@ on:
     paths: 
       - 'examples/**'
       - 'demos/**'
-      - 'Dockerfile'
       - '.github/workflows/generate-demos.yml'
   workflow_dispatch:
     inputs:

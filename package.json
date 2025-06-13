@@ -81,7 +81,7 @@
     "attw": "attw --pack",
     "pkg:inspect": "rimraf package-inspect *.tgz && npm run build && npm pack && mkdir package-inspect && tar -xzf *.tgz -C package-inspect && echo '\\n📦 Package extracted to package-inspect/ for inspection'",
     "prepublishOnly": "npm run clean && npm run build && npm run test:ci && npm run attw",
-    "demo:docker:build": "docker build -t vhs-node-demo .",
+    "demo:docker:build": "docker build -f demos/Dockerfile -t vhs-node-demo .",
     "demo:docker:run": "docker run --rm -v $PWD/docs/img:/workspace/docs/img vhs-node-demo",
     "demo:generate:basic": "npm run demo:docker:build && npm run demo:docker:run demos/basic.tape",
     "demo:generate:all": "npm run demo:generate:basic",
