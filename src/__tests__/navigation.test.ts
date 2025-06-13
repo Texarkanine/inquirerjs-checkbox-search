@@ -13,14 +13,14 @@ describe('Navigation', () => {
     expect(screen).toContain('❯ ◯ Apple'); // cursor should be on first item
 
     // Move down
-    events.keypress('down');
+    await events.keypress('down');
     screen = getScreen();
     // Should move cursor to second item
     expect(screen).toContain('❯ ◯ Banana');
     expect(screen).not.toContain('❯ ◯ Apple');
 
     // Move up
-    events.keypress('up');
+    await events.keypress('up');
     screen = getScreen();
     // Should move cursor back to first item
     expect(screen).toContain('❯ ◯ Apple');
@@ -38,16 +38,16 @@ describe('Navigation', () => {
     });
 
     // Filter to show only items with 'ap'
-    events.type('ap');
+    await events.type('ap');
     const screen = getScreen();
     expect(screen).toContain('Apple');
     expect(screen).toContain('Apricot');
     expect(screen).not.toContain('Banana');
 
     // Navigate through filtered results
-    events.keypress('down');
-    events.keypress('tab'); // Select second item (Apricot)
-    events.keypress('enter');
+    await events.keypress('down');
+    await events.keypress('tab'); // Select second item (Apricot)
+    await events.keypress('enter');
   });
 
   it('should loop navigation when enabled', async () => {
@@ -58,14 +58,14 @@ describe('Navigation', () => {
     });
 
     // Go to last item
-    events.keypress('up'); // Should wrap to last item
+    await events.keypress('up'); // Should wrap to last item
     let screen = getScreen();
     expect(screen).toContain('❯');
 
     // Go past last item
-    events.keypress('down');
-    events.keypress('down');
-    events.keypress('down');
+    await events.keypress('down');
+    await events.keypress('down');
+    await events.keypress('down');
     screen = getScreen();
     expect(screen).toContain('❯'); // Should wrap to first item
   });
@@ -81,18 +81,18 @@ describe('Navigation', () => {
     const initialScreen = screen;
 
     // Try to go up from first item
-    events.keypress('up');
+    await events.keypress('up');
     screen = getScreen();
     // Should stay at first item (no wrap)
     expect(screen).toEqual(initialScreen);
 
     // Go to last item
-    events.keypress('down');
-    events.keypress('down');
+    await events.keypress('down');
+    await events.keypress('down');
     const lastScreen = getScreen();
 
     // Try to go down from last item
-    events.keypress('down');
+    await events.keypress('down');
     screen = getScreen();
     // Should stay at last item (no wrap)
     expect(screen).toEqual(lastScreen);
@@ -117,7 +117,7 @@ describe('Navigation', () => {
     expect(screen).toContain('Svelte');
 
     // Filter to show only Vue.js
-    events.type('vue');
+    await events.type('vue');
     screen = getScreen();
     expect(screen).toContain('Vue.js');
     expect(screen).not.toContain('React');
@@ -125,12 +125,12 @@ describe('Navigation', () => {
     expect(screen).not.toContain('Svelte');
 
     // Select Vue.js (cursor should be on it since it's the only filtered item)
-    events.keypress('tab');
+    await events.keypress('tab');
     screen = getScreen();
     expect(screen).toContain('◉'); // Vue.js should be selected
 
     // Clear the search filter with escape
-    events.keypress('escape');
+    await events.keypress('escape');
     screen = getScreen();
 
     // All items should be visible again
@@ -165,7 +165,7 @@ describe('Navigation', () => {
     });
 
     // Filter to show items containing 'a' (Angular should be visible)
-    events.type('ang');
+    await events.type('ang');
     let screen = getScreen();
     expect(screen).toContain('Angular');
     expect(screen).not.toContain('React');
@@ -176,7 +176,7 @@ describe('Navigation', () => {
     // DON'T select it - just leave cursor focused on it
 
     // Clear the search filter with escape
-    events.keypress('escape');
+    await events.keypress('escape');
     screen = getScreen();
 
     // All items should be visible again
@@ -210,18 +210,18 @@ describe('Navigation', () => {
     });
 
     // First cycle: Filter for Svelte and navigate to it
-    events.type('sve');
+    await events.type('sve');
     let screen = getScreen();
     expect(screen).toContain('Svelte');
     expect(screen).not.toContain('React');
 
     // Select Svelte
-    events.keypress('tab');
+    await events.keypress('tab');
     screen = getScreen();
     expect(screen).toContain('◉'); // Svelte should be selected
 
     // Clear filter - cursor should stay on Svelte
-    events.keypress('escape');
+    await events.keypress('escape');
     screen = getScreen();
     let lines = screen.split('\n');
     let svelteLine = lines.find((line: string) => line.includes('Svelte'));
@@ -229,7 +229,7 @@ describe('Navigation', () => {
     expect(svelteLine).toContain('◉'); // Svelte should still be selected
 
     // Second cycle: Filter for Angular
-    events.type('ang');
+    await events.type('ang');
     screen = getScreen();
     expect(screen).toContain('Angular');
     expect(screen).not.toContain('Svelte'); // Hidden by filter
@@ -239,7 +239,7 @@ describe('Navigation', () => {
     // Angular should already be focused since it's the only visible item
 
     // Clear filter again - cursor should move to Angular, Svelte should stay selected
-    events.keypress('escape');
+    await events.keypress('escape');
     screen = getScreen();
     lines = screen.split('\n');
 
@@ -275,28 +275,28 @@ describe('Navigation', () => {
     expect(screen).not.toContain('❯ ◯ React');
 
     // Navigate down - should go to TypeScript (second selectable item)
-    events.keypress('down');
+    await events.keypress('down');
     screen = getScreen();
     expect(screen).not.toContain('❯ ◯ JavaScript');
     expect(screen).toContain('❯ ◯ TypeScript');
     expect(screen).not.toContain('❯ ◯ React');
 
     // Navigate down again - should skip separator and go to React
-    events.keypress('down');
+    await events.keypress('down');
     screen = getScreen();
     expect(screen).not.toContain('❯ ◯ TypeScript');
     expect(screen).toContain('❯ ◯ React');
     expect(screen).not.toContain('❯ ◯ Vue.js');
 
     // Navigate down again - should go to Vue.js
-    events.keypress('down');
+    await events.keypress('down');
     screen = getScreen();
     expect(screen).not.toContain('❯ ◯ React');
     expect(screen).toContain('❯ ◯ Vue.js');
     expect(screen).not.toContain('❯ ◯ Webpack');
 
     // Navigate down again - should skip separator and go to Webpack
-    events.keypress('down');
+    await events.keypress('down');
     screen = getScreen();
     expect(screen).not.toContain('❯ ◯ Vue.js');
     expect(screen).toContain('❯ ◯ Webpack');
@@ -316,27 +316,27 @@ describe('Navigation', () => {
     });
 
     // Start by navigating to the last item (Webpack)
-    events.keypress('down'); // to React
-    events.keypress('down'); // to Vue.js
-    events.keypress('down'); // to Webpack
+    await events.keypress('down'); // to React
+    await events.keypress('down'); // to Vue.js
+    await events.keypress('down'); // to Webpack
 
     let screen = getScreen();
     expect(screen).toContain('❯ ◯ Webpack');
 
     // Navigate up - should go to Vue.js
-    events.keypress('up');
+    await events.keypress('up');
     screen = getScreen();
     expect(screen).not.toContain('❯ ◯ Webpack');
     expect(screen).toContain('❯ ◯ Vue.js');
 
     // Navigate up again - should go to React
-    events.keypress('up');
+    await events.keypress('up');
     screen = getScreen();
     expect(screen).not.toContain('❯ ◯ Vue.js');
     expect(screen).toContain('❯ ◯ React');
 
     // Navigate up again - should skip separator and go to JavaScript
-    events.keypress('up');
+    await events.keypress('up');
     screen = getScreen();
     expect(screen).not.toContain('❯ ◯ React');
     expect(screen).toContain('❯ ◯ JavaScript');
@@ -354,27 +354,27 @@ describe('Navigation', () => {
     });
 
     // Navigate to React and select it
-    events.keypress('down'); // Go to React (first down should skip separator)
+    await events.keypress('down'); // Go to React (first down should skip separator)
 
     let screen = getScreen();
     expect(screen).toContain('❯ ◯ React');
 
     // Select React
-    events.keypress('tab');
+    await events.keypress('tab');
     screen = getScreen();
     expect(screen).toContain('❯ ◉ React'); // Should be selected
 
     // Navigate to Vue.js and select it
-    events.keypress('down');
+    await events.keypress('down');
     screen = getScreen();
     expect(screen).toContain('❯ ◯ Vue.js');
 
-    events.keypress('tab');
+    await events.keypress('tab');
     screen = getScreen();
     expect(screen).toContain('❯ ◉ Vue.js'); // Should be selected
 
     // Submit
-    events.keypress('enter');
+    await events.keypress('enter');
     await expect(answer).resolves.toEqual(['react', 'vue']);
   });
 
@@ -394,13 +394,13 @@ describe('Navigation', () => {
     expect(screen).toContain('❯ ◯ First');
 
     // Navigate up (should loop to Last)
-    events.keypress('up');
+    await events.keypress('up');
     screen = getScreen();
     expect(screen).not.toContain('❯ ◯ First');
     expect(screen).toContain('❯ ◯ Last');
 
     // Navigate down (should loop back to First, skipping separator)
-    events.keypress('down');
+    await events.keypress('down');
     screen = getScreen();
     expect(screen).toContain('❯ ◯ First');
     expect(screen).not.toContain('❯ ◯ Last');
@@ -418,23 +418,23 @@ describe('Navigation', () => {
     });
 
     // Select first item
-    events.keypress('tab');
+    await events.keypress('tab');
     let screen = getScreen();
     expect(screen).toContain('❯ ◉ Item 1');
 
     // Navigate to Item 2 and select it
-    events.keypress('down'); // Skip separator, go to Item 2
+    await events.keypress('down'); // Skip separator, go to Item 2
     screen = getScreen();
     expect(screen).toContain('❯ ◯ Item 2');
     expect(screen).toContain('◉ Item 1'); // Should still be selected
 
-    events.keypress('tab');
+    await events.keypress('tab');
     screen = getScreen();
     expect(screen).toContain('❯ ◉ Item 2');
     expect(screen).toContain('◉ Item 1'); // Should still be selected
 
     // Navigate back up - selections should be preserved
-    events.keypress('up');
+    await events.keypress('up');
     screen = getScreen();
     expect(screen).toContain('❯ ◉ Item 1');
     expect(screen).toContain('◉ Item 2'); // Should still be selected

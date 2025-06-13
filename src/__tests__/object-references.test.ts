@@ -22,14 +22,14 @@ describe('Object value reference equality', () => {
     );
 
     // Select all items
-    events.keypress('tab'); // Select array choice
-    events.keypress('down');
-    events.keypress('tab'); // Select object choice
-    events.keypress('down');
-    events.keypress('tab'); // Select string choice
+    await events.keypress('tab'); // Select array choice
+    await events.keypress('down');
+    await events.keypress('tab'); // Select object choice
+    await events.keypress('down');
+    await events.keypress('tab'); // Select string choice
 
     // Submit
-    events.keypress('enter');
+    await events.keypress('enter');
     const result = await answer;
 
     // Verify we get back the EXACT same references
@@ -52,29 +52,37 @@ describe('Object value reference equality', () => {
     const specialObject: ObjectType = { type: 'special', data: [1, 2, 3] };
     const normalObject: ObjectType = { type: 'normal', data: [4, 5, 6] };
 
-    const { answer, events } = await render(checkboxSearch<ObjectType>, {
-      message: 'Select items',
-      choices: [
-        { value: specialObject, name: 'Special Item' },
-        { value: normalObject, name: 'Normal Item' },
-      ],
-    });
+    const { answer, events, getScreen } = await render(
+      checkboxSearch<ObjectType>,
+      {
+        message: 'Select items',
+        choices: [
+          { value: specialObject, name: 'Special Item' },
+          { value: normalObject, name: 'Normal Item' },
+        ],
+      },
+    );
 
     // Filter to show only "special"
-    events.type('special');
+    await events.type('special');
+    let screen = getScreen();
+    expect(screen).toContain('Special Item');
 
-    // Select the filtered item
-    events.keypress('tab');
+    await events.keypress('tab');
+    screen = getScreen();
+    expect(screen).toContain('◉'); // Should be selected
 
-    // Clear filter to show all items
-    events.keypress('escape');
+    await events.keypress('escape');
+    screen = getScreen();
+    expect(screen).toContain('Special Item');
+    expect(screen).toContain('Normal Item');
 
-    // Select the normal object too
-    events.keypress('down');
-    events.keypress('tab');
+    await events.keypress('down');
+    await events.keypress('tab');
+    screen = getScreen();
+    expect(screen).toContain('◉'); // Should show selections
 
-    // Submit
-    events.keypress('enter');
+    await events.keypress('enter');
     const result = await answer;
 
     // Should get back exact same object references

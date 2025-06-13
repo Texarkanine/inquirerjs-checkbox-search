@@ -21,7 +21,7 @@ describe('Basic functionality', () => {
     expect(screen).toContain('❯'); // cursor indicator
 
     // Should be able to complete with no selections initially
-    events.keypress('enter');
+    await events.keypress('enter');
     await expect(answer).resolves.toEqual([]);
   });
 
@@ -38,8 +38,8 @@ describe('Basic functionality', () => {
     expect(screen).toContain('Angular');
 
     // Select first option and confirm
-    events.keypress('tab');
-    events.keypress('enter');
+    await events.keypress('tab');
+    await events.keypress('enter');
     await expect(answer).resolves.toEqual(['React']);
   });
 
