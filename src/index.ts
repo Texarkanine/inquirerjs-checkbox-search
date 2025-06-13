@@ -262,7 +262,7 @@ export function calculateDynamicPageSize(fallbackPageSize: number): number {
     return Math.max(2, Math.min(availableLines, 50));
   } catch {
     // If there's any error accessing terminal dimensions, fallback gracefully
-    return fallbackPageSize;
+    return Math.max(2, Math.min(fallbackPageSize, 50));
   }
 }
 

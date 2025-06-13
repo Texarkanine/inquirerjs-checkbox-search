@@ -52,7 +52,7 @@ describe('Theme customization', () => {
     expect(screen).toContain('👉');
 
     // Select first item
-    events.keypress('tab');
+    await events.keypress('tab');
     screen = getScreen();
 
     // Should show custom checked icon
@@ -80,7 +80,7 @@ describe('Theme customization', () => {
     });
 
     // Type search term
-    events.type('app');
+    await events.type('app');
     const screen = getScreen();
 
     // Should use custom search term styling
@@ -114,7 +114,7 @@ describe('Theme customization', () => {
     expect(screen).toContain('**Red fruit**');
 
     // Navigate to second item
-    events.keypress('down');
+    await events.keypress('down');
     screen = getScreen();
 
     // Should apply custom highlighting to new active item
@@ -147,7 +147,7 @@ describe('Theme customization', () => {
     expect(screen).toContain('⬜ Apple');
 
     // Select first item
-    events.keypress('tab');
+    await events.keypress('tab');
     screen = getScreen();
 
     // Should show function-based checked
@@ -175,7 +175,7 @@ describe('Theme customization', () => {
     expect(screen).toContain('⬜ Apple'); // String unchecked
 
     // Select first item
-    events.keypress('tab');
+    await events.keypress('tab');
     screen = getScreen();
 
     // Should show function-based checked icon
@@ -196,7 +196,7 @@ describe('Theme customization', () => {
     });
 
     // Navigate to second item
-    events.keypress('down');
+    await events.keypress('down');
     let screen = getScreen();
 
     // Verify cursor is on Banana
@@ -205,7 +205,7 @@ describe('Theme customization', () => {
     expect(bananaLine).toContain('→');
 
     // Toggle selection
-    events.keypress('tab');
+    await events.keypress('tab');
     screen = getScreen();
 
     // Cursor should still be on Banana

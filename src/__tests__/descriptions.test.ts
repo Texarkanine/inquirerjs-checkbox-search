@@ -37,7 +37,7 @@ describe('Description display', () => {
     expect(descriptionLineIndex).toBeGreaterThan(lastChoiceLineIndex);
 
     // Navigate to second item - description should update
-    events.keypress('down');
+    await events.keypress('down');
     screen = getScreen();
 
     // Should now show Banana's description at bottom
@@ -90,7 +90,7 @@ describe('Description display', () => {
     expect(screen).toContain('Red fruit');
 
     // Navigate to Banana (no description)
-    events.keypress('down');
+    await events.keypress('down');
     screen = getScreen();
 
     // Should not show any description now
@@ -99,7 +99,7 @@ describe('Description display', () => {
     expect(screen).not.toContain('Small red fruit');
 
     // Navigate to Cherry (has description)
-    events.keypress('down');
+    await events.keypress('down');
     screen = getScreen();
 
     // Should show Cherry's description
@@ -117,7 +117,7 @@ describe('Description display', () => {
     });
 
     // Type search to filter
-    events.type('ap');
+    await events.type('ap');
     let screen = getScreen();
 
     // Should show filtered results with Apple active
@@ -127,7 +127,7 @@ describe('Description display', () => {
     expect(screen).toContain('Red fruit'); // Apple's description
 
     // Navigate to Apricot
-    events.keypress('down');
+    await events.keypress('down');
     screen = getScreen();
 
     // Description should update to Apricot's

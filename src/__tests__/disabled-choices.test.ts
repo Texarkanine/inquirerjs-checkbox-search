@@ -4,8 +4,8 @@ import checkboxSearch from '../index.js';
 
 describe('Disabled choices', () => {
   it('should skip disabled choices during navigation', async () => {
-    const { events, getScreen, answer } = await render(checkboxSearch, {
-      message: 'Select items',
+    const { answer, events, getScreen } = await render(checkboxSearch, {
+      message: 'Select fruits',
       choices: [
         { value: 'apple', name: 'Apple' },
         { value: 'banana', name: 'Banana', disabled: true },
@@ -18,12 +18,11 @@ describe('Disabled choices', () => {
     expect(screen).toContain('Banana');
     expect(screen).toContain('Cherry');
 
-    // Navigate down - should skip disabled item
-    events.keypress('down');
-    events.keypress('tab'); // Should select Cherry, not Banana
-    events.keypress('enter');
+    // Navigate down - should skip disabled Banana
+    await events.keypress('down');
+    await events.keypress('tab'); // Should select Cherry, not Banana
+    await events.keypress('enter');
 
-    // Verify only Cherry was selected
     await expect(answer).resolves.toEqual(['cherry']);
   });
 
@@ -49,5 +48,24 @@ describe('Disabled choices', () => {
     // Should show disabled indicator
     expect(screen).toContain('disabled');
     expect(screen).toContain('Custom reason');
+  });
+
+  it('should show disabled status for disabled choices', async () => {
+    const { getScreen } = await render(checkboxSearch, {
+      message: 'Select items',
+      choices: [
+        { value: 'available', name: 'Available Item' },
+        {
+          value: 'disabled',
+          name: 'Disabled Item',
+          disabled: 'This item is disabled',
+        },
+      ],
+    });
+
+    const screen = getScreen();
+    expect(screen).toContain('Available Item');
+    expect(screen).toContain('Disabled Item');
+    expect(screen).toContain('This item is disabled');
   });
 });

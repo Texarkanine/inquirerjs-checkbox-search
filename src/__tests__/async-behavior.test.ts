@@ -9,6 +9,8 @@ describe('Async behavior', () => {
   });
 
   afterEach(() => {
+    // Clear all pending fake timers before restoring real timers
+    vi.clearAllTimers();
     // Restore real timers after each test
     vi.useRealTimers();
   });
@@ -89,11 +91,11 @@ describe('Async behavior', () => {
     });
 
     // Type quickly to trigger multiple requests
-    events.type('a');
+    await events.type('a');
     vi.advanceTimersByTime(10); // Allow first request to start
-    events.type('b');
+    await events.type('b');
     vi.advanceTimersByTime(10); // Allow second request to start
-    events.type('c');
+    await events.type('c');
 
     // Fast-forward time for requests to complete
     vi.advanceTimersByTime(100);

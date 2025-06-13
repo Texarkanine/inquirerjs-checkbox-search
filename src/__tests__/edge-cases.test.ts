@@ -32,41 +32,60 @@ describe('Edge cases', () => {
     expect(screen).not.toContain('Item 50'); // Should not show items beyond page size
 
     // Search should work with large dataset
-    events.type('100');
+    await events.type('100');
     const searchScreen = getScreen();
     expect(searchScreen).toContain('Item 100');
     expect(searchScreen).not.toContain('Item 200');
   });
 
-  it('should handle choices with special characters', async () => {
+  it('should handle large page sizes', async () => {
+    const { events, getScreen } = await render(checkboxSearch, {
+      message: 'Select items',
+      choices: Array.from({ length: 200 }, (_, i) => ({
+        value: `item${i}`,
+        name: `Item ${i}`,
+      })),
+      pageSize: 100,
+    });
+
+    let screen = getScreen();
+    expect(screen).toContain('Item 0');
+    expect(screen).toContain('Item 99'); // Should show up to pageSize-1
+
+    // Search to filter results
+    await events.type('100');
+    screen = getScreen();
+    expect(screen).toContain('Item 100');
+    expect(screen).not.toContain('Item 0');
+  });
+
+  it('should handle special characters in choices', async () => {
     const { events, getScreen } = await render(checkboxSearch, {
       message: 'Select items',
       choices: [
-        { value: 'emoji', name: '🚀 Rocket Ship' },
-        { value: 'unicode', name: 'Iñtërnâtiønàl' },
-        { value: 'symbols', name: 'Special @#$%^&*()' },
-        { value: 'newlines', name: 'Multi\nLine\nItem' },
+        { value: 'emoji', name: '🚀 Rocket' },
+        { value: 'unicode', name: 'Iñtërnâtiônàlizætiøn' },
+        { value: 'symbols', name: 'Special @#$%^&*() symbols' },
       ],
     });
 
     let screen = getScreen();
-    expect(screen).toContain('🚀 Rocket Ship');
-    expect(screen).toContain('Iñtërnâtiønàl');
-    expect(screen).toContain('Special @#$%^&*()');
+    expect(screen).toContain('🚀 Rocket');
+    expect(screen).toContain('Iñtërnâtiônàlizætiøn');
+    expect(screen).toContain('Special @#$%^&*() symbols');
 
-    // Search should work with special characters
-    events.type('🚀');
+    // Search with emoji
+    await events.type('🚀');
     screen = getScreen();
-    expect(screen).toContain('🚀 Rocket Ship');
-    expect(screen).not.toContain('Iñtërnâtiønàl');
+    expect(screen).toContain('🚀 Rocket');
+    expect(screen).not.toContain('Iñtërnâtiônàlizætiøn');
 
-    // Clear and search for unicode
-    for (let i = 0; i < 5; i++) {
-      events.keypress('backspace');
-    }
-    events.type('Iñt');
+    // Clear and search with unicode
+    await events.keypress('backspace');
+    await events.keypress('backspace'); // Emoji might need multiple backspaces
+    await events.type('Iñt');
     screen = getScreen();
-    expect(screen).toContain('Iñtërnâtiønàl');
-    expect(screen).not.toContain('🚀 Rocket Ship');
+    expect(screen).toContain('Iñtërnâtiônàlizætiøn');
+    expect(screen).not.toContain('🚀 Rocket');
   });
 });

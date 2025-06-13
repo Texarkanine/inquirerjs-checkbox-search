@@ -11,15 +11,15 @@ describe('Validation', () => {
     });
 
     // Try to submit without selecting anything
-    events.keypress('enter');
+    await events.keypress('enter');
     // Wait for next tick so validation message has time to render
     await new Promise((resolve) => setTimeout(resolve, 0));
     let screen = getScreen();
     expect(screen).toMatch(/at least one|required|must select/i);
 
     // Select an item and submit
-    events.keypress('tab');
-    events.keypress('enter');
+    await events.keypress('tab');
+    await events.keypress('enter');
     await expect(answer).resolves.toEqual(['Apple']);
   });
 
@@ -38,15 +38,15 @@ describe('Validation', () => {
     });
 
     // Select only one item and try to submit
-    events.keypress('tab');
-    events.keypress('enter');
+    await events.keypress('tab');
+    await events.keypress('enter');
     let screen = getScreen();
     expect(screen).toContain('Please select exactly 2 items');
 
     // Select another item and submit
-    events.keypress('down');
-    events.keypress('tab');
-    events.keypress('enter');
+    await events.keypress('down');
+    await events.keypress('tab');
+    await events.keypress('enter');
     await expect(answer).resolves.toHaveLength(2);
   });
 
@@ -62,8 +62,8 @@ describe('Validation', () => {
     });
 
     // Select item and submit - should succeed
-    events.keypress('tab');
-    events.keypress('enter');
+    await events.keypress('tab');
+    await events.keypress('enter');
     await expect(answer).resolves.toEqual(['Apple']);
   });
 });

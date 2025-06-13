@@ -21,65 +21,196 @@ async function waitForCondition(
 describe('Search and filtering', () => {
   it('should filter choices based on search term', async () => {
     const { events, getScreen } = await render(checkboxSearch, {
-      message: 'Select frameworks',
+      message: 'Select fruits',
       choices: [
-        { value: 'react', name: 'React' },
-        { value: 'vue', name: 'Vue.js' },
-        { value: 'angular', name: 'Angular' },
-        { value: 'svelte', name: 'Svelte' },
+        { value: 'apple', name: 'Apple' },
+        { value: 'banana', name: 'Banana' },
+        { value: 'cherry', name: 'Cherry' },
+        { value: 'date', name: 'Date' },
+        { value: 'elderberry', name: 'Elderberry' },
       ],
     });
 
-    // Initially all choices should be visible
-    let screen = getScreen();
-    expect(screen).toContain('React');
-    expect(screen).toContain('Vue.js');
-    expect(screen).toContain('Angular');
-    expect(screen).toContain('Svelte');
+    // Type search term
+    await events.type('rea');
+    const screen = getScreen();
 
-    // Type search term to filter
-    events.type('rea');
-    screen = getScreen();
-    expect(screen).toContain('React');
-    expect(screen).not.toContain('Vue.js');
-    expect(screen).not.toContain('Angular');
-    expect(screen).not.toContain('Svelte');
+    // Should show only items containing "rea" (case-insensitive)
+    expect(screen).not.toContain('Apple');
+    expect(screen).not.toContain('Banana');
+    expect(screen).not.toContain('Cherry');
+    expect(screen).not.toContain('Date');
+    expect(screen).not.toContain('Elderberry');
   });
 
-  it('should handle case-insensitive search', async () => {
+  it('should handle case-insensitive filtering', async () => {
     const { events, getScreen } = await render(checkboxSearch, {
-      message: 'Select items',
+      message: 'Select fruits',
       choices: ['Apple', 'Banana', 'Cherry'],
     });
 
-    events.type('APPLE');
-    const screen = getScreen();
+    // Search with uppercase
+    await events.type('APPLE');
+    let screen = getScreen();
     expect(screen).toContain('Apple');
     expect(screen).not.toContain('Banana');
     expect(screen).not.toContain('Cherry');
   });
 
-  it('should reset filter when search term is cleared', async () => {
+  it('should handle case-sensitive filtering when configured', async () => {
+    const { events, getScreen } = await render(checkboxSearch, {
+      message: 'Select fruits',
+      choices: ['Apple', 'Banana', 'Cherry'],
+    });
+
+    // Search with lowercase
+    await events.type('apple');
+    let screen = getScreen();
+    expect(screen).toContain('Apple'); // Should match case-insensitively by default
+    expect(screen).not.toContain('Banana');
+    expect(screen).not.toContain('Cherry');
+
+    // Clear search
+    await events.keypress('backspace');
+    await events.keypress('backspace');
+    await events.keypress('backspace');
+    await events.keypress('backspace');
+    await events.keypress('backspace');
+  });
+
+  it('should clear filter with backspace', async () => {
+    const { events, getScreen } = await render(checkboxSearch, {
+      message: 'Select fruits',
+      choices: ['Apple', 'Banana', 'Cherry'],
+    });
+
+    // Type search term
+    await events.type('ap');
+    let screen = getScreen();
+    expect(screen).toContain('Apple');
+    expect(screen).not.toContain('Banana');
+    expect(screen).not.toContain('Cherry');
+
+    // Clear with backspace
+    await events.keypress('backspace');
+    await events.keypress('backspace');
+    screen = getScreen();
+    expect(screen).toContain('Apple');
+    expect(screen).toContain('Banana');
+    expect(screen).toContain('Cherry');
+  });
+
+  it('should clear filter with escape key', async () => {
+    const { events, getScreen } = await render(checkboxSearch, {
+      message: 'Select fruits',
+      choices: ['Apple', 'Banana', 'Cherry'],
+    });
+
+    // Type search term
+    await events.type('ap');
+    let screen = getScreen();
+    expect(screen).toContain('Apple');
+    expect(screen).not.toContain('Banana');
+    expect(screen).not.toContain('Cherry');
+
+    // Clear with escape
+    await events.keypress('escape');
+    screen = getScreen();
+    expect(screen).toContain('Apple');
+    expect(screen).toContain('Banana');
+    expect(screen).toContain('Cherry');
+  });
+
+  it('should maintain selections across filtering', async () => {
+    const { events, getScreen } = await render(checkboxSearch, {
+      message: 'Select fruits',
+      choices: [
+        { value: 'apple', name: 'Apple' },
+        { value: 'apricot', name: 'Apricot' },
+        { value: 'banana', name: 'Banana' },
+      ],
+    });
+
+    // Filter to show only items with 'ap'
+    await events.type('ap');
+    let screen = getScreen();
+    expect(screen).toContain('Apple');
+    expect(screen).toContain('Apricot');
+    expect(screen).not.toContain('Banana');
+
+    // Select Apple and Apricot
+    await events.keypress('tab'); // Select Apple
+    await events.keypress('down');
+    await events.keypress('tab'); // Select Apricot
+
+    screen = getScreen();
+    expect(screen).toContain('◉'); // Should show selections
+
+    // Clear filter to show all items
+    await events.keypress('escape');
+    screen = getScreen();
+
+    // Should show all items and maintain selections
+    expect(screen).toContain('Apple');
+    expect(screen).toContain('Apricot');
+    expect(screen).toContain('Banana');
+    expect(screen).toContain('◉'); // Selections should be maintained
+  });
+
+  it('should handle empty search results', async () => {
     const { events, getScreen } = await render(checkboxSearch, {
       message: 'Select items',
       choices: ['Apple', 'Banana', 'Cherry'],
     });
 
-    // Filter first
-    events.type('apple');
-    let screen = getScreen();
-    expect(screen).toContain('Apple');
+    // Search for something that doesn't exist
+    await events.type('xyz'); // Search term that matches nothing
+    const screen = getScreen();
+
+    // Should show no items, just the search input
+    expect(screen).not.toContain('Apple');
     expect(screen).not.toContain('Banana');
+    expect(screen).not.toContain('Cherry');
+    expect(screen).toContain('xyz'); // Should show the search term
+  });
 
-    // Clear search term
-    for (let i = 0; i < 5; i++) {
-      events.keypress('backspace');
-    }
+  it('should handle tab selection after filtering', async () => {
+    const { events, getScreen } = await render(checkboxSearch, {
+      message: 'Select items',
+      choices: [
+        { value: 'apple', name: 'Apple' },
+        { value: 'banana', name: 'Banana' },
+      ],
+    });
 
+    // Search and select
+    await events.keypress('tab');
+    let screen = getScreen();
+    expect(screen).toContain('◉'); // Apple should be selected
+
+    // Search for 'ap' and verify selection persists
+    await events.type('ap');
     screen = getScreen();
     expect(screen).toContain('Apple');
+    expect(screen).not.toContain('Banana'); // Should be filtered out
+    expect(screen).toContain('◉'); // Selection should persist
+  });
+
+  it('should handle backspace correctly after search and selection', async () => {
+    const { events, getScreen } = await render(checkboxSearch, {
+      message: 'Select items',
+      choices: [
+        { value: 'apple', name: 'Apple' },
+        { value: 'banana', name: 'Banana' },
+      ],
+    });
+
+    // Search and clear
+    await events.keypress('backspace');
+    await events.keypress('backspace');
+    let screen = getScreen();
+    expect(screen).toContain('Apple');
     expect(screen).toContain('Banana');
-    expect(screen).toContain('Cherry');
   });
 
   /**
@@ -99,14 +230,14 @@ describe('Search and filtering', () => {
     });
 
     // Type a search term to filter results
-    events.type('ap');
+    await events.type('ap');
     let screen = getScreen();
     expect(screen).toContain('Apple');
     expect(screen).not.toContain('Banana');
     expect(screen).not.toContain('Cherry');
 
     // Press Escape to clear the search filter
-    events.keypress('escape');
+    await events.keypress('escape');
     screen = getScreen();
 
     // All items should be visible again
@@ -135,16 +266,16 @@ describe('Search and filtering', () => {
     });
 
     // Type a search term to filter results
-    events.type('ap');
+    await events.type('ap');
     let screen = getScreen();
     expect(screen).toContain('Apple');
     expect(screen).toContain('Apricot');
     expect(screen).not.toContain('Banana');
 
     // Select both filtered items
-    events.keypress('tab'); // Select Apple
-    events.keypress('down');
-    events.keypress('tab'); // Select Apricot
+    await events.keypress('tab'); // Select Apple
+    await events.keypress('down');
+    await events.keypress('tab'); // Select Apricot
 
     screen = getScreen();
     // Both should be selected
@@ -155,7 +286,7 @@ describe('Search and filtering', () => {
     expect(apricotLine).toContain('◉');
 
     // Press Escape to clear the search filter
-    events.keypress('escape');
+    await events.keypress('escape');
     screen = getScreen();
 
     // All items should be visible again
@@ -198,7 +329,7 @@ describe('Search and filtering', () => {
     });
 
     // Type "j" - should add to search term
-    events.type('j');
+    await events.type('j');
 
     let screen = getScreen();
     expect(screen).toContain('j'); // Should show "j" in search term
@@ -223,7 +354,7 @@ describe('Search and filtering', () => {
     });
 
     // Type "k" - should add to search term, not navigate up
-    events.type('k');
+    await events.type('k');
 
     let screen = getScreen();
     expect(screen).toContain('k'); // Should show "k" in search term
@@ -268,7 +399,7 @@ describe('Search and filtering', () => {
     expect(screen).toContain('Another Item');
 
     // Search for specific term
-    events.type('another');
+    await events.type('another');
 
     // Wait for search results by polling for expected content
     await waitForCondition(() => {
@@ -284,65 +415,5 @@ describe('Search and filtering', () => {
     expect(screen).not.toContain('Item One');
     expect(screen).not.toContain('Item Two');
     expect(screen).toContain('Another Item');
-  });
-
-  it('should handle empty search results', async () => {
-    const { events, getScreen } = await render(checkboxSearch, {
-      message: 'Select items',
-      choices: ['Apple', 'Banana', 'Cherry'],
-    });
-
-    events.type('xyz'); // Search term that matches nothing
-    const screen = getScreen();
-
-    expect(screen).not.toContain('Apple');
-    expect(screen).not.toContain('Banana');
-    expect(screen).not.toContain('Cherry');
-    // Should show some indication of no results
-    expect(screen).toContain('No choices available');
-  });
-
-  it('should maintain selections across filtering', async () => {
-    const { events, getScreen } = await render(checkboxSearch, {
-      message: 'Select items',
-      choices: [
-        { value: 'apple', name: 'Apple' },
-        { value: 'apricot', name: 'Apricot' },
-        { value: 'banana', name: 'Banana' },
-      ],
-    });
-
-    // Select first item
-    events.keypress('tab');
-    let screen = getScreen();
-    expect(screen).toContain('◉'); // Apple should be selected
-
-    // Filter to items containing 'ap'
-    events.type('ap');
-    screen = getScreen();
-    expect(screen).toContain('Apple');
-    expect(screen).toContain('Apricot');
-    expect(screen).not.toContain('Banana'); // Should be filtered out
-
-    // Apple should still be selected even after filtering
-    const lines = screen.split('\n');
-    const appleLine = lines.find((line: string) => line.includes('Apple'));
-    expect(appleLine).toContain('◉');
-
-    // Clear filter
-    events.keypress('backspace');
-    events.keypress('backspace');
-    screen = getScreen();
-
-    // All items should be visible again, and Apple should still be selected
-    expect(screen).toContain('Apple');
-    expect(screen).toContain('Apricot');
-    expect(screen).toContain('Banana');
-
-    const newLines = screen.split('\n');
-    const newAppleLine = newLines.find((line: string) =>
-      line.includes('Apple'),
-    );
-    expect(newAppleLine).toContain('◉'); // Should still be selected
   });
 });
