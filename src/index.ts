@@ -90,6 +90,18 @@ export type NormalizedChoice<Value> = {
 /**
  * Configuration options for the checkbox-search prompt
  */
+export type PageSizeConfig = {
+  base?: number;
+  max?: number;
+  min?: number;
+  autoBufferDescriptions?: boolean;
+  buffer?: number;
+  minBuffer?: number;
+  autoBufferCountsLineWidth?: boolean;
+};
+
+export type PageSize = number | PageSizeConfig;
+
 type CheckboxSearchConfig<
   Value,
   ChoicesObject =
@@ -98,7 +110,7 @@ type CheckboxSearchConfig<
 > = {
   message: string;
   prefix?: string;
-  pageSize?: number;
+  pageSize?: PageSize;
   instructions?: string | boolean;
 
   // Either choices or source must be provided
@@ -232,6 +244,139 @@ function defaultFilter<Value>(
 }
 
 /**
+ * Validate PageSizeConfig object for correctness
+ * @param config - PageSizeConfig to validate
+ * @throws Error if validation fails
+ */
+export function validatePageSizeConfig(config: PageSizeConfig): void {
+  if (config.min !== undefined && config.min < 1) {
+    throw new Error('PageSize min cannot be less than 1');
+  }
+
+  if (config.base !== undefined && config.base < 1) {
+    throw new Error('PageSize base cannot be less than 1');
+  }
+
+  if (config.buffer !== undefined && config.buffer < 0) {
+    throw new Error('PageSize buffer cannot be negative');
+  }
+
+  if (config.minBuffer !== undefined && config.minBuffer < 0) {
+    throw new Error('PageSize minBuffer cannot be negative');
+  }
+
+  if (
+    config.min !== undefined &&
+    config.max !== undefined &&
+    config.min > config.max
+  ) {
+    throw new Error(
+      `PageSize min (${config.min}) cannot be greater than max (${config.max})`,
+    );
+  }
+}
+
+/**
+ * Calculate the maximum number of lines needed for descriptions across all items
+ * @param items - Array of items to analyze
+ * @param countLineWidth - Whether to consider terminal width for line wrapping
+ * @returns Maximum lines needed by any description
+ */
+export function calculateDescriptionLines<Value>(
+  items: readonly Item<Value>[],
+  countLineWidth: boolean,
+): number {
+  let maxLines = 0;
+
+  for (const item of items) {
+    if (Separator.isSeparator(item) || !item.description) {
+      continue;
+    }
+
+    let lines: number;
+    if (countLineWidth) {
+      // Consider terminal width for wrapping
+      const terminalWidth = process.stdout.columns || 80;
+      const descriptionLines = item.description.split('\n');
+      lines = descriptionLines.reduce((total, line) => {
+        return total + (Math.ceil(line.length / terminalWidth) || 1);
+      }, 0);
+    } else {
+      // Simple newline counting
+      lines = item.description.split('\n').length;
+    }
+
+    maxLines = Math.max(maxLines, lines);
+  }
+
+  return maxLines;
+}
+
+/**
+ * Resolve PageSize configuration to a final numeric page size
+ * @param pageSize - PageSize configuration (number or PageSizeConfig)
+ * @param items - Current items to consider for auto-buffering
+ * @returns Final resolved page size
+ */
+export function resolvePageSize<Value>(
+  pageSize: PageSize,
+  items: readonly Item<Value>[],
+): number {
+  // Handle simple number case (backward compatibility)
+  if (typeof pageSize === 'number') {
+    return pageSize;
+  }
+
+  // Validate the configuration
+  validatePageSizeConfig(pageSize);
+
+  // Step 1: Determine base page size
+  let basePageSize: number;
+  if (pageSize.base !== undefined) {
+    basePageSize = pageSize.base;
+  } else {
+    // Auto-calculate using existing logic
+    basePageSize = calculateDynamicPageSize(7);
+  }
+
+  // Step 2: Calculate buffer reduction
+  let buffer = 0;
+
+  // 2a: Start at 0 ✓
+
+  // 2b: If autoBufferDescriptions, add max description lines
+  if (pageSize.autoBufferDescriptions) {
+    buffer += calculateDescriptionLines(
+      items,
+      pageSize.autoBufferCountsLineWidth || false,
+    );
+  } else {
+    // 2c: Add buffer value (only if not auto-buffering)
+    buffer += pageSize.buffer || 0;
+  }
+
+  // 2d: Ensure at least minBuffer
+  if (pageSize.minBuffer !== undefined) {
+    buffer = Math.max(buffer, pageSize.minBuffer);
+  }
+
+  // Step 3: Subtract buffer from base
+  let finalPageSize = basePageSize - buffer;
+
+  // Step 4: Apply min/max constraints
+  if (pageSize.min !== undefined) {
+    finalPageSize = Math.max(finalPageSize, pageSize.min);
+  }
+
+  if (pageSize.max !== undefined) {
+    finalPageSize = Math.min(finalPageSize, pageSize.max);
+  }
+
+  // Ensure minimum of 1
+  return Math.max(1, finalPageSize);
+}
+
+/**
  * Calculate dynamic page size based on terminal height
  * @param fallbackPageSize - Default page size to use if terminal height is not available
  * @returns Calculated page size
@@ -301,18 +446,6 @@ export default createPrompt(
       default: defaultValues = emptyArray,
     } = config;
 
-    // Calculate effective page size (memoized with terminal size tracking)
-    // If pageSize is specified, use it as fixed size
-    // If not specified, use auto-sizing that recalculates when terminal resizes
-    const terminalHeight = process.stdout.rows; // Track terminal size for memoization
-    const pageSize = useMemo(
-      () =>
-        configPageSize !== undefined
-          ? configPageSize // Fixed page size
-          : calculateDynamicPageSize(7), // Auto page size with fallback 7
-      [configPageSize, terminalHeight], // Recalculate when config OR terminal size changes
-    );
-
     const theme = makeTheme<CheckboxSearchTheme>(
       checkboxSearchTheme,
       config.theme,
@@ -342,6 +475,21 @@ export default createPrompt(
       }
       return [];
     });
+
+    // Calculate effective page size (memoized with terminal size tracking)
+    // Use new resolvePageSize function to handle both number and PageSizeConfig
+    const terminalHeight = process.stdout.rows; // Track terminal size for memoization
+    const pageSize = useMemo(
+      () => {
+        if (configPageSize !== undefined) {
+          return resolvePageSize(configPageSize, allItems);
+        } else {
+          // Default behavior - auto-calculate
+          return calculateDynamicPageSize(7);
+        }
+      },
+      [configPageSize, terminalHeight, allItems], // Recalculate when config, terminal, OR items change
+    );
 
     // Store the active item value instead of active index
     const [activeItemValue, setActiveItemValue] = useState<Value | null>(null);

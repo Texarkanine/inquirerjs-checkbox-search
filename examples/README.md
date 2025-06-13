@@ -124,6 +124,29 @@ node examples/custom-filter.js
 - Type "py" to find "Python"
 - Type "c" to see C#, C++, etc.
 
+### 7. `pagesize-configuration.js` - PageSize Configuration
+
+**What it demonstrates:**
+
+- Advanced PageSize configuration options
+- Auto-buffering for descriptions to prevent UI jumping
+- Min/max constraints and buffer settings
+- Backward compatibility with simple numeric pageSize
+
+**Run it:**
+
+```bash
+node examples/pagesize-configuration.js
+```
+
+**Try this:**
+
+- Notice how different PageSize configurations affect the display
+- Observe auto-buffering reserving space for multi-line descriptions
+- See how min/max constraints work with various settings
+- **Demo 6 is especially interesting**: Shows terminal filling with obvious buffer space reserved at the bottom for descriptions when scrolling through many items
+- **Demo 7 demonstrates line-width counting**: Compare auto-buffering with and without terminal width consideration for long descriptions that wrap
+
 ## Troubleshooting
 
 ### "Cannot find module" error
