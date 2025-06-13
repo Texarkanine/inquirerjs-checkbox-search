@@ -1,5 +1,22 @@
 #!/usr/bin/env node
 
+/**
+ * Custom Filter Function Example
+ *
+ * What it demonstrates:
+ * - Custom fuzzy matching filter
+ * - Enhanced search capabilities
+ * - Partial character matching
+ *
+ * Try this:
+ * - Type "js" to find "JavaScript"
+ * - Type "py" to find "Python"
+ * - Type "c" to see C#, C++, etc.
+ *
+ * Run it:
+ * node examples/custom-filter.js
+ */
+
 import checkboxSearch from '../dist/esm/index.js';
 
 const languages = [

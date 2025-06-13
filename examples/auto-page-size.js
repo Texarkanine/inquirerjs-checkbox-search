@@ -1,7 +1,22 @@
 #!/usr/bin/env node
 
 /**
- * Example demonstrating the auto page size feature for terminal height scaling
+ * Auto Page Size Example
+ *
+ * What it demonstrates:
+ * - Automatic page size calculation based on terminal height
+ * - Comparison between fixed page size and auto page sizing
+ * - Terminal height detection and adaptive UI
+ * - Large choice lists for pagination testing
+ *
+ * Try this:
+ * - Compare the fixed page size (7 items) with auto page sizing
+ * - Resize your terminal and run again to see adaptive behavior
+ * - Notice how auto page sizing maximizes available terminal space
+ * - Observe the terminal info output showing calculated page size
+ *
+ * Run it:
+ * node examples/auto-page-size.js
  */
 
 import checkboxSearch from '../dist/esm/index.js';

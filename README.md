@@ -129,22 +129,7 @@ type CheckboxSearchTheme = {
 
 ## Advanced Features
 
-For detailed examples of advanced features, see the [`examples/`](./examples/) directory:
-
-- **[Basic Multi-Select](./examples/basic.js)** - Simple multi-select functionality
-- **[Search Filtering](./examples/search-filtering.js)** - Real-time search with larger lists
-- **[Async Source](./examples/async-source.js)** - Dynamic loading with mock API
-- **[Custom Theme](./examples/custom-theme.js)** - Custom icons and styling
-- **[Validation](./examples/validation.js)** - Input validation and pre-selection
-- **[Custom Filter](./examples/custom-filter.js)** - Fuzzy matching filter
-- **[PageSize Configuration](./examples/pagesize-configuration.js)** - Advanced page size control with auto-buffering
-
-**To run examples:**
-
-1. Build the package: `npm run build`
-2. Run any example: `node examples/basic.js`
-
-See the [examples README](./examples/README.md) for detailed instructions.
+For detailed examples of advanced features, see the [`examples/`](./examples/) directory.
 
 Each example includes detailed comments and demonstrates real-world usage patterns.
 

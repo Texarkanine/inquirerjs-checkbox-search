@@ -1,5 +1,22 @@
 #!/usr/bin/env node
 
+/**
+ * Async Source Function Example
+ *
+ * What it demonstrates:
+ * - Dynamic loading with async source function
+ * - Loading states and request cancellation
+ * - Mock API simulation with delay
+ *
+ * Try this:
+ * - Wait for initial load (shows popular repos)
+ * - Type "react" to search for React-related repositories
+ * - Type quickly to see request cancellation in action
+ *
+ * Run it:
+ * node examples/async-source.js
+ */
+
 import checkboxSearch from '../dist/esm/index.js';
 
 // Mock API data

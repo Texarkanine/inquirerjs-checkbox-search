@@ -1,5 +1,25 @@
 #!/usr/bin/env node
 
+/**
+ * PageSize Configuration Example
+ *
+ * What it demonstrates:
+ * - Advanced PageSize configuration options
+ * - Auto-buffering for descriptions to prevent UI jumping
+ * - Min/max constraints and buffer settings
+ * - Backward compatibility with simple numeric pageSize
+ *
+ * Try this:
+ * - Notice how different PageSize configurations affect the display
+ * - Observe auto-buffering reserving space for multi-line descriptions
+ * - See how min/max constraints work with various settings
+ * - Demo 6 is especially interesting: Shows terminal filling with obvious buffer space reserved at the bottom for descriptions when scrolling through many items
+ * - Demo 7 demonstrates line-width counting: Compare auto-buffering with and without terminal width consideration for long descriptions that wrap
+ *
+ * Run it:
+ * node examples/pagesize-configuration.js
+ */
+
 import checkboxSearch from 'inquirerjs-checkbox-search';
 
 // Sample data with descriptions of varying lengths
@@ -267,9 +287,28 @@ async function demoPageSizeConfiguration() {
   );
   console.log();
 
-  // Demo 7: Line-width counting for auto-buffering
+  // Demo 7: Reserve buffer space (experimental UX feature)
   console.log(
-    '7️⃣  Auto-buffering with line-width counting (handles long text wrapping):',
+    '7️⃣  Reserve buffer space (prevents prompt jumping - experimental):',
+  );
+  const result7 = await checkboxSearch({
+    message: 'Select fruits (with reserved buffer space)',
+    choices,
+    pageSize: {
+      base: 8,
+      autoBufferDescriptions: true,
+      reserveBufferSpace: true, // Pre-allocate space to prevent jumping
+    },
+  });
+  console.log(
+    'Selected:',
+    result7.map((val) => choices.find((c) => c.value === val)?.name).join(', '),
+  );
+  console.log();
+
+  // Demo 8: Line-width counting for auto-buffering
+  console.log(
+    '8️⃣  Auto-buffering with line-width counting (handles long text wrapping):',
   );
 
   // Create choices with 10x longer descriptions based on existing fruits
@@ -286,7 +325,7 @@ async function demoPageSizeConfiguration() {
   console.log(
     "\n🔄 First, let's see WITHOUT line-width counting (autoBufferCountsLineWidth: false):",
   );
-  const result7a = await checkboxSearch({
+  const result8a = await checkboxSearch({
     message: 'Select items (auto-buffering WITHOUT line-width counting)',
     choices: longDescriptionChoices,
     pageSize: {
@@ -298,7 +337,7 @@ async function demoPageSizeConfiguration() {
   console.log(
     "\n🔄 Now, let's see WITH line-width counting (autoBufferCountsLineWidth: true):",
   );
-  const result7b = await checkboxSearch({
+  const result8b = await checkboxSearch({
     message: 'Select items (auto-buffering WITH line-width counting)',
     choices: longDescriptionChoices,
     pageSize: {
@@ -309,27 +348,19 @@ async function demoPageSizeConfiguration() {
 
   console.log(
     'Selected (without line-width):',
-    result7a
+    result8a
       .map((val) => longDescriptionChoices.find((c) => c.value === val)?.name)
       .join(', '),
   );
   console.log(
     'Selected (with line-width):',
-    result7b
+    result8b
       .map((val) => longDescriptionChoices.find((c) => c.value === val)?.name)
       .join(', '),
   );
   console.log();
 
-  console.log(
-    '✅ Demo complete! Notice how Demo 6 fills your terminal but reserves space at the bottom for descriptions.',
-  );
-  console.log(
-    '💡 The auto-buffering prevents UI jumping when navigating through items with varying description lengths.',
-  );
-  console.log(
-    '📏 Demo 7 shows how line-width counting provides more accurate buffering for long text that wraps.',
-  );
+  console.log('✅ Demo complete!');
 }
 
 // Run the demo
