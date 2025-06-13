@@ -26,21 +26,23 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
       
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      
-      - name: Build custom VHS Docker image
-        run: |
-          docker build -t vhs-node-demo .
       
       - name: Create output directory
         run: mkdir -p docs/img
       
       - name: Generate basic demo GIF
-        run: |
-          docker run --rm \
-            -v ${{ github.workspace }}/docs/img:/workspace/docs/img \
-            vhs-node-demo demos/basic.tape
+        run: npm run demo:generate:basic
       
       - name: List generated files
         run: |
