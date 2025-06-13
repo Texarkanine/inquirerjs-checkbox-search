@@ -12,17 +12,9 @@ Set TypingSpeed 100ms
 Set Theme "Catppuccin Mocha"
 Set Padding 20
 
-# Clear terminal and show the command we'll run
-Type "clear"
-Enter
-Sleep 500ms
-
-# Show the command prompt
-Type "# Demo: inquirerjs-checkbox-search basic example"
-Enter
 Type "node examples/basic.js"
 Enter
-Sleep 1.5s
+Sleep 1s
 
 # Wait for the prompt to appear, then interact with it
 # The basic example shows a multi-select with React, Vue, Angular, etc.
@@ -32,7 +24,7 @@ Type "react"
 Sleep 1s
 
 # Select React (should be filtered to show only React)
-Space
+Tab
 Sleep 500ms
 
 # Clear the search to show all options again
@@ -41,12 +33,12 @@ Sleep 800ms
 
 # Navigate to Vue and select it
 Down Down
-Space
+Tab
 Sleep 500ms
 
 # Navigate to Angular and select it  
 Down
-Space
+Tab
 Sleep 500ms
 
 # Submit the selection
@@ -54,4 +46,4 @@ Enter
 Sleep 2s
 
 # Show the final result
-Sleep 1s 
+Sleep 1s
