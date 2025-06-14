@@ -6,7 +6,7 @@ Set FontSize 30
 Set Width 1500
 Set Height 600
 Set TypingSpeed 100ms
-Set Theme "Catppuccin Mocha"
+Set Theme "iTerm2 Smoooooth"
 Set Padding 20
 Set PlaybackSpeed 1.0
 
