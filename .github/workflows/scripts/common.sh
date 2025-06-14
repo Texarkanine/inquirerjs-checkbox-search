@@ -75,7 +75,7 @@ parse_args() {
                 key="${key#--}"
                 key="${key//-/_}"  # Convert dashes to underscores
                 key="${key^^}"     # Convert to uppercase
-                declare -g "ARG_${key}=${value}"
+                printf -v "ARG_${key}" '%s' "$value"
                 ;;
             --*)
                 # Handle --flag value format
@@ -83,10 +83,10 @@ parse_args() {
                 key="${key//-/_}"  # Convert dashes to underscores  
                 key="${key^^}"     # Convert to uppercase
                 if [[ $# -gt 1 && ! $2 =~ ^-- ]]; then
-                    declare -g "ARG_${key}=$2"
+                    printf -v "ARG_${key}" '%s' "$2"
                     shift
                 else
-                    declare -g "ARG_${key}=true"
+                    printf -v "ARG_${key}" '%s' "true"
                 fi
                 ;;
             *)

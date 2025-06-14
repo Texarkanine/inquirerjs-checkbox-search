@@ -45,8 +45,8 @@ detect_demo_changes() {
     local -a changed_demos=()
     
     # Check each demo file
+    shopt -s nullglob
     for demo_file in docs/img/*-demo.gif; do
-        if [ -f "$demo_file" ]; then
             local demo_name
             demo_name=$(basename "$demo_file" | sed 's/-demo\.gif$//')
             
@@ -82,8 +82,8 @@ detect_demo_changes() {
                     log_info "Demo unchanged from main: $demo_name"
                 fi
             fi
-        fi
     done
+    shopt -u nullglob
     
     # Convert array to space-separated string for output
     local changed_demos_string

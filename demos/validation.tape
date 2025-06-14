@@ -19,8 +19,6 @@ Sleep 1s
 # Wait for the prompt to appear, then interact with it
 Show
 
-# Try to submit with only the pre-selected items (should fail validation - only 2 selected, need 2-4)
-# Actually, 2 is valid, so let me demonstrate selecting only 1 first
 # Uncheck Alice first to get down to 1 selection
 Tab
 Sleep 1s

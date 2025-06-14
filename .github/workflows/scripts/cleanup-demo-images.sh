@@ -85,13 +85,13 @@ cleanup_demo_images() {
     if [ "$cleanup_mode" = "single_pr" ]; then
         # Single PR cleanup - remove all files for this specific PR
         log_info "Looking for files matching: pr-${target_pr}-*.gif"
+        shopt -s nullglob
         for file in pr-${target_pr}-*.gif; do
-            if [ -f "$file" ]; then
-                log_info "Will remove (PR closed): $file"
-                files_to_remove+=("$file")
-                remove_count=$((remove_count + 1))
-            fi
+            log_info "Will remove (PR closed): $file"
+            files_to_remove+=("$file")
+            remove_count=$((remove_count + 1))
         done
+        shopt -u nullglob
     else
         # Bulk cleanup - get open PRs and remove files for closed PRs
         log_step "Fetching open PR numbers..."
@@ -104,26 +104,26 @@ cleanup_demo_images() {
         open_prs=$(gh pr list --json number --jq '.[].number' --limit 1000 | tr '\n' ' ')
         log_info "Open PRs: $open_prs"
         
+        shopt -s nullglob
         for file in pr-*-*.gif; do
-            if [ -f "$file" ]; then
-                # Extract PR number from filename (pr-123-abc.gif -> 123)
-                local pr_num
-                pr_num=$(extract_pr_number "$file")
-                
-                if [ -n "$pr_num" ]; then
-                    # Check if this PR number is in the open PRs list
-                    if ! echo " $open_prs " | grep -q " $pr_num "; then
-                        log_info "Will remove (PR closed): $file (PR #$pr_num)"
-                        files_to_remove+=("$file")
-                        remove_count=$((remove_count + 1))
-                    else
-                        log_info "Keeping (PR open): $file (PR #$pr_num)"
-                    fi
+            # Extract PR number from filename (pr-123-abc.gif -> 123)
+            local pr_num
+            pr_num=$(extract_pr_number "$file")
+            
+            if [ -n "$pr_num" ]; then
+                # Check if this PR number is in the open PRs list
+                if ! echo " $open_prs " | grep -q " $pr_num "; then
+                    log_info "Will remove (PR closed): $file (PR #$pr_num)"
+                    files_to_remove+=("$file")
+                    remove_count=$((remove_count + 1))
                 else
-                    log_warning "Skipping invalid filename format: $file"
+                    log_info "Keeping (PR open): $file (PR #$pr_num)"
                 fi
+            else
+                log_warning "Skipping invalid filename format: $file"
             fi
         done
+        shopt -u nullglob
     fi
     
     # Remove files if any found
@@ -132,26 +132,26 @@ cleanup_demo_images() {
         
         # Create a list of files to keep (inverse of files to remove)
         local keep_pattern=""
+        shopt -s nullglob
         for file in pr-*-*.gif README.md; do
-            if [ -f "$file" ]; then
-                # Check if this file should be kept
-                local should_keep=true
-                for remove_file in "${files_to_remove[@]}"; do
-                    if [ "$file" = "$remove_file" ]; then
-                        should_keep=false
-                        break
-                    fi
-                done
-                
-                if [ "$should_keep" = true ]; then
-                    if [ -z "$keep_pattern" ]; then
-                        keep_pattern="$file"
-                    else
-                        keep_pattern="$keep_pattern|$file"
-                    fi
+            # Check if this file should be kept
+            local should_keep=true
+            for remove_file in "${files_to_remove[@]}"; do
+                if [ "$file" = "$remove_file" ]; then
+                    should_keep=false
+                    break
+                fi
+            done
+            
+            if [ "$should_keep" = true ]; then
+                if [ -z "$keep_pattern" ]; then
+                    keep_pattern="$file"
+                else
+                    keep_pattern="$keep_pattern|$file"
                 fi
             fi
         done
+        shopt -u nullglob
         
         # Use git filter-branch to rewrite history, keeping only desired files
         if [ -n "$keep_pattern" ]; then

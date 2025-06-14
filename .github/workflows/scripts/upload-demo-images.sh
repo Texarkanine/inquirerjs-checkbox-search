@@ -56,19 +56,25 @@ upload_demo_images() {
     
     # FIRST: Backup all generated demos BEFORE switching branches
     log_step "Backing up generated demos before branch switch..."
-    mkdir -p /tmp/demo-backup
+    local backup_dir
+    backup_dir=$(mktemp -d)
+    
+    # Set up cleanup trap
+    trap "rm -rf '$backup_dir'" EXIT
+    
+    log_info "Created temporary backup directory: $backup_dir"
     log_info "Looking for *-demo.gif files in current directory:"
     set +e
     ls -la docs/img/*-demo.gif 2>/dev/null || log_info "No *-demo.gif files found"
     set -e
     
     if ls docs/img/*-demo.gif 1> /dev/null 2>&1; then
-        cp docs/img/*-demo.gif /tmp/demo-backup/
+        cp docs/img/*-demo.gif "$backup_dir/"
         local backup_count
         backup_count=$(ls docs/img/*-demo.gif | wc -l)
-        log_success "Backed up $backup_count demo files to /tmp/demo-backup/"
+        log_success "Backed up $backup_count demo files to $backup_dir/"
         log_info "Backed up files:"
-        ls -la /tmp/demo-backup/
+        ls -la "$backup_dir/"
     else
         log_error "No demo files found to backup"
         exit 1
@@ -101,18 +107,14 @@ upload_demo_images() {
     log_step "Processing backed up demo files:"
     
     # Validate backup directory exists and has files
-    if [ ! -d "/tmp/demo-backup" ]; then
-        log_error "Backup directory /tmp/demo-backup not found"
+    if [ ! -d "$backup_dir" ]; then
+        log_error "Backup directory $backup_dir not found"
         exit 1
     fi
     
     local processed_count=0
-    for demo_file in /tmp/demo-backup/*-demo.gif; do
-        # Skip if glob doesn't match any files
-        if [ ! -f "$demo_file" ]; then
-            log_warning "No demo files found matching pattern: $demo_file"
-            continue
-        fi
+    shopt -s nullglob
+    for demo_file in "$backup_dir"/*-demo.gif; do
         
         # Extract demo name and validate it
         local demo_name
@@ -149,6 +151,7 @@ upload_demo_images() {
             exit 1
         fi
     done
+    shopt -u nullglob
     
     log_info "Successfully processed $processed_count demo files"
     
@@ -211,6 +214,12 @@ main() {
     # Validate PR number is numeric
     if ! [[ "$ARG_PR_NUMBER" =~ ^[0-9]+$ ]]; then
         log_error "PR number must be numeric: $ARG_PR_NUMBER"
+        exit 1
+    fi
+    
+    # Validate commit SHA format (7-40 hexadecimal characters)
+    if ! [[ "$ARG_COMMIT_SHA" =~ ^[0-9a-fA-F]{7,40}$ ]]; then
+        log_error "Commit SHA must be 7-40 hexadecimal characters: $ARG_COMMIT_SHA"
         exit 1
     fi
     

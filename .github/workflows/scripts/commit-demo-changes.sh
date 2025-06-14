@@ -60,8 +60,12 @@ commit_demo_changes() {
             exit 1
         fi
         
-        # Add demo files
-        git add docs/img/*.gif
+        # Add demo files (only if they exist)
+        if compgen -G "docs/img/*.gif" > /dev/null; then
+            git add docs/img/*.gif
+        else
+            log_info "No .gif files found in docs/img/"
+        fi
         
         # Check if there are any changes to commit
         if git diff --cached --quiet; then
