@@ -2,7 +2,7 @@
 Output docs/img/validation-demo.gif
 
 # Terminal appearance settings for deterministic output
-Set FontSize 20
+Set FontSize 30
 Set Width 1500
 Set Height 600
 Set TypingSpeed 100ms
