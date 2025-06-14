@@ -148,10 +148,24 @@ generate_demo_comment() {
     
     log_step "Generating demo comment from template: $template_file"
     
+    # Debug: Show actual environment variable values
+    log_info "Environment variables received:"
+    log_info "  DEMO_IMAGES='$DEMO_IMAGES'"
+    log_info "  CHANGED_DEMOS='$CHANGED_DEMOS'"
+    log_info "  DEMO_CHANGED='$DEMO_CHANGED'"
+    
     # Set up additional environment variables for template
     set_change_status_message
     export DEMO_LIST
     DEMO_LIST=$(build_demo_list)
+    
+    # Debug: Show generated demo list
+    log_info "Generated DEMO_LIST length: ${#DEMO_LIST}"
+    if [ ${#DEMO_LIST} -lt 200 ]; then
+        log_info "DEMO_LIST content: '$DEMO_LIST'"
+    else
+        log_info "DEMO_LIST content (first 200 chars): '${DEMO_LIST:0:200}...'"
+    fi
     
     # Generate comment using envsubst
     if [ -n "$output_file" ]; then

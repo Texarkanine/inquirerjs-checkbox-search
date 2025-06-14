@@ -111,7 +111,11 @@ upload_demo_images() {
             
             # Build the image URL
             local image_url="https://raw.githubusercontent.com/${repository}/demo-images/$pr_image"
-            demo_images="$demo_images $demo_name:$image_url"
+            if [ -z "$demo_images" ]; then
+                demo_images="$demo_name:$image_url"
+            else
+                demo_images="$demo_images $demo_name:$image_url"
+            fi
             log_info "Added to DEMO_IMAGES: $demo_name -> $image_url"
         else
             log_warning "File not found: $demo_file"
