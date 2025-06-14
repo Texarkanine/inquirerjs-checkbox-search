@@ -6,8 +6,8 @@ ${DEMO_LIST}
 
 ## 📋 Commit Information
 
-- **Your commit SHA**: [`${USER_COMMIT_SHA}`](https://github.com/${GITHUB_REPOSITORY}/commit/${USER_COMMIT_SHA}) (from your branch)
-- **GitHub merge commit SHA**: [`${GITHUB_SHA}`](https://github.com/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA}) (GitHub's test merge)
+- **Your commit SHA**: [`${USER_COMMIT_SHA}`](https://github.com/${GITHUB_REPOSITORY}/commit/${USER_COMMIT_SHA})
+- **GitHub merge commit SHA**: [`${GITHUB_SHA}`](https://github.com/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA})
 
 <details>
 <summary>🔍 Technical Details</summary>
