@@ -169,6 +169,11 @@ jobs:
 
           # Copy all demo images with PR-specific naming
           DEMO_IMAGES=""
+          echo "🔍 Listing all files in docs/img/:"
+          ls -la docs/img/ || echo "📁 docs/img/ directory not found"
+          echo "🔍 Looking for *-demo.gif files:"
+          ls -la docs/img/*-demo.gif 2>/dev/null || echo "📁 No *-demo.gif files found"
+
           for demo_file in docs/img/*-demo.gif; do
             if [ -f "$demo_file" ]; then
               demo_name=$(basename "$demo_file" | sed 's/-demo\.gif$//')
@@ -180,15 +185,17 @@ jobs:
               # Build the image URL
               IMAGE_URL="https://raw.githubusercontent.com/${{ github.repository }}/demo-images/$PR_IMAGE"
               DEMO_IMAGES="$DEMO_IMAGES $demo_name:$IMAGE_URL"
+              echo "🔗 Added to DEMO_IMAGES: $demo_name -> $IMAGE_URL"
+            else
+              echo "⚠️ File not found: $demo_file"
             fi
           done
 
-          # Also copy header.gif if it exists
-          if [ -f "docs/img/header.gif" ]; then
-            HEADER_PR_IMAGE="pr-${{ github.event.pull_request.number }}-${{ github.sha }}-header.gif"
-            cp "docs/img/header.gif" "$HEADER_PR_IMAGE"
-            echo "📷 Copied: docs/img/header.gif -> $HEADER_PR_IMAGE"
-          fi
+          echo "📋 Final DEMO_IMAGES: '$DEMO_IMAGES'"
+
+          # Note: We don't upload header.gif to demo-images branch since it's just a 
+          # duplicate of the source demo (e.g., basic-demo.gif). The header.gif is 
+          # only used in the main repository, not for PR previews.
 
           # Clean up temp docs directory
           rm -rf docs/

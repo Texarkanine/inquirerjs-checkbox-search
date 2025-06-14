@@ -1,18 +1,21 @@
 # VHS documentation: https://github.com/charmbracelet/vhs
 Output docs/img/validation-demo.gif
 
-Set Theme "Catppuccin Mocha"
+# Terminal appearance settings for deterministic output
 Set FontSize 20
 Set Width 1500
 Set Height 600
+Set TypingSpeed 100ms
+Set Theme "Catppuccin Mocha"
+Set Padding 20
+Set PlaybackSpeed 1.0
 
+# Setup
 Hide
 Type "node examples/validation.js"
-
 Enter
-
-# Show the prompt with pre-selected items (Alice and Bob should be checked)
 Sleep 1s
+# Wait for the prompt to appear, then interact with it
 Show
 
 # Try to submit with only the pre-selected items (should fail validation - only 2 selected, need 2-4)
