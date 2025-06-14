@@ -51,8 +51,8 @@ upload_demo_images() {
     fi
     
     # Get the user's actual commit SHA (from the PR branch)
-    local user_commit_sha
-    user_commit_sha=$(git rev-parse HEAD)
+    # Use the commit_sha passed in, which is the actual PR head commit
+    local user_commit_sha="$commit_sha"
     
     # FIRST: Backup all generated demos BEFORE switching branches
     log_step "Backing up generated demos before branch switch..."
@@ -97,7 +97,7 @@ upload_demo_images() {
     fi
     
     # Copy all demo images with PR-specific naming from backup directory
-    local demo_images=""
+    local -a demo_images=()
     log_step "Processing backed up demo files:"
     
     # Validate backup directory exists and has files
@@ -140,11 +140,7 @@ upload_demo_images() {
             local image_url="https://raw.githubusercontent.com/${repository}/demo-images/$pr_image"
             
             # Add to demo images list
-            if [ -z "$demo_images" ]; then
-                demo_images="$demo_name:$image_url"
-            else
-                demo_images="$demo_images $demo_name:$image_url"
-            fi
+            demo_images+=("$demo_name:$image_url")
             
             log_info "✅ Added to DEMO_IMAGES: $demo_name -> $image_url"
             processed_count=$((processed_count + 1))
@@ -156,13 +152,16 @@ upload_demo_images() {
     
     log_info "Successfully processed $processed_count demo files"
     
-    # Validate we have at least one demo
-    if [ $processed_count -eq 0 ]; then
-        log_error "No valid demo files were processed"
-        demo_images="❌ No valid demo files found"
+    # Convert array to space-separated string for output
+    local demo_images_string
+    if [ ${#demo_images[@]} -gt 0 ]; then
+        printf -v demo_images_string '%s ' "${demo_images[@]}"
+        demo_images_string="${demo_images_string% }"  # trim trailing space
+    else
+        demo_images_string="❌ No valid demo files found"
     fi
     
-    log_info "Final DEMO_IMAGES: '$demo_images'"
+    log_info "Final DEMO_IMAGES: '$demo_images_string'"
     
     # Add all PR-specific images
     git add pr-${pr_number}-${commit_sha}-*.gif
@@ -178,7 +177,7 @@ upload_demo_images() {
         log_success "Uploaded all demos to demo-images branch"
     else
         log_error "Failed to push to demo-images branch"
-        demo_images="❌ Failed to upload demo images"
+        demo_images_string="❌ Failed to upload demo images"
     fi
     
     # Switch back to original branch
@@ -189,7 +188,7 @@ upload_demo_images() {
     
     # Output structured data for downstream use (all to stdout)
     echo "USER_COMMIT_SHA=$user_commit_sha"
-    echo "DEMO_IMAGES=$demo_images"
+    echo "DEMO_IMAGES=$demo_images_string"
 }
 
 # Main execution

@@ -79,7 +79,7 @@ cleanup_demo_images() {
     initial_count=$(ls -1 pr-*-*.gif 2>/dev/null | wc -l || echo "0")
     
     # Handle cleanup based on mode
-    local files_to_remove=""
+    local -a files_to_remove=()
     local remove_count=0
     
     if [ "$cleanup_mode" = "single_pr" ]; then
@@ -88,7 +88,7 @@ cleanup_demo_images() {
         for file in pr-${target_pr}-*.gif; do
             if [ -f "$file" ]; then
                 log_info "Will remove (PR closed): $file"
-                files_to_remove="$files_to_remove $file"
+                files_to_remove+=("$file")
                 remove_count=$((remove_count + 1))
             fi
         done
@@ -114,7 +114,7 @@ cleanup_demo_images() {
                     # Check if this PR number is in the open PRs list
                     if ! echo " $open_prs " | grep -q " $pr_num "; then
                         log_info "Will remove (PR closed): $file (PR #$pr_num)"
-                        files_to_remove="$files_to_remove $file"
+                        files_to_remove+=("$file")
                         remove_count=$((remove_count + 1))
                     else
                         log_info "Keeping (PR open): $file (PR #$pr_num)"
@@ -136,7 +136,7 @@ cleanup_demo_images() {
             if [ -f "$file" ]; then
                 # Check if this file should be kept
                 local should_keep=true
-                for remove_file in $files_to_remove; do
+                for remove_file in "${files_to_remove[@]}"; do
                     if [ "$file" = "$remove_file" ]; then
                         should_keep=false
                         break
@@ -179,7 +179,7 @@ cleanup_demo_images() {
             log_step "Falling back to regular file deletion..."
             
             # Fallback to regular deletion
-            for file in $files_to_remove; do
+            for file in "${files_to_remove[@]}"; do
                 if [ -f "$file" ]; then
                     git rm "$file"
                 fi

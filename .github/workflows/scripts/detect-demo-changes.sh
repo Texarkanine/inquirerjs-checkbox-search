@@ -42,7 +42,7 @@ detect_demo_changes() {
     
     log_step "Checking for demo changes..."
     
-    local changed_demos=""
+    local -a changed_demos=()
     
     # Check each demo file
     for demo_file in docs/img/*-demo.gif; do
@@ -73,10 +73,10 @@ detect_demo_changes() {
             
             if [ $file_in_main -ne 0 ]; then
                 log_info "New demo (not in main branch): $demo_name"
-                changed_demos="$changed_demos $demo_name"
+                changed_demos+=("$demo_name")
             elif [ $file_changed_from_main -ne 0 ]; then
                 log_info "Demo changed from main: $demo_name"
-                changed_demos="$changed_demos $demo_name"
+                changed_demos+=("$demo_name")
             else
                 if [ "$verbose" = "true" ]; then
                     log_info "Demo unchanged from main: $demo_name"
@@ -85,12 +85,18 @@ detect_demo_changes() {
         fi
     done
     
-    # Clean up changed_demos (remove leading space)
-    changed_demos="${changed_demos# }"
+    # Convert array to space-separated string for output
+    local changed_demos_string
+    if [ ${#changed_demos[@]} -gt 0 ]; then
+        printf -v changed_demos_string '%s ' "${changed_demos[@]}"
+        changed_demos_string="${changed_demos_string% }"  # trim trailing space
+    else
+        changed_demos_string=""
+    fi
     
     # Determine overall change status
     local demo_changed
-    if [ -n "$changed_demos" ]; then
+    if [ ${#changed_demos[@]} -gt 0 ]; then
         demo_changed="true"
         log_success "Overall: Demo changes detected"
     else
@@ -101,27 +107,28 @@ detect_demo_changes() {
     # Output in requested format
     case "$output_format" in
         env)
-            echo "CHANGED_DEMOS='$changed_demos'"
+            echo "CHANGED_DEMOS='$changed_demos_string'"
             echo "DEMO_CHANGED='$demo_changed'"
             ;;
         json)
-            # Convert space-separated list to JSON array
-            local json_array=""
-            if [ -n "$changed_demos" ]; then
-                # Split by spaces and format as JSON array
-                local first=true
-                for demo in $changed_demos; do
-                    if [ "$first" = true ]; then
-                        json_array="\"$demo\""
-                        first=false
-                    else
-                        json_array="$json_array, \"$demo\""
-                    fi
+            # Convert array to JSON array
+            local -a json_array=()
+            if [ ${#changed_demos[@]} -gt 0 ]; then
+                # Build JSON array from changed_demos array
+                for demo in "${changed_demos[@]}"; do
+                    json_array+=("\"$demo\"")
                 done
             fi
             
+            # Convert array to comma-separated string for JSON
+            local json_array_string=""
+            if [ ${#json_array[@]} -gt 0 ]; then
+                printf -v json_array_string '%s, ' "${json_array[@]}"
+                json_array_string="${json_array_string%, }"  # trim trailing comma and space
+            fi
+            
             echo "{"
-            echo "  \"changed_demos\": [$json_array],"
+            echo "  \"changed_demos\": [$json_array_string],"
             echo "  \"demo_changed\": $demo_changed"
             echo "}"
             ;;
