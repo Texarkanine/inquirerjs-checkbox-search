@@ -119,6 +119,9 @@ jobs:
       - name: Check which demos changed (using git)
         id: check_changes
         run: |
+          # Ensure we have the latest main branch for comparison
+          git fetch origin main:main || true
+          
           # Call detection script and parse output
           DETECTION_OUTPUT=$(.github/workflows/scripts/detect-demo-changes.sh --verbose)
 
