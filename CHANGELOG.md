@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v0.3.0...v0.4.0) (2025-06-14)
+
+
+### Features
+
+* Comprehensive demo GIF CI/CD workflow with VHS Docker integration ([#12](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/12)) ([f3f38ff](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/f3f38ff364f22f814de2d4c712ac54081d5af8f7))
+
 ## [0.3.0](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v0.2.1...v0.3.0) (2025-06-13)
 
 
