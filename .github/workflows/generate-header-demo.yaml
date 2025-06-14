@@ -98,147 +98,40 @@ jobs:
         if: steps.context.outputs.is_pr == 'true'
         id: demo_preview
         run: |
-          echo "🔄 Uploading all demo images to demo-images branch..."
-
-          # Configure git
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-
-          # Save current state and get commit SHA
-          CURRENT_SHA="${{ github.sha }}"
-          CURRENT_BRANCH="${{ github.head_ref || github.ref_name }}"
-
-          # Get the user's actual commit SHA (from the PR branch)
-          USER_COMMIT_SHA=$(git rev-parse HEAD)
-
-          # FIRST: Backup all generated demos BEFORE switching branches
-          echo "📁 Backing up generated demos before branch switch..."
-          mkdir -p /tmp/demo-backup
-          echo "🔍 Looking for *-demo.gif files in current directory:"
-          ls -la docs/img/*-demo.gif 2>/dev/null || echo "📁 No *-demo.gif files found"
-
-          if ls docs/img/*-demo.gif 1> /dev/null 2>&1; then
-            cp docs/img/*-demo.gif /tmp/demo-backup/
-            echo "✅ Backed up $(ls docs/img/*-demo.gif | wc -l) demo files to /tmp/demo-backup/"
-            echo "📋 Backed up files:"
-            ls -la /tmp/demo-backup/
-          else
-            echo "❌ No demo files found to backup"
-            exit 1
-          fi
-
-          git add . && git stash || true
-
-          # Create or switch to demo-images orphan branch
-          if git ls-remote --heads origin demo-images | grep -q demo-images; then
-            echo "📁 Switching to existing demo-images branch"
-            git fetch origin demo-images
-            git checkout demo-images
-          else
-            echo "📁 Creating new demo-images orphan branch"
-            git checkout --orphan demo-images
-            git rm -rf . 2>/dev/null || true
-            echo "# Demo Images Branch" > README.md
-            echo "This branch contains demo images for PR previews." >> README.md
-            git add README.md
-            git commit -m "Initialize demo-images branch"
-          fi
-
-          # Copy all demo images with PR-specific naming from backup directory
-          DEMO_IMAGES=""
-          echo "🔍 Processing backed up demo files:"
-
-          for demo_file in /tmp/demo-backup/*-demo.gif; do
-            if [ -f "$demo_file" ]; then
-              demo_name=$(basename "$demo_file" | sed 's/-demo\.gif$//')
-              PR_IMAGE="pr-${{ github.event.pull_request.number }}-${{ github.sha }}-${demo_name}.gif"
-              
-              cp "$demo_file" "$PR_IMAGE"
-              echo "📷 Copied: $demo_file -> $PR_IMAGE"
-              
-              # Build the image URL
-              IMAGE_URL="https://raw.githubusercontent.com/${{ github.repository }}/demo-images/$PR_IMAGE"
-              DEMO_IMAGES="$DEMO_IMAGES $demo_name:$IMAGE_URL"
-              echo "🔗 Added to DEMO_IMAGES: $demo_name -> $IMAGE_URL"
-            else
-              echo "⚠️ File not found: $demo_file"
-            fi
-          done
-
-          echo "📋 Final DEMO_IMAGES: '$DEMO_IMAGES'"
-
-          # Add all PR-specific images
-          git add pr-${{ github.event.pull_request.number }}-${{ github.sha }}-*.gif
-
-          if git commit -m "Add demo images for PR #${{ github.event.pull_request.number }}"; then
-            echo "📷 Added new demo images"
-          else
-            echo "📷 Demo images unchanged"
-          fi
-
-          # Push to demo-images branch
-          if git push origin demo-images; then
-            echo "✅ Uploaded all demos to demo-images branch"
-          else
-            echo "❌ Failed to push to demo-images branch"
-            DEMO_IMAGES="❌ Failed to upload demo images"
-          fi
-
-          # Switch back to original branch
-          git checkout "$CURRENT_BRANCH"
-          git stash pop 2>/dev/null || true
-
-          # Store demo images info for comment generation
+          # Call upload script and capture output
+          UPLOAD_OUTPUT=$(.github/workflows/scripts/upload-demo-images.sh \
+            --pr-number="${{ github.event.pull_request.number }}" \
+            --commit-sha="${{ github.sha }}" \
+            --repository="${{ github.repository }}" \
+            --head-ref="${{ github.head_ref || github.ref_name }}" \
+            2>&1)
+          
+          # Extract user commit SHA from stderr output
+          USER_COMMIT_SHA=$(echo "$UPLOAD_OUTPUT" | grep "USER_COMMIT_SHA=" | cut -d'=' -f2)
+          
+          # Extract demo images list from stdout (last line)
+          DEMO_IMAGES=$(echo "$UPLOAD_OUTPUT" | tail -1)
+          
+          # Store outputs for downstream steps
           echo "demo_images<<EOF" >> $GITHUB_OUTPUT
           echo "$DEMO_IMAGES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-
+          
           echo "user_commit_sha=$USER_COMMIT_SHA" >> $GITHUB_OUTPUT
 
       - name: Check which demos changed (using git)
         id: check_changes
         run: |
-          # Check which demo files have changed
-          CHANGED_DEMOS=""
-
-          echo "📊 Checking for demo changes..."
-
-          # Check each demo file
-          for demo_file in docs/img/*-demo.gif; do
-            if [ -f "$demo_file" ]; then
-              demo_name=$(basename "$demo_file" | sed 's/-demo\.gif$//')
-              
-              # Debug: Check git status of this file
-              echo "🔍 Debugging $demo_name:"
-              echo "  File path: $demo_file"
-              echo "  Git status: $(git status --porcelain "$demo_file" || echo 'not in git status')"
-              echo "  In HEAD commit: $(git cat-file -e HEAD:"$demo_file" 2>/dev/null && echo 'exists' || echo 'not in HEAD')"
-              echo "  Git diff vs HEAD: $(git diff --quiet HEAD -- "$demo_file" 2>/dev/null && echo 'no diff' || echo 'has diff or new')"
-              
-              # Check if file exists in committed history (HEAD), not just staging area
-              if ! git cat-file -e HEAD:"$demo_file" 2>/dev/null; then
-                echo "🆕 New demo (not in git history): $demo_name"
-                CHANGED_DEMOS="$CHANGED_DEMOS $demo_name"
-              elif ! git diff --quiet "$demo_file"; then
-                echo "✅ Demo changed: $demo_name"
-                CHANGED_DEMOS="$CHANGED_DEMOS $demo_name"
-              else
-                echo "📍 Demo unchanged: $demo_name"
-              fi
-            fi
-          done
-
-          # Set outputs
+          # Call detection script and parse output
+          DETECTION_OUTPUT=$(.github/workflows/scripts/detect-demo-changes.sh --verbose)
+          
+          # Extract values from the output
+          CHANGED_DEMOS=$(echo "$DETECTION_OUTPUT" | grep "CHANGED_DEMOS=" | cut -d"'" -f2)
+          DEMO_CHANGED=$(echo "$DETECTION_OUTPUT" | grep "DEMO_CHANGED=" | cut -d"'" -f2)
+          
+          # Set GitHub Action outputs
           echo "changed_demos=$CHANGED_DEMOS" >> $GITHUB_OUTPUT
-
-          # Determine if any demo changed for legacy compatibility
-          if [ -n "$CHANGED_DEMOS" ] ; then
-            echo "demo_changed=true" >> $GITHUB_OUTPUT
-            echo "🎬 Overall: Demo changes detected"
-          else
-            echo "demo_changed=false" >> $GITHUB_OUTPUT
-            echo "🎬 Overall: No demo changes"
-          fi
+          echo "demo_changed=$DEMO_CHANGED" >> $GITHUB_OUTPUT
 
       - name: Handle release-please with demo changes (fail build)
         if: steps.context.outputs.is_release_please == 'true' && steps.context.outputs.is_pr == 'true' && steps.check_changes.outputs.demo_changed == 'true'
@@ -260,103 +153,18 @@ jobs:
       - name: Generate demo preview comment
         if: steps.context.outputs.is_pr == 'true' && steps.context.outputs.is_release_please == 'false'
         id: generate_comment
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}  
+          GITHUB_SHA: ${{ github.sha }}
+          USER_COMMIT_SHA: ${{ steps.demo_preview.outputs.user_commit_sha }}
+          DEMO_CHANGED: ${{ steps.check_changes.outputs.demo_changed }}
+          DEMO_IMAGES: ${{ steps.demo_preview.outputs.demo_images }}
+          CHANGED_DEMOS: ${{ steps.check_changes.outputs.changed_demos }}
         run: |
-          echo "🔄 Generating demo preview comment..."
-
-          # Get demo images info and changed demos
-          DEMO_IMAGES="${{ steps.demo_preview.outputs.demo_images }}"
-          CHANGED_DEMOS="${{ steps.check_changes.outputs.changed_demos }}"
-
-          # Build comment body
-          COMMENT_BODY="## 🎬 Demo Previews"
-
-          if [ "${{ steps.check_changes.outputs.demo_changed }}" = "true" ]; then
-            COMMENT_BODY="$COMMENT_BODY
-
-            ⚠️ **Changes detected** - Please review the generated demos to ensure they accurately represent the library.
-            "
-          else
-            COMMENT_BODY="$COMMENT_BODY
-
-            ✅ **Demos are stable** - No changes detected in demo output.
-            "
-          fi
-
-          COMMENT_BODY="$COMMENT_BODY
-
-          "
-
-          # Parse demo images and create alphabetical list
-          if [ "$DEMO_IMAGES" != "❌ Failed to upload demo images" ]; then
-            SORTED_DEMOS=$(echo "$DEMO_IMAGES" | tr ' ' '\n' | grep ':' | cut -d':' -f1 | sort)
-            
-            for demo_name in $SORTED_DEMOS; do
-              # Get the URL for this demo
-              DEMO_URL=$(echo "$DEMO_IMAGES" | tr ' ' '\n' | grep "^${demo_name}:" | cut -d':' -f2-)
-              
-              # Check if this demo changed
-              IS_CHANGED=false
-              for changed_demo in $CHANGED_DEMOS; do
-                if [ "$demo_name" = "$changed_demo" ]; then
-                  IS_CHANGED=true
-                  break
-                fi
-              done
-              
-              # Use <details open> for changed demos, <details> for unchanged
-              if [ "$IS_CHANGED" = true ]; then
-                # Check if this is a new demo or changed demo (check committed history, not staging)
-                if ! git cat-file -e HEAD:"docs/img/${demo_name}-demo.gif" 2>/dev/null; then
-                  COMMENT_BODY="$COMMENT_BODY
-          <details open>
-          <summary>🆕 demos/${demo_name}.gif (NEW)</summary>
-
-          ![${demo_name}-demo]($DEMO_URL)
-          </details>
-          "
-                else
-                  COMMENT_BODY="$COMMENT_BODY
-          <details open>
-          <summary>🔥 demos/${demo_name}.gif (CHANGED)</summary>
-
-          ![${demo_name}-demo]($DEMO_URL)
-          </details>
-          "
-                fi
-              else
-                COMMENT_BODY="$COMMENT_BODY
-          <details>
-          <summary>📷 demos/${demo_name}.gif</summary>
-
-          ![${demo_name}-demo]($DEMO_URL)
-          </details>
-          "
-              fi
-            done
-          else
-            COMMENT_BODY="$COMMENT_BODY
-          ❌ Failed to upload demo images for preview.
-          "
-          fi
-
-          COMMENT_BODY="$COMMENT_BODY
-
-          ## 📋 Commit Information
-          - **Your commit SHA**: [\`${{ steps.demo_preview.outputs.user_commit_sha }}\`](https://github.com/${{ github.repository }}/commit/${{ steps.demo_preview.outputs.user_commit_sha }}) (from your branch)
-          - **GitHub merge commit SHA**: [\`${{ github.sha }}\`](https://github.com/${{ github.repository }}/commit/${{ github.sha }}) (GitHub's test merge)
-
-          <details>
-          <summary>🔍 Technical Details</summary>
-
-          The demos were generated from your branch commit [\`${{ steps.demo_preview.outputs.user_commit_sha }}\`](https://github.com/${{ github.repository }}/commit/${{ steps.demo_preview.outputs.user_commit_sha }}) using:
-          - All demo tapes: [\`demos/\`](https://github.com/${{ github.repository }}/tree/${{ steps.demo_preview.outputs.user_commit_sha }}/demos)
-          - Docker image: Built from [\`demos/Dockerfile\`](https://github.com/${{ github.repository }}/blob/${{ steps.demo_preview.outputs.user_commit_sha }}/demos/Dockerfile)
-
-          **Note**: GitHub shows two different SHAs because it creates a temporary merge commit (\`${{ github.sha }}\`) to test what the PR would look like if merged, while your actual changes are in commit \`${{ steps.demo_preview.outputs.user_commit_sha }}\`.
-
-          </details>
-          "
-
+          # Generate comment using template
+          COMMENT_BODY=$(.github/workflows/scripts/generate-demo-comment.sh \
+            --template-file=.github/workflows/scripts/templates/demo-comment.md)
+          
           # Save comment body to output using heredoc
           echo "comment_body<<EOF" >> $GITHUB_OUTPUT
           echo "$COMMENT_BODY" >> $GITHUB_OUTPUT
@@ -381,53 +189,8 @@ jobs:
             github.event.inputs.commit_updates == 'true'
           )
         run: |
-          echo "🚀 Committing demo changes..."
-
-          # Configure git
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-
-          # Retry logic for potential conflicts
-          max_retries=3
-          retry_count=0
-
-          while [ $retry_count -lt $max_retries ]; do
-            echo "Attempt $((retry_count + 1)) of $max_retries"
-            
-            # Fetch latest changes
-            git fetch origin main
-            git reset --hard origin/main
-            
-            # Regenerate all demos to ensure we have latest
-            npm run demo:generate:all
-            
-            # Add and commit
-            git add docs/img/*.gif
-            
-            if git diff --cached --quiet; then
-              echo "No changes to commit after regeneration"
-              break
-            fi
-            
-            if git commit --no-gpg-sign -m "docs: Update demo GIFs [skip ci]"; then
-              if git push; then
-                echo "✅ Successfully committed and pushed demo changes"
-                break
-              else
-                echo "⚠️ Push failed, retrying..."
-                retry_count=$((retry_count + 1))
-                sleep $((retry_count * 2))  # Exponential backoff
-              fi
-            else
-              echo "❌ Commit failed"
-              break
-            fi
-          done
-
-          if [ $retry_count -eq $max_retries ]; then
-            echo "❌ Failed to commit after $max_retries attempts"
-            exit 1
-          fi
+          # Call commit script with default settings
+          .github/workflows/scripts/commit-demo-changes.sh
 
       - name: Summary
         run: |

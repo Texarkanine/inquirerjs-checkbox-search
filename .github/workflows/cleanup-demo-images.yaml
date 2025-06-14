@@ -24,183 +24,24 @@ jobs:
 
       - name: Cleanup demo images
         run: |
-          # Determine the context and what we're cleaning up
+          # Call cleanup script with appropriate arguments
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "🧹 Cleaning up demo images for closed PR #${{ github.event.pull_request.number }}"
-            CLEANUP_MODE="single_pr"
-            TARGET_PR="${{ github.event.pull_request.number }}"
+            .github/workflows/scripts/cleanup-demo-images.sh \
+              --event-name="pull_request" \
+              --pr-number="${{ github.event.pull_request.number }}"
           else
-            echo "🧹 Cleaning up orphaned demo images for all closed PRs using GitHub CLI"
-            CLEANUP_MODE="all_closed"
-          fi
-
-          # Configure git
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-
-          # Check if demo-images branch exists
-          if git ls-remote --heads origin demo-images | grep -q demo-images; then
-            echo "📁 Switching to demo-images branch"
-            git fetch origin demo-images
-            git checkout demo-images
-            
-            # Get initial stats
-            INITIAL_SIZE=$(du -sb . 2>/dev/null | cut -f1 || echo "0")
-            INITIAL_COUNT=$(ls -1 pr-*-*.gif 2>/dev/null | wc -l || echo "0")
-            
-            # Handle cleanup based on mode
-            FILES_TO_REMOVE=""
-            REMOVE_COUNT=0
-            
-            if [ "$CLEANUP_MODE" = "single_pr" ]; then
-              # Single PR cleanup - remove all files for this specific PR
-              echo "🎯 Looking for files matching: pr-${TARGET_PR}-*.gif"
-              for file in pr-${TARGET_PR}-*.gif; do
-                if [ -f "$file" ]; then
-                  echo "🗑️ Will remove (PR closed): $file"
-                  FILES_TO_REMOVE="$FILES_TO_REMOVE $file"
-                  REMOVE_COUNT=$((REMOVE_COUNT + 1))
-                fi
-              done
-            else
-              # Bulk cleanup - get open PRs and remove files for closed PRs
-              echo "🔍 Fetching open PR numbers..."
-              OPEN_PRS=$(gh pr list --json number --jq '.[].number' --limit 1000 | tr '\n' ' ')
-              echo "📋 Open PRs: $OPEN_PRS"
-              
-              for file in pr-*-*.gif; do
-                if [ -f "$file" ]; then
-                  # Extract PR number from filename (pr-123-abc.gif -> 123)
-                  PR_NUM=$(echo "$file" | sed -n 's/^pr-\([0-9]\+\)-.*\.gif$/\1/p')
-                  
-                  if [ -n "$PR_NUM" ]; then
-                    # Check if this PR number is in the open PRs list
-                    if ! echo " $OPEN_PRS " | grep -q " $PR_NUM "; then
-                      echo "🗑️ Will remove (PR closed): $file (PR #$PR_NUM)"
-                      FILES_TO_REMOVE="$FILES_TO_REMOVE $file"
-                      REMOVE_COUNT=$((REMOVE_COUNT + 1))
-                    else
-                      echo "✅ Keeping (PR open): $file (PR #$PR_NUM)"
-                    fi
-                  else
-                    echo "⚠️ Skipping invalid filename format: $file"
-                  fi
-                fi
-              done
-            fi
-            
-            if [ "$REMOVE_COUNT" -gt 0 ]; then
-              echo "🔄 Rewriting git history to completely remove $REMOVE_COUNT old files..."
-              
-              # Create a list of files to keep (inverse of files to remove)
-              KEEP_PATTERN=""
-              for file in pr-*-*.gif README.md; do
-                if [ -f "$file" ]; then
-                  # Check if this file should be kept
-                  SHOULD_KEEP=true
-                  for remove_file in $FILES_TO_REMOVE; do
-                    if [ "$file" = "$remove_file" ]; then
-                      SHOULD_KEEP=false
-                      break
-                    fi
-                  done
-                  
-                  if [ "$SHOULD_KEEP" = true ]; then
-                    if [ -z "$KEEP_PATTERN" ]; then
-                      KEEP_PATTERN="$file"
-                    else
-                      KEEP_PATTERN="$KEEP_PATTERN|$file"
-                    fi
-                  fi
-                fi
-              done
-              
-              # Use git filter-branch to rewrite history, keeping only desired files
-              if [ -n "$KEEP_PATTERN" ]; then
-                echo "📝 Keeping files matching: $KEEP_PATTERN"
-                
-                # Backup current branch
-                git branch demo-images-backup
-                
-                # Filter branch to keep only desired files
-                git filter-branch --force --index-filter "
-                  git ls-files -z | 
-                  grep -zZE '^($KEEP_PATTERN)$' | 
-                  git update-index --index-info --stdin || 
-                  git rm --cached --ignore-unmatch -r .
-                " --prune-empty -- demo-images
-                
-                # Clean up filter-branch refs
-                git for-each-ref --format='delete %(refname)' refs/original | git update-ref --stdin
-                git reflog expire --expire=now --all
-                git gc --prune=now --aggressive
-                
-                echo "✅ History rewritten successfully"
-              else
-                echo "⚠️ No files to keep - this would delete the entire branch"
-                echo "🔄 Falling back to regular file deletion..."
-                
-                # Fallback to regular deletion
-                for file in $FILES_TO_REMOVE; do
-                  if [ -f "$file" ]; then
-                    git rm "$file"
-                  fi
-                done
-                
-                if [ "$CLEANUP_MODE" = "single_pr" ]; then
-                  COMMIT_MSG="Remove demo images for closed PR #${TARGET_PR}"
-                else
-                  COMMIT_MSG="Cleanup: Remove $REMOVE_COUNT demo images for closed PRs"
-                fi
-                
-                if git commit -m "$COMMIT_MSG"; then
-                  echo "✅ Files removed with regular commit"
-                fi
-              fi
-              
-              # Force push the rewritten history
-              echo "🚀 Force pushing rewritten history..."
-              git push --force-with-lease origin demo-images
-              
-              # Clean up backup branch
-              git branch -D demo-images-backup 2>/dev/null || true
-              
-            else
-              if [ "$CLEANUP_MODE" = "single_pr" ]; then
-                echo "📷 No demo images found for PR #${TARGET_PR}"
-              else
-                echo "📷 No orphaned demo images found to remove"
-              fi
-            fi
-            
-            # Report final stats (only for bulk cleanup to avoid noise)
-            if [ "$CLEANUP_MODE" != "single_pr" ]; then
-              FINAL_SIZE=$(du -sb . 2>/dev/null | cut -f1 || echo "0")
-              FINAL_COUNT=$(ls -1 pr-*-*.gif 2>/dev/null | wc -l || echo "0")
-              SAVED_BYTES=$((INITIAL_SIZE - FINAL_SIZE))
-              
-              echo "📊 Cleanup results:"
-              echo "- Files before: $INITIAL_COUNT"
-              echo "- Files after: $FINAL_COUNT"
-              echo "- Files removed: $((INITIAL_COUNT - FINAL_COUNT))"
-              echo "- Space saved: $(numfmt --to=iec $SAVED_BYTES 2>/dev/null || echo "$SAVED_BYTES bytes")"
-              echo "- Current branch size: $(du -sh . 2>/dev/null | cut -f1)"
-            fi
-            
-          else
-            echo "📁 demo-images branch does not exist"
+            .github/workflows/scripts/cleanup-demo-images.sh \
+              --event-name="${{ github.event_name }}" \
+              --gh-token="${{ secrets.GITHUB_TOKEN }}"
           fi
 
       - name: Summary
         run: |
+          echo "## 🧹 Cleanup Summary"
+          echo "- Event: ${{ github.event_name }}"
+          echo "- Completed: $(date)"
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "## 🧹 PR Cleanup Summary"
             echo "- PR: #${{ github.event.pull_request.number }}"
-            echo "- Action: ${{ github.event.action }}"
-            echo "- Pattern searched: pr-${{ github.event.pull_request.number }}-*.gif"
           else
-            echo "## 🧹 Bulk Cleanup Summary"
-            echo "- Trigger: ${{ github.event_name }}"
-            echo "- Cleanup method: GitHub CLI PR status check"
-            echo "- Branch: demo-images"
+            echo "- Method: GitHub CLI PR status check"
           fi
