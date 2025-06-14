@@ -22,6 +22,20 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install git-filter-repo
+        run: |
+          echo "📦 Installing git-filter-repo for faster history rewriting..."
+          pip install --user git-filter-repo
+          echo "✅ git-filter-repo installed successfully"
+
+          # Verify installation
+          git-filter-repo --version || echo "⚠️  git-filter-repo installation verification failed"
+
       - name: Cleanup demo images
         run: |
           # Call cleanup script with appropriate arguments

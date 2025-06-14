@@ -153,27 +153,36 @@ cleanup_demo_images() {
         done
         shopt -u nullglob
         
-        # Use git filter-branch to rewrite history, keeping only desired files
+        # Use git-filter-repo to rewrite history, keeping only desired files
         if [ -n "$keep_pattern" ]; then
             log_info "Keeping files matching: $keep_pattern"
             
-            # Backup current branch
-            git branch demo-images-backup
+            # Create temporary file with files to keep (one per line)
+            local paths_file
+            paths_file=$(mktemp)
+            trap "rm -f '$paths_file'" EXIT
             
-            # Filter branch to keep only desired files
-            git filter-branch --force --index-filter "
-              git ls-files -z | 
-              grep -zZE '^($keep_pattern)$' | 
-              git update-index --index-info --stdin || 
-              git rm --cached --ignore-unmatch -r .
-            " --prune-empty -- demo-images
+            # Convert pattern to individual file paths
+            echo "$keep_pattern" | tr '|' '\n' > "$paths_file"
             
-            # Clean up filter-branch refs
-            git for-each-ref --format='delete %(refname)' refs/original | git update-ref --stdin
-            git reflog expire --expire=now --all
-            git gc --prune=now --aggressive
+            log_info "Paths to keep:"
+            while IFS= read -r path; do
+                if [ -n "$path" ]; then
+                    log_info "  - $path"
+                fi
+            done < "$paths_file"
             
-            log_success "History rewritten successfully"
+            # Use git-filter-repo to rewrite history
+            log_step "Rewriting git history with git-filter-repo (faster than filter-branch)..."
+            if git filter-repo --force --paths-from-file "$paths_file"; then
+                log_success "History rewritten successfully with git-filter-repo"
+                
+                # git-filter-repo automatically handles cleanup, but let's ensure optimal packing
+                git gc --prune=now --aggressive
+            else
+                log_error "git-filter-repo failed"
+                exit 1
+            fi
         else
             log_warning "No files to keep - this would delete the entire branch"
             log_step "Falling back to regular file deletion..."
@@ -200,11 +209,6 @@ cleanup_demo_images() {
         # Force push the rewritten history
         log_step "Force pushing rewritten history..."
         git push --force-with-lease origin demo-images
-        
-        # Clean up backup branch
-        set +e
-        git branch -D demo-images-backup 2>/dev/null || true
-        set -e
         
     else
         if [ "$cleanup_mode" = "single_pr" ]; then
@@ -233,7 +237,7 @@ cleanup_demo_images() {
 # Main execution
 main() {
     # Check required commands
-    check_required_commands git du
+    check_required_commands git git-filter-repo du ls grep tr
     
     # Parse arguments
     parse_args "$@"

@@ -8,6 +8,10 @@ import { promisify } from 'util';
 const execAsync = promisify(exec);
 const DEMOS_DIR = 'demos';
 
+// Configuration constants
+const DEFAULT_MAX_PARALLELISM = 4;
+const BUFFER_SIZE = 10 * 1024 * 1024; // 10 MB buffer for Docker output
+
 function runCommand(command) {
   console.log(`🔨 Running: ${command}`);
   try {
@@ -21,7 +25,7 @@ function runCommand(command) {
 async function runCommandAsync(command, tapeName) {
   console.log(`🎬 [${tapeName}] Starting...`);
   try {
-    const { stderr } = await execAsync(command);
+    const { stderr } = await execAsync(command, { maxBuffer: BUFFER_SIZE });
     if (stderr) {
       console.error(`⚠️ [${tapeName}] stderr: ${stderr}`);
     }
@@ -65,16 +69,82 @@ function getAllTapeFiles() {
   return files;
 }
 
+// Process items in chunks with controlled parallelism
+async function processInChunks(items, processor, maxParallelism) {
+  const results = [];
+
+  for (let i = 0; i < items.length; i += maxParallelism) {
+    const chunk = items.slice(i, i + maxParallelism);
+    console.log(
+      `🚀 Processing chunk ${Math.floor(i / maxParallelism) + 1}/${Math.ceil(items.length / maxParallelism)} (${chunk.length} demos)`,
+    );
+
+    const chunkResults = await Promise.all(chunk.map(processor));
+
+    results.push(...chunkResults);
+  }
+
+  return results;
+}
+
+function showUsage() {
+  console.log(
+    'Usage: node scripts/generate-demo.js <demo-name(s)|all> [--max-parallelism=N]',
+  );
+  console.log('');
+  console.log('Options:');
+  console.log(
+    `  --max-parallelism=N   Maximum parallel demos (default: ${DEFAULT_MAX_PARALLELISM})`,
+  );
+  console.log('  --help               Show this help message');
+  console.log('');
+  console.log('Examples:');
+  console.log('  node scripts/generate-demo.js basic');
+  console.log('  node scripts/generate-demo.js basic validation');
+  console.log('  node scripts/generate-demo.js all');
+  console.log('  node scripts/generate-demo.js all --max-parallelism=2');
+}
+
 async function main() {
-  const args = process.argv.slice(2);
+  let args = process.argv.slice(2);
+  let maxParallelism = DEFAULT_MAX_PARALLELISM;
+
+  // Check for help flag first
+  if (args.includes('--help') || args.includes('-h')) {
+    showUsage();
+    process.exit(0);
+  }
+
+  // Parse --max-parallelism flag
+  const maxParallelismIndex = args.findIndex((arg) =>
+    arg.startsWith('--max-parallelism'),
+  );
+  if (maxParallelismIndex !== -1) {
+    const flag = args[maxParallelismIndex];
+    if (flag.includes('=')) {
+      maxParallelism = parseInt(flag.split('=')[1], 10);
+    } else if (maxParallelismIndex + 1 < args.length) {
+      maxParallelism = parseInt(args[maxParallelismIndex + 1], 10);
+      args.splice(maxParallelismIndex, 2); // Remove flag and value
+    } else {
+      console.error('❌ --max-parallelism requires a value');
+      process.exit(1);
+    }
+
+    if (flag.includes('=')) {
+      args.splice(maxParallelismIndex, 1); // Remove flag only
+    }
+
+    if (isNaN(maxParallelism) || maxParallelism < 1) {
+      console.error('❌ --max-parallelism must be a positive integer');
+      process.exit(1);
+    }
+  }
 
   if (args.length === 0) {
-    console.error('❌ Usage: node scripts/generate-demo.js <demo-name(s)|all>');
+    console.error('❌ No demo names provided');
     console.error('');
-    console.error('Examples:');
-    console.error('  node scripts/generate-demo.js basic');
-    console.error('  node scripts/generate-demo.js basic validation');
-    console.error('  node scripts/generate-demo.js all');
+    showUsage();
     process.exit(1);
   }
 
@@ -130,8 +200,10 @@ async function main() {
       `✅ Demo "${basename(demosToGenerate[0], '.tape')}" generated successfully!`,
     );
   } else {
-    // Multiple demos - use parallel generation
-    console.log(`🚀 Generating ${demosToGenerate.length} demos in parallel...`);
+    // Multiple demos - use parallel generation with controlled parallelism
+    console.log(
+      `🚀 Generating ${demosToGenerate.length} demos in parallel (max ${maxParallelism} at once)...`,
+    );
 
     // Build Docker image once
     console.log('🔨 Building Docker image (required for all demos)...');
@@ -139,12 +211,14 @@ async function main() {
     console.log('✅ Docker image built successfully!');
     console.log('');
 
-    // Generate all demos in parallel
+    // Generate all demos in controlled parallel chunks
     console.log('🚀 Starting parallel demo generation...');
     const startTime = Date.now();
 
-    const results = await Promise.all(
-      demosToGenerate.map(generateDemoParallel),
+    const results = await processInChunks(
+      demosToGenerate,
+      generateDemoParallel,
+      maxParallelism,
     );
 
     const endTime = Date.now();
@@ -157,6 +231,7 @@ async function main() {
     console.log('');
     console.log('📊 Generation Summary:');
     console.log(`⏱️  Total time: ${duration}s`);
+    console.log(`🔧 Max parallelism: ${maxParallelism}`);
     console.log(`✅ Successful: ${successful.length}`);
     if (failed.length > 0) {
       console.log(`❌ Failed: ${failed.length}`);
