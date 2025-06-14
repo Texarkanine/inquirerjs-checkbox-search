@@ -8,7 +8,8 @@ on:
       - 'examples/**'
       - 'demos/**'
       - 'src/**'
-      - '.github/workflows/generate-demos.yaml'
+      - 'package*.json'
+      - '.github/workflows/**'
   push:
     branches:
       - main
@@ -16,7 +17,8 @@ on:
       - 'examples/**'
       - 'demos/**'
       - 'src/**'
-      - '.github/workflows/generate-demos.yaml'
+      - 'package*.json'
+      - '.github/workflows/**'
   workflow_dispatch:
     inputs:
       commit_updates:
