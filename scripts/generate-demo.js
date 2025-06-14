@@ -23,7 +23,7 @@ async function runCommandAsync(command, tapeName) {
   try {
     const { stderr } = await execAsync(command);
     if (stderr) {
-      console.error(`⚠️ [${tapeName}] Warning: ${stderr}`);
+      console.error(`⚠️ [${tapeName}] stderr: ${stderr}`);
     }
     console.log(`✅ [${tapeName}] Completed successfully!`);
     return { success: true, tapeName };
