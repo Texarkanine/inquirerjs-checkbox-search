@@ -1,4 +1,4 @@
-name: Header Demo GIF
+name: Demo GIFs
 
 on:
   pull_request:
@@ -8,7 +8,7 @@ on:
       - 'examples/**'
       - 'demos/**'
       - 'src/**'
-      - '.github/workflows/generate-header-demo.yaml'
+      - '.github/workflows/generate-demos.yaml'
   push:
     branches:
       - main
@@ -16,18 +16,9 @@ on:
       - 'examples/**'
       - 'demos/**'
       - 'src/**'
-      - '.github/workflows/generate-header-demo.yaml'
+      - '.github/workflows/generate-demos.yaml'
   workflow_dispatch:
     inputs:
-      header_example:
-        description: 'Which example to use as header.gif'
-        required: false
-        default: 'basic'
-        type: choice
-        options:
-          - 'basic'
-          - 'validation'
-          # Add more as tape files are created
       commit_updates:
         description: 'Commit updates back to branch?'
         required: false
@@ -38,7 +29,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  generate-header-demo:
+  generate-demos:
     name: 'Generate'
     runs-on: ubuntu-latest
     permissions:
@@ -87,19 +78,6 @@ jobs:
             echo "🔍 Regular change detected: $commit_message"
           fi
 
-      - name: Determine header example
-        id: header
-        run: |
-          # Use input parameter if provided (workflow_dispatch), otherwise default to 'basic'
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            HEADER_EXAMPLE="${{ github.event.inputs.header_example }}"
-          else
-            HEADER_EXAMPLE="basic"
-          fi
-
-          echo "example=$HEADER_EXAMPLE" >> $GITHUB_OUTPUT
-          echo "🎯 Will generate '$HEADER_EXAMPLE' demo as header.gif"
-
       - name: Generate all demo GIFs
         run: |
           # Set deterministic timestamp for consistent builds
@@ -108,19 +86,6 @@ jobs:
           # Generate all demos
           echo "🎬 Generating all demos..."
           npm run demo:generate:all
-
-      - name: Create header GIF from demo
-        run: |
-          EXAMPLE="${{ steps.header.outputs.example }}"
-          SOURCE_FILE="docs/img/${EXAMPLE}-demo.gif"
-
-          if [ -f "$SOURCE_FILE" ]; then
-            cp "$SOURCE_FILE" docs/img/header.gif
-            echo "✅ Created header.gif from $SOURCE_FILE"
-          else
-            echo "❌ Source demo file not found: $SOURCE_FILE"
-            exit 1
-          fi
 
       - name: Upload demo artifacts (always upload regardless of changes)
         uses: actions/upload-artifact@v4
@@ -193,10 +158,6 @@ jobs:
 
           echo "📋 Final DEMO_IMAGES: '$DEMO_IMAGES'"
 
-          # Note: We don't upload header.gif to demo-images branch since it's just a 
-          # duplicate of the source demo (e.g., basic-demo.gif). The header.gif is 
-          # only used in the main repository, not for PR previews.
-
           # Clean up temp docs directory
           rm -rf docs/
 
@@ -233,7 +194,6 @@ jobs:
         run: |
           # Check which demo files have changed
           CHANGED_DEMOS=""
-          HEADER_CHANGED=false
 
           echo "📊 Checking for demo changes..."
 
@@ -251,20 +211,11 @@ jobs:
             fi
           done
 
-          # Check header.gif specifically
-          if ! git diff --quiet docs/img/header.gif; then
-            echo "✅ Header GIF has changed"
-            HEADER_CHANGED=true
-          else
-            echo "📍 Header GIF unchanged"
-          fi
-
           # Set outputs
           echo "changed_demos=$CHANGED_DEMOS" >> $GITHUB_OUTPUT
-          echo "header_changed=$HEADER_CHANGED" >> $GITHUB_OUTPUT
 
           # Determine if any demo changed for legacy compatibility
-          if [ -n "$CHANGED_DEMOS" ] || [ "$HEADER_CHANGED" = true ]; then
+          if [ -n "$CHANGED_DEMOS" ] ; then
             echo "demo_changed=true" >> $GITHUB_OUTPUT
             echo "🎬 Overall: Demo changes detected"
           else
@@ -372,7 +323,6 @@ jobs:
           <summary>🔍 Technical Details</summary>
 
           The demos were generated from your branch commit [\`${{ steps.demo_preview.outputs.user_commit_sha }}\`](https://github.com/${{ github.repository }}/commit/${{ steps.demo_preview.outputs.user_commit_sha }}) using:
-          - Header demo source: [\`demos/${{ steps.header.outputs.example }}.tape\`](https://github.com/${{ github.repository }}/blob/${{ steps.demo_preview.outputs.user_commit_sha }}/demos/${{ steps.header.outputs.example }}.tape)
           - All demo tapes: [\`demos/\`](https://github.com/${{ github.repository }}/tree/${{ steps.demo_preview.outputs.user_commit_sha }}/demos)
           - Docker image: Built from [\`demos/Dockerfile\`](https://github.com/${{ github.repository }}/blob/${{ steps.demo_preview.outputs.user_commit_sha }}/demos/Dockerfile)
 

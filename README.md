@@ -2,7 +2,7 @@
 
 A multi-select prompt with text filtering/search capability for [inquirer.js](https://github.com/SBoudrias/Inquirer.js).
 
-<img src="docs/img/header.gif" alt="Demo showing inquirerjs-checkbox-search in action" width="100%">
+<img src="docs/img/basic-demo.gif" alt="Demo showing inquirerjs-checkbox-search in action" width="100%">
 
 This prompt combines the functionality of `@inquirer/checkbox` and `@inquirer/search`, allowing you to:
 
