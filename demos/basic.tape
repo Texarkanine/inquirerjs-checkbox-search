@@ -47,7 +47,6 @@ Sleep 500ms
 
 # Submit the selection
 Enter
-Sleep 2s
 
-# Show the final result
-Sleep 1s
+# Let people process
+Sleep 3s

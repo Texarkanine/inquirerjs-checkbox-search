@@ -56,7 +56,6 @@ Sleep 1s
 
 # Now submit with valid selection (Alice, Bob, Carol, David = 4 people)
 Enter
-Sleep 2s
 
-# Show the final result
+# Let people process
 Sleep 3s
