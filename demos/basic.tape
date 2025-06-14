@@ -7,7 +7,7 @@ Output docs/img/basic-demo.gif
 # Terminal appearance settings for deterministic output
 Set FontSize 30
 Set Width 1500
-Set Height 300
+Set Height 400
 Set TypingSpeed 100ms
 Set Theme "iTerm2 Smoooooth"
 Set Padding 20
