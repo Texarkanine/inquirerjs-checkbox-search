@@ -26,6 +26,7 @@ on:
         type: choice
         options:
           - 'basic'
+          - 'validation'
           # Add more as tape files are created
       commit_updates:
         description: 'Commit updates back to branch?'
