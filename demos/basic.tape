@@ -1,7 +1,5 @@
-# VHS Tape File for Basic Example Demo
-# Records the actual inquirerjs-checkbox-search basic example running
-
-# Output settings
+# VHS Tape File for recording a demo of an example
+# vhs documentation: https://github.com/charmbracelet/vhs
 Output docs/img/basic-demo.gif
 
 # Terminal appearance settings for deterministic output
@@ -29,21 +27,21 @@ Sleep 1s
 
 # Select React (should be filtered to show only React)
 Tab
-Sleep 500ms
+Sleep 1s
 
 # Clear the search to show all options again
 Backspace 5
-Sleep 800ms
+Sleep 1s
 
 # Navigate to Vue and select it
 Down Down
 Tab
-Sleep 500ms
+Sleep 1s
 
-# Navigate to Angular and select it  
+# Navigate to Angular and select it
 Down
 Tab
-Sleep 500ms
+Sleep 1s
 
 # Submit the selection
 Enter

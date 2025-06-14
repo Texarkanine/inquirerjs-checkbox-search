@@ -1,4 +1,5 @@
-# VHS documentation: https://github.com/charmbracelet/vhs
+# VHS Tape File for recording a demo of an example
+# vhs documentation: https://github.com/charmbracelet/vhs
 Output docs/img/validation-demo.gif
 
 # Terminal appearance settings for deterministic output
@@ -21,7 +22,7 @@ Show
 # Try to submit with only the pre-selected items (should fail validation - only 2 selected, need 2-4)
 # Actually, 2 is valid, so let me demonstrate selecting only 1 first
 # Uncheck Alice first to get down to 1 selection
-Tab  # Uncheck Alice
+Tab
 Sleep 1s
 
 # Now try to submit with only 1 selection (Bob) - should show validation error
@@ -29,21 +30,30 @@ Enter
 Sleep 2s
 
 # Now add Alice back and one more person to get 3 total
-Tab # Check Alice back
+# Check Alice back
+Tab
 Sleep 1s
-Down    # Move to Carol
-Tab  # Check Carol
+# Move to Carol
+Down
+# Check Carol
+Tab
 Sleep 1s
 
 # Try to add too many - go down and select more until we have 5
-Down    # Move to David
-Tab  # Check David
+# Move to David
+Down
+# Check David
+Tab
 Sleep 1s
-Down    # Move to Eve  
-Tab  # Check Eve
+# Move to Eve
+Down
+# Check Eve
+Tab
 Sleep 1s
-Down    # Move to Frank
-Tab  # Check Frank
+# Move to Frank
+Down
+# Check Frank
+Tab
 Sleep 1s
 
 # Now we have 5 selected, try to submit - should show validation error
@@ -51,7 +61,8 @@ Enter
 Sleep 2s
 
 # Fix it by unchecking Frank to get back to 4
-Tab  # Uncheck Frank
+# Uncheck Frank
+Tab
 Sleep 1s
 
 # Now submit with valid selection (Alice, Bob, Carol, David = 4 people)
