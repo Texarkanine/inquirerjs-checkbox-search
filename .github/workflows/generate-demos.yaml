@@ -27,182 +27,182 @@ jobs:
       pull-requests: write
       issues: write
 
-  steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        fetch-depth: 0
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
 
-    - name: Install dependencies
-      run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-    - name: Determine release-please context
-      id: context
-      env:
-        PR_TITLE: ${{ github.event.pull_request.title }}
-        HEAD_MSG: ${{ github.event.head_commit.message }}
-      run: |
-        # Check commit message for release-please pattern (works for both PRs and commits)
-        if [ "${{ github.event_name }}" = "pull_request" ]; then
-          commit_message="$PR_TITLE"
-          echo "is_pr=true" >> $GITHUB_OUTPUT
-        else
-          commit_message="$HEAD_MSG"
-          echo "is_pr=false" >> $GITHUB_OUTPUT
-        fi
+      - name: Determine release-please context
+        id: context
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          HEAD_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          # Check commit message for release-please pattern (works for both PRs and commits)
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            commit_message="$PR_TITLE"
+            echo "is_pr=true" >> $GITHUB_OUTPUT
+          else
+            commit_message="$HEAD_MSG"
+            echo "is_pr=false" >> $GITHUB_OUTPUT
+          fi
 
-        if [[ "$commit_message" =~ ^chore\(main\): ]]; then
-          echo "is_release_please=true" >> $GITHUB_OUTPUT
-          echo "🔍 Release-please detected: $commit_message"
-        else
-          echo "is_release_please=false" >> $GITHUB_OUTPUT
-          echo "🔍 Regular change detected: $commit_message"
-        fi
+          if [[ "$commit_message" =~ ^chore\(main\): ]]; then
+            echo "is_release_please=true" >> $GITHUB_OUTPUT
+            echo "🔍 Release-please detected: $commit_message"
+          else
+            echo "is_release_please=false" >> $GITHUB_OUTPUT
+            echo "🔍 Regular change detected: $commit_message"
+          fi
 
-    - name: Generate all demo GIFs
-      run: |
-        # Set deterministic timestamp for consistent builds
-        export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
+      - name: Generate all demo GIFs
+        run: |
+          # Set deterministic timestamp for consistent builds
+          export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
 
-        # Generate all demos
-        echo "🎬 Generating all demos..."
-        npm run demo:generate:all
+          # Generate all demos
+          echo "🎬 Generating all demos..."
+          npm run demo:generate:all
 
-    - name: Upload demo artifacts (always upload regardless of changes)
-      uses: actions/upload-artifact@v4
-      with:
-        name: demo-gifs-${{ github.run_id }}
-        path: docs/img/*.gif
-        retention-days: 30
+      - name: Upload demo artifacts (always upload regardless of changes)
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-gifs-${{ github.run_id }}
+          path: docs/img/*.gif
+          retention-days: 30
 
-    - name: Upload all demos to orphan branch and prepare preview
-      if: steps.context.outputs.is_pr == 'true'
-      id: demo_preview
-      run: |
-        # For PRs, use the actual PR head commit, not the merge commit
-        PR_HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+      - name: Upload all demos to orphan branch and prepare preview
+        if: steps.context.outputs.is_pr == 'true'
+        id: demo_preview
+        run: |
+          # For PRs, use the actual PR head commit, not the merge commit
+          PR_HEAD_SHA="${{ github.event.pull_request.head.sha }}"
 
-        # Debug: Show SHA values being used
-        echo "🔍 SHA Debug Information:"
-        echo "  - github.sha (merge commit): ${{ github.sha }}"
-        echo "  - PR head SHA (user commit): $PR_HEAD_SHA"
-        echo "  - Are they different? $([ "${{ github.sha }}" != "$PR_HEAD_SHA" ] && echo "YES ✅" || echo "NO ❌")"
+          # Debug: Show SHA values being used
+          echo "🔍 SHA Debug Information:"
+          echo "  - github.sha (merge commit): ${{ github.sha }}"
+          echo "  - PR head SHA (user commit): $PR_HEAD_SHA"
+          echo "  - Are they different? $([ "${{ github.sha }}" != "$PR_HEAD_SHA" ] && echo "YES ✅" || echo "NO ❌")"
 
-        # Call upload script and capture structured output
-        UPLOAD_OUTPUT=$(.github/workflows/scripts/upload-demo-images.sh \
-          --pr-number="${{ github.event.pull_request.number }}" \
-          --commit-sha="$PR_HEAD_SHA" \
-          --repository="${{ github.repository }}" \
-          --head-ref="${{ github.head_ref || github.ref_name }}")
+          # Call upload script and capture structured output
+          UPLOAD_OUTPUT=$(.github/workflows/scripts/upload-demo-images.sh \
+            --pr-number="${{ github.event.pull_request.number }}" \
+            --commit-sha="$PR_HEAD_SHA" \
+            --repository="${{ github.repository }}" \
+            --head-ref="${{ github.head_ref || github.ref_name }}")
 
-        # Parse structured output
-        USER_COMMIT_SHA=$(echo "$UPLOAD_OUTPUT" | grep "^USER_COMMIT_SHA=" | cut -d'=' -f2)
-        DEMO_IMAGES=$(echo "$UPLOAD_OUTPUT" | grep "^DEMO_IMAGES=" | cut -d'=' -f2-)
+          # Parse structured output
+          USER_COMMIT_SHA=$(echo "$UPLOAD_OUTPUT" | grep "^USER_COMMIT_SHA=" | cut -d'=' -f2)
+          DEMO_IMAGES=$(echo "$UPLOAD_OUTPUT" | grep "^DEMO_IMAGES=" | cut -d'=' -f2-)
 
-        # Store outputs for downstream steps
-        echo "demo_images<<EOF" >> $GITHUB_OUTPUT
-        echo "$DEMO_IMAGES" >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
+          # Store outputs for downstream steps
+          echo "demo_images<<EOF" >> $GITHUB_OUTPUT
+          echo "$DEMO_IMAGES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
-        echo "user_commit_sha=$USER_COMMIT_SHA" >> $GITHUB_OUTPUT
+          echo "user_commit_sha=$USER_COMMIT_SHA" >> $GITHUB_OUTPUT
 
-    - name: Check which demos changed (using git)
-      id: check_changes
-      run: |
-        # Ensure we have the latest main branch for comparison
-        git fetch origin main:main || true
+      - name: Check which demos changed (using git)
+        id: check_changes
+        run: |
+          # Ensure we have the latest main branch for comparison
+          git fetch origin main:main || true
 
-        # Call detection script and parse output
-        DETECTION_OUTPUT=$(.github/workflows/scripts/detect-demo-changes.sh --verbose)
+          # Call detection script and parse output
+          DETECTION_OUTPUT=$(.github/workflows/scripts/detect-demo-changes.sh --verbose)
 
-        # Extract values from the output
-        CHANGED_DEMOS=$(echo "$DETECTION_OUTPUT" | grep "CHANGED_DEMOS=" | cut -d"'" -f2)
-        DEMO_CHANGED=$(echo "$DETECTION_OUTPUT" | grep "DEMO_CHANGED=" | cut -d"'" -f2)
+          # Extract values from the output
+          CHANGED_DEMOS=$(echo "$DETECTION_OUTPUT" | grep "CHANGED_DEMOS=" | cut -d"'" -f2)
+          DEMO_CHANGED=$(echo "$DETECTION_OUTPUT" | grep "DEMO_CHANGED=" | cut -d"'" -f2)
 
-        # Set GitHub Action outputs
-        echo "changed_demos=$CHANGED_DEMOS" >> $GITHUB_OUTPUT
-        echo "demo_changed=$DEMO_CHANGED" >> $GITHUB_OUTPUT
+          # Set GitHub Action outputs
+          echo "changed_demos=$CHANGED_DEMOS" >> $GITHUB_OUTPUT
+          echo "demo_changed=$DEMO_CHANGED" >> $GITHUB_OUTPUT
 
-    - name: Handle release-please with demo changes (fail build)
-      if: steps.context.outputs.is_release_please == 'true' && steps.context.outputs.is_pr == 'true' && steps.check_changes.outputs.demo_changed == 'true'
-      run: |
-        echo "❌ ERROR: Demo GIF has changed in release-please PR!"
-        echo "Demo changes should not be included in release PRs."
-        echo "Please update the demo in a separate PR before the release."
-        exit 1
+      - name: Handle release-please with demo changes (fail build)
+        if: steps.context.outputs.is_release_please == 'true' && steps.context.outputs.is_pr == 'true' && steps.check_changes.outputs.demo_changed == 'true'
+        run: |
+          echo "❌ ERROR: Demo GIF has changed in release-please PR!"
+          echo "Demo changes should not be included in release PRs."
+          echo "Please update the demo in a separate PR before the release."
+          exit 1
 
-    - name: Find existing demo comment
-      if: steps.context.outputs.is_pr == 'true' && steps.context.outputs.is_release_please == 'false'
-      uses: peter-evans/find-comment@v3
-      id: find_comment
-      with:
-        issue-number: ${{ github.event.pull_request.number }}
-        comment-author: 'github-actions[bot]'
-        body-includes: 'Demo Previews'
+      - name: Find existing demo comment
+        if: steps.context.outputs.is_pr == 'true' && steps.context.outputs.is_release_please == 'false'
+        uses: peter-evans/find-comment@v3
+        id: find_comment
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: 'Demo Previews'
 
-    - name: Generate demo preview comment
-      if: steps.context.outputs.is_pr == 'true' && steps.context.outputs.is_release_please == 'false'
-      id: generate_comment
-      env:
-        GITHUB_REPOSITORY: ${{ github.repository }}
-        GITHUB_SHA: ${{ github.sha }}
-        USER_COMMIT_SHA: ${{ steps.demo_preview.outputs.user_commit_sha }}
-        DEMO_CHANGED: ${{ steps.check_changes.outputs.demo_changed }}
-        DEMO_IMAGES: ${{ steps.demo_preview.outputs.demo_images }}
-        CHANGED_DEMOS: ${{ steps.check_changes.outputs.changed_demos }}
-        DEBUG: 'true'
-      run: |
-        # Debug: Show environment variables for comment generation
-        echo "🔍 Comment Generation Debug:"
-        echo "  - GITHUB_SHA (merge commit): $GITHUB_SHA"
-        echo "  - USER_COMMIT_SHA (user commit): $USER_COMMIT_SHA"
-        echo "  - Are they different? $([ "$GITHUB_SHA" != "$USER_COMMIT_SHA" ] && echo "YES ✅" || echo "NO ❌")"
+      - name: Generate demo preview comment
+        if: steps.context.outputs.is_pr == 'true' && steps.context.outputs.is_release_please == 'false'
+        id: generate_comment
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SHA: ${{ github.sha }}
+          USER_COMMIT_SHA: ${{ steps.demo_preview.outputs.user_commit_sha }}
+          DEMO_CHANGED: ${{ steps.check_changes.outputs.demo_changed }}
+          DEMO_IMAGES: ${{ steps.demo_preview.outputs.demo_images }}
+          CHANGED_DEMOS: ${{ steps.check_changes.outputs.changed_demos }}
+          DEBUG: 'true'
+        run: |
+          # Debug: Show environment variables for comment generation
+          echo "🔍 Comment Generation Debug:"
+          echo "  - GITHUB_SHA (merge commit): $GITHUB_SHA"
+          echo "  - USER_COMMIT_SHA (user commit): $USER_COMMIT_SHA"
+          echo "  - Are they different? $([ "$GITHUB_SHA" != "$USER_COMMIT_SHA" ] && echo "YES ✅" || echo "NO ❌")"
 
-        # Generate comment using template
-        COMMENT_BODY=$(.github/workflows/scripts/generate-demo-comment.sh \
-          --template-file=.github/workflows/scripts/templates/demo-comment.md)
+          # Generate comment using template
+          COMMENT_BODY=$(.github/workflows/scripts/generate-demo-comment.sh \
+            --template-file=.github/workflows/scripts/templates/demo-comment.md)
 
-        # Save comment body to output using heredoc
-        echo "comment_body<<EOF" >> $GITHUB_OUTPUT
-        echo "$COMMENT_BODY" >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
+          # Save comment body to output using heredoc
+          echo "comment_body<<EOF" >> $GITHUB_OUTPUT
+          echo "$COMMENT_BODY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
-    - name: Post/update demo preview comment
-      if: steps.context.outputs.is_pr == 'true' && steps.context.outputs.is_release_please == 'false'
-      uses: peter-evans/create-or-update-comment@v4
-      with:
-        comment-id: ${{ steps.find_comment.outputs.comment-id }}
-        issue-number: ${{ github.event.pull_request.number }}
-        edit-mode: replace
-        body: ${{ steps.generate_comment.outputs.comment_body }}
-        reactions: 'eyes'
+      - name: Post/update demo preview comment
+        if: steps.context.outputs.is_pr == 'true' && steps.context.outputs.is_release_please == 'false'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ steps.find_comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          edit-mode: replace
+          body: ${{ steps.generate_comment.outputs.comment_body }}
+          reactions: 'eyes'
 
-    - name: Commit demo changes (normal commits to main only)
-      if: |
-        steps.context.outputs.is_pr == 'false' && 
-        steps.check_changes.outputs.demo_changed == 'true' && 
-        (
-          steps.context.outputs.is_release_please == 'false' ||
-          github.event.inputs.commit_updates == 'true'
-        )
-      run: |
-        # Call commit script with default settings
-        .github/workflows/scripts/commit-demo-changes.sh
+      - name: Commit demo changes (normal commits to main only)
+        if: |
+          steps.context.outputs.is_pr == 'false' && 
+          steps.check_changes.outputs.demo_changed == 'true' && 
+          (
+            steps.context.outputs.is_release_please == 'false' ||
+            github.event.inputs.commit_updates == 'true'
+          )
+        run: |
+          # Call commit script with default settings
+          .github/workflows/scripts/commit-demo-changes.sh
 
-    - name: Summary
-      run: |
-        echo "## 📊 Demo Generation Summary"
-        echo "- Event: ${{ github.event_name }}"
-        echo "- Demo changed: ${{ steps.check_changes.outputs.demo_changed }}"
-        echo "- Is PR: ${{ steps.context.outputs.is_pr }}"
-        echo "- Is release-please: ${{ steps.context.outputs.is_release_please }}"
+      - name: Summary
+        run: |
+          echo "## 📊 Demo Generation Summary"
+          echo "- Event: ${{ github.event_name }}"
+          echo "- Demo changed: ${{ steps.check_changes.outputs.demo_changed }}"
+          echo "- Is PR: ${{ steps.context.outputs.is_pr }}"
+          echo "- Is release-please: ${{ steps.context.outputs.is_release_please }}"
