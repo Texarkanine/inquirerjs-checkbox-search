@@ -333,20 +333,20 @@ jobs:
               # Use <details open> for changed demos, <details> for unchanged
               if [ "$IS_CHANGED" = true ]; then
                 COMMENT_BODY="$COMMENT_BODY
-                <details open>
-                <summary>🔥 demos/${demo_name}.gif (CHANGED)</summary>
+              <details open>
+              <summary>🔥 demos/${demo_name}.gif (CHANGED)</summary>
 
-                ![${demo_name}-demo]($DEMO_URL)
-                </details>
-                "
-                    else
-                      COMMENT_BODY="$COMMENT_BODY
-                <details>
-                <summary>📷 demos/${demo_name}.gif</summary>
+              ![${demo_name}-demo]($DEMO_URL)
+              </details>
+              "
+                  else
+                    COMMENT_BODY="$COMMENT_BODY
+              <details>
+              <summary>📷 demos/${demo_name}.gif</summary>
 
-                ![${demo_name}-demo]($DEMO_URL)
-                </details>
-                "
+              ![${demo_name}-demo]($DEMO_URL)
+              </details>
+              "
               fi
             done
           else
