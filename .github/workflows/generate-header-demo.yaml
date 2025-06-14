@@ -100,15 +100,14 @@ jobs:
           echo "example=$HEADER_EXAMPLE" >> $GITHUB_OUTPUT
           echo "🎯 Will generate '$HEADER_EXAMPLE' demo as header.gif"
 
-      - name: Generate demo GIF
+      - name: Generate all demo GIFs
         run: |
           # Set deterministic timestamp for consistent builds
           export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
 
-          # Generate the chosen example
-          EXAMPLE="${{ steps.header.outputs.example }}"
-          echo "🎬 Generating demo for: $EXAMPLE"
-          npm run "demo:generate:$EXAMPLE"
+          # Generate all demos
+          echo "🎬 Generating all demos..."
+          npm run demo:generate:all
 
       - name: Create header GIF from demo
         run: |
@@ -130,100 +129,140 @@ jobs:
           path: docs/img/*.gif
           retention-days: 30
 
-      - name: Upload demo to orphan branch and prepare preview
+      - name: Upload all demos to orphan branch and prepare preview
         if: steps.context.outputs.is_pr == 'true'
         id: demo_preview
         run: |
-          if [ -f "docs/img/header.gif" ]; then
-            echo "🔄 Uploading header.gif to demo-images branch..."
-            
-            FILE_SIZE=$(stat -f%z "docs/img/header.gif" 2>/dev/null || stat -c%s "docs/img/header.gif")
-            echo "Header GIF size: ${FILE_SIZE} bytes"
-            
-            # Configure git
-            git config --local user.email "action@github.com"
-            git config --local user.name "GitHub Action"
-            
-            # Save current state and get commit SHA (safer than branch name with slashes)
-            CURRENT_SHA="${{ github.sha }}"
-            CURRENT_BRANCH="${{ github.head_ref || github.ref_name }}"
-            git add . && git stash || true
-            
-            # Create or switch to demo-images orphan branch
-            if git ls-remote --heads origin demo-images | grep -q demo-images; then
-              echo "📁 Switching to existing demo-images branch"
-              git fetch origin demo-images
-              git checkout demo-images
-            else
-              echo "📁 Creating new demo-images orphan branch"
-              git checkout --orphan demo-images
-              git rm -rf . 2>/dev/null || true
-              echo "# Demo Images Branch" > README.md
-              echo "This branch contains demo images for PR previews." >> README.md
-              git add README.md
-              git commit -m "Initialize demo-images branch"
-            fi
-            
-             # Copy the demo image with deterministic name using a temp directory
-             PR_IMAGE="pr-${{ github.event.pull_request.number }}-${{ github.sha }}.gif"
-             
-             # Create a temporary directory to avoid polluting orphan branch
-             mkdir -p /tmp/header-extract
-             git checkout "$CURRENT_SHA" -- docs/img/header.gif
-             mv docs/img/header.gif /tmp/header-extract/
-             rm -rf docs/  # Remove entire docs directory from orphan branch
-             
-             # Copy from temp location to final name
-             cp /tmp/header-extract/header.gif "$PR_IMAGE"
-             rm -rf /tmp/header-extract
-            
-            # Add and commit ONLY the PR-specific image
-            git add "$PR_IMAGE"
-            if git commit -m "Add demo image for PR #${{ github.event.pull_request.number }}"; then
-              echo "📷 Added new demo image"
-            else
-              echo "📷 Demo image unchanged"
-            fi
-            
-            # Push to demo-images branch
-            if git push origin demo-images; then
-              # Construct the raw URL for inline display
-              IMAGE_URL="https://raw.githubusercontent.com/${{ github.repository }}/demo-images/$PR_IMAGE"
-              PREVIEW_CONTENT="<img src=\"$IMAGE_URL\" alt=\"Demo GIF\" width=\"100%\">"
-              echo "✅ Uploaded to demo-images branch: $PR_IMAGE"
-              echo "🔗 Image URL: $IMAGE_URL"
-            else
-              echo "❌ Failed to push to demo-images branch"
-              PREVIEW_CONTENT="❌ Failed to upload demo image to branch"
-            fi
-            
-            # Switch back to original branch
-            git checkout "$CURRENT_BRANCH"
-            git stash pop 2>/dev/null || true
+          echo "🔄 Uploading all demo images to demo-images branch..."
+
+          # Configure git
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          # Save current state and get commit SHA
+          CURRENT_SHA="${{ github.sha }}"
+          CURRENT_BRANCH="${{ github.head_ref || github.ref_name }}"
+
+          # Get the user's actual commit SHA (from the PR branch)
+          USER_COMMIT_SHA=$(git rev-parse HEAD)
+
+          git add . && git stash || true
+
+          # Create or switch to demo-images orphan branch
+          if git ls-remote --heads origin demo-images | grep -q demo-images; then
+            echo "📁 Switching to existing demo-images branch"
+            git fetch origin demo-images
+            git checkout demo-images
           else
-            PREVIEW_CONTENT="❌ Header GIF generation failed"
-            echo "❌ No header.gif file found"
+            echo "📁 Creating new demo-images orphan branch"
+            git checkout --orphan demo-images
+            git rm -rf . 2>/dev/null || true
+            echo "# Demo Images Branch" > README.md
+            echo "This branch contains demo images for PR previews." >> README.md
+            git add README.md
+            git commit -m "Initialize demo-images branch"
           fi
 
-          # Set the preview content using heredoc syntax
-          echo "preview_content<<EOF" >> $GITHUB_OUTPUT
-          echo "$PREVIEW_CONTENT" >> $GITHUB_OUTPUT
+          # Create a temporary directory to avoid polluting orphan branch
+          mkdir -p /tmp/demo-extract
+          git checkout "$CURRENT_SHA" -- docs/img/
+
+          # Copy all demo images with PR-specific naming
+          DEMO_IMAGES=""
+          for demo_file in docs/img/*-demo.gif; do
+            if [ -f "$demo_file" ]; then
+              demo_name=$(basename "$demo_file" | sed 's/-demo\.gif$//')
+              PR_IMAGE="pr-${{ github.event.pull_request.number }}-${{ github.sha }}-${demo_name}.gif"
+              
+              cp "$demo_file" "$PR_IMAGE"
+              echo "📷 Copied: $demo_file -> $PR_IMAGE"
+              
+              # Build the image URL
+              IMAGE_URL="https://raw.githubusercontent.com/${{ github.repository }}/demo-images/$PR_IMAGE"
+              DEMO_IMAGES="$DEMO_IMAGES $demo_name:$IMAGE_URL"
+            fi
+          done
+
+          # Also copy header.gif if it exists
+          if [ -f "docs/img/header.gif" ]; then
+            HEADER_PR_IMAGE="pr-${{ github.event.pull_request.number }}-${{ github.sha }}-header.gif"
+            cp "docs/img/header.gif" "$HEADER_PR_IMAGE"
+            echo "📷 Copied: docs/img/header.gif -> $HEADER_PR_IMAGE"
+          fi
+
+          # Clean up temp docs directory
+          rm -rf docs/
+
+          # Add all PR-specific images
+          git add pr-${{ github.event.pull_request.number }}-${{ github.sha }}-*.gif
+
+          if git commit -m "Add demo images for PR #${{ github.event.pull_request.number }}"; then
+            echo "📷 Added new demo images"
+          else
+            echo "📷 Demo images unchanged"
+          fi
+
+          # Push to demo-images branch
+          if git push origin demo-images; then
+            echo "✅ Uploaded all demos to demo-images branch"
+          else
+            echo "❌ Failed to push to demo-images branch"
+            DEMO_IMAGES="❌ Failed to upload demo images"
+          fi
+
+          # Switch back to original branch
+          git checkout "$CURRENT_BRANCH"
+          git stash pop 2>/dev/null || true
+
+          # Store demo images info for comment generation
+          echo "demo_images<<EOF" >> $GITHUB_OUTPUT
+          echo "$DEMO_IMAGES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Check if header GIF changed (using git)
+          echo "user_commit_sha=$USER_COMMIT_SHA" >> $GITHUB_OUTPUT
+
+      - name: Check which demos changed (using git)
         id: check_changes
         run: |
-          # Use git to detect changes - much cleaner!
-          if git diff --quiet docs/img/header.gif; then
-            echo "demo_changed=false" >> $GITHUB_OUTPUT
-            echo "✅ Header GIF unchanged"
-          else
-            echo "demo_changed=true" >> $GITHUB_OUTPUT
+          # Check which demo files have changed
+          CHANGED_DEMOS=""
+          HEADER_CHANGED=false
+
+          echo "📊 Checking for demo changes..."
+
+          # Check each demo file
+          for demo_file in docs/img/*-demo.gif; do
+            if [ -f "$demo_file" ]; then
+              demo_name=$(basename "$demo_file" | sed 's/-demo\.gif$//')
+              
+              if ! git diff --quiet "$demo_file"; then
+                echo "✅ Demo changed: $demo_name"
+                CHANGED_DEMOS="$CHANGED_DEMOS $demo_name"
+              else
+                echo "📍 Demo unchanged: $demo_name"
+              fi
+            fi
+          done
+
+          # Check header.gif specifically
+          if ! git diff --quiet docs/img/header.gif; then
             echo "✅ Header GIF has changed"
-            
-            # Show what changed for debugging
-            echo "📊 Git status:"
-            git status --porcelain docs/img/header.gif
+            HEADER_CHANGED=true
+          else
+            echo "📍 Header GIF unchanged"
+          fi
+
+          # Set outputs
+          echo "changed_demos=$CHANGED_DEMOS" >> $GITHUB_OUTPUT
+          echo "header_changed=$HEADER_CHANGED" >> $GITHUB_OUTPUT
+
+          # Determine if any demo changed for legacy compatibility
+          if [ -n "$CHANGED_DEMOS" ] || [ "$HEADER_CHANGED" = true ]; then
+            echo "demo_changed=true" >> $GITHUB_OUTPUT
+            echo "🎬 Overall: Demo changes detected"
+          else
+            echo "demo_changed=false" >> $GITHUB_OUTPUT
+            echo "🎬 Overall: No demo changes"
           fi
 
       - name: Handle release-please with demo changes (fail build)
@@ -241,64 +280,114 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: 'github-actions[bot]'
-          body-includes: 'Header Demo GIF'
+          body-includes: 'Demo Preview - All Generated Demos'
 
-      - name: Comment on demo changes (changed)
-        if: steps.context.outputs.is_pr == 'true' && steps.context.outputs.is_release_please == 'false' && steps.check_changes.outputs.demo_changed == 'true'
+      - name: Generate demo preview comment
+        if: steps.context.outputs.is_pr == 'true' && steps.context.outputs.is_release_please == 'false'
+        id: generate_comment
+        run: |
+          echo "🔄 Generating demo preview comment..."
+
+          # Get demo images info and changed demos
+          DEMO_IMAGES="${{ steps.demo_preview.outputs.demo_images }}"
+          CHANGED_DEMOS="${{ steps.check_changes.outputs.changed_demos }}"
+
+          # Build comment body
+          COMMENT_BODY="## 🎬 Demo Preview - All Generated Demos"
+
+          if [ "${{ steps.check_changes.outputs.demo_changed }}" = "true" ]; then
+            COMMENT_BODY="$COMMENT_BODY
+
+            ⚠️ **Changes detected** - Please review the generated demos to ensure they accurately represent the library.
+            "
+          else
+            COMMENT_BODY="$COMMENT_BODY
+
+            ✅ **Demos are stable** - No changes detected in demo output.
+            "
+          fi
+
+          COMMENT_BODY="$COMMENT_BODY
+
+          ### 📋 All Generated Demos (Alphabetical)
+          "
+
+          # Parse demo images and create alphabetical list
+          if [ "$DEMO_IMAGES" != "❌ Failed to upload demo images" ]; then
+            # Sort demo names alphabetically
+            SORTED_DEMOS=$(echo "$DEMO_IMAGES" | tr ' ' '\n' | grep ':' | cut -d':' -f1 | sort)
+            
+            for demo_name in $SORTED_DEMOS; do
+              # Get the URL for this demo
+              DEMO_URL=$(echo "$DEMO_IMAGES" | tr ' ' '\n' | grep "^${demo_name}:" | cut -d':' -f2-)
+              
+              # Check if this demo changed
+              IS_CHANGED=false
+              for changed_demo in $CHANGED_DEMOS; do
+                if [ "$demo_name" = "$changed_demo" ]; then
+                  IS_CHANGED=true
+                  break
+                fi
+              done
+              
+              # Use <details open> for changed demos, <details> for unchanged
+              if [ "$IS_CHANGED" = true ]; then
+                COMMENT_BODY="$COMMENT_BODY
+                <details open>
+                <summary>🔥 demos/${demo_name}.gif (CHANGED)</summary>
+
+                ![${demo_name}-demo]($DEMO_URL)
+                </details>
+                "
+                    else
+                      COMMENT_BODY="$COMMENT_BODY
+                <details>
+                <summary>📷 demos/${demo_name}.gif</summary>
+
+                ![${demo_name}-demo]($DEMO_URL)
+                </details>
+                "
+              fi
+            done
+          else
+            COMMENT_BODY="$COMMENT_BODY
+          ❌ Failed to upload demo images for preview.
+          "
+          fi
+
+          COMMENT_BODY="$COMMENT_BODY
+
+          ### 📋 Commit Information
+          - **Your commit SHA**: [\`${{ steps.demo_preview.outputs.user_commit_sha }}\`](https://github.com/${{ github.repository }}/commit/${{ steps.demo_preview.outputs.user_commit_sha }}) (from your branch)
+          - **GitHub merge commit SHA**: [\`${{ github.sha }}\`](https://github.com/${{ github.repository }}/commit/${{ github.sha }}) (GitHub's test merge)
+
+          <details>
+          <summary>🔍 Technical Details</summary>
+
+          The demos were generated from your branch commit [\`${{ steps.demo_preview.outputs.user_commit_sha }}\`](https://github.com/${{ github.repository }}/commit/${{ steps.demo_preview.outputs.user_commit_sha }}) using:
+          - Header demo source: [\`demos/${{ steps.header.outputs.example }}.tape\`](https://github.com/${{ github.repository }}/blob/${{ steps.demo_preview.outputs.user_commit_sha }}/demos/${{ steps.header.outputs.example }}.tape)
+          - All demo tapes: [\`demos/\`](https://github.com/${{ github.repository }}/tree/${{ steps.demo_preview.outputs.user_commit_sha }}/demos)
+          - Docker image: Built from [\`demos/Dockerfile\`](https://github.com/${{ github.repository }}/blob/${{ steps.demo_preview.outputs.user_commit_sha }}/demos/Dockerfile)
+
+          **Note**: GitHub shows two different SHAs because it creates a temporary merge commit (\`${{ github.sha }}\`) to test what the PR would look like if merged, while your actual changes are in commit \`${{ steps.demo_preview.outputs.user_commit_sha }}\`.
+
+          </details>
+          "
+
+          # Save comment body to output using heredoc
+          echo "comment_body<<EOF" >> $GITHUB_OUTPUT
+          echo "$COMMENT_BODY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Post/update demo preview comment
+        if: steps.context.outputs.is_pr == 'true' && steps.context.outputs.is_release_please == 'false'
         uses: peter-evans/create-or-update-comment@v4
         with:
           comment-id: ${{ steps.find_comment.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
           edit-mode: replace
-          body: |
-            ## ⚠️ Header Demo GIF Changed - Review Required
-
-            This PR includes changes that affect the demo GIF output. 
-
-            **Please review the generated demo to ensure it accurately represents the library.**
-
-            ### 🎬 Generated Demo Preview:
-
-            ${{ steps.demo_preview.outputs.preview_content }}
-
-            ### Changes Detected:
-            - 🎬 `docs/img/header.gif` has been modified
-
-            ### Next Steps:
-            1. Review the demo GIF preview above
-            2. Ensure the demo accurately shows the intended functionality
-            3. If the demo looks correct, this is expected and the PR can proceed
-            4. If the demo is incorrect, please update the demo configuration in `demos/${{ steps.header.outputs.example }}.tape`
-
-            <details>
-            <summary>🔍 Technical Details</summary>
-
-            The demo was generated from commit [`${{ github.sha }}`](https://github.com/${{ github.repository }}/commit/${{ github.sha }}) using:
-            - VHS tape file: [`demos/${{ steps.header.outputs.example }}.tape`](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/demos/${{ steps.header.outputs.example }}.tape)
-            - Example: [`examples/${{ steps.header.outputs.example }}.js`](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/examples/${{ steps.header.outputs.example }}.js)
-            - Docker image: Built from [`demos/Dockerfile`](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/demos/Dockerfile)
-
-            </details>
+          body: ${{ steps.generate_comment.outputs.comment_body }}
           reactions: 'eyes'
-
-      - name: Comment on demo changes (stable)
-        if: steps.context.outputs.is_pr == 'true' && steps.context.outputs.is_release_please == 'false' && steps.check_changes.outputs.demo_changed == 'false'
-        uses: peter-evans/create-or-update-comment@v4
-        with:
-          comment-id: ${{ steps.find_comment.outputs.comment-id }}
-          issue-number: ${{ github.event.pull_request.number }}
-          edit-mode: replace
-          body: |
-            ## ✅ Header Demo GIF Reviewed and Stable
-
-            The demo GIF is now stable and matches the current functionality.
-
-            ### Status:
-            - 🎬 `docs/img/header.gif` is up-to-date
-            - ✅ No further demo review required for this PR
-
-            *This comment will be updated if demo changes are detected in future commits.*
-          reactions: 'hooray'
 
       - name: Commit demo changes (normal commits to main only)
         if: |
@@ -326,8 +415,8 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
             
-            # Regenerate demo to ensure we have latest
-            npm run demo:generate:${{ steps.header.outputs.example }}
+            # Regenerate all demos to ensure we have latest
+            npm run demo:generate:all
             
             # Add and commit
             git add docs/img/*.gif

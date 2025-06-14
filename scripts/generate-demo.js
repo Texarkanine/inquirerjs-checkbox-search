@@ -37,12 +37,12 @@ function generateDemo(tapeFile) {
   const tapeName = basename(tapeFile, '.tape');
   console.log(`🎬 Generating demo: ${tapeName}`);
   runCommand(`npm run demo:docker:build`);
-  runCommand(`npm run demo:docker:run ${tapeFile}`);
+  runCommand(`npm run demo:docker:run -- "${tapeFile}"`);
 }
 
 async function generateDemoParallel(tapeFile) {
   const tapeName = basename(tapeFile, '.tape');
-  const command = `npm run demo:docker:run ${tapeFile}`;
+  const command = `npm run demo:docker:run -- "${tapeFile}"`;
   return await runCommandAsync(command, tapeName);
 }
 
