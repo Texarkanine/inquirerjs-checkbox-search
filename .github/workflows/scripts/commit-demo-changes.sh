@@ -124,7 +124,7 @@ main() {
     
     # Validate branch name if provided
     if [ -n "${ARG_BRANCH:-}" ]; then
-        if [[ "$ARG_BRANCH" =~ [^a-zA-Z0-9/_-] ]]; then
+        if [[ "$ARG_BRANCH" =~ [^a-zA-Z0-9._/-] ]]; then
             log_error "Invalid branch name: $ARG_BRANCH"
             exit 1
         fi
