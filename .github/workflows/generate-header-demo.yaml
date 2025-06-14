@@ -212,11 +212,11 @@ jobs:
               echo "🔍 Debugging $demo_name:"
               echo "  File path: $demo_file"
               echo "  Git status: $(git status --porcelain "$demo_file" || echo 'not in git status')"
-              echo "  Git ls-files check: $(git ls-files --error-unmatch "$demo_file" 2>&1 || echo 'not tracked')"
-              echo "  Git diff check: $(git diff --quiet "$demo_file" && echo 'no diff' || echo 'has diff')"
+              echo "  In HEAD commit: $(git cat-file -e HEAD:"$demo_file" 2>/dev/null && echo 'exists' || echo 'not in HEAD')"
+              echo "  Git diff vs HEAD: $(git diff --quiet HEAD -- "$demo_file" 2>/dev/null && echo 'no diff' || echo 'has diff or new')"
               
-              # Check if file exists in git history (to handle new demos)
-              if ! git ls-files --error-unmatch "$demo_file" >/dev/null 2>&1; then
+              # Check if file exists in committed history (HEAD), not just staging area
+              if ! git cat-file -e HEAD:"$demo_file" 2>/dev/null; then
                 echo "🆕 New demo (not in git history): $demo_name"
                 CHANGED_DEMOS="$CHANGED_DEMOS $demo_name"
               elif ! git diff --quiet "$demo_file"; then
@@ -255,7 +255,7 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: 'github-actions[bot]'
-          body-includes: 'Demo Preview - All Generated Demos'
+          body-includes: 'Demo Previews'
 
       - name: Generate demo preview comment
         if: steps.context.outputs.is_pr == 'true' && steps.context.outputs.is_release_please == 'false'
@@ -268,7 +268,7 @@ jobs:
           CHANGED_DEMOS="${{ steps.check_changes.outputs.changed_demos }}"
 
           # Build comment body
-          COMMENT_BODY="## 🎬 Demo Preview - All Generated Demos"
+          COMMENT_BODY="## 🎬 Demo Previews"
 
           if [ "${{ steps.check_changes.outputs.demo_changed }}" = "true" ]; then
             COMMENT_BODY="$COMMENT_BODY
@@ -284,7 +284,6 @@ jobs:
 
           COMMENT_BODY="$COMMENT_BODY
 
-          ### 📋 All Generated Demos
           "
 
           # Parse demo images and create alphabetical list
@@ -306,8 +305,8 @@ jobs:
               
               # Use <details open> for changed demos, <details> for unchanged
               if [ "$IS_CHANGED" = true ]; then
-                # Check if this is a new demo or changed demo
-                if ! git ls-files --error-unmatch "docs/img/${demo_name}-demo.gif" >/dev/null 2>&1; then
+                # Check if this is a new demo or changed demo (check committed history, not staging)
+                if ! git cat-file -e HEAD:"docs/img/${demo_name}-demo.gif" 2>/dev/null; then
                   COMMENT_BODY="$COMMENT_BODY
           <details open>
           <summary>🆕 demos/${demo_name}.gif (NEW)</summary>
@@ -342,7 +341,7 @@ jobs:
 
           COMMENT_BODY="$COMMENT_BODY
 
-          ### 📋 Commit Information
+          ## 📋 Commit Information
           - **Your commit SHA**: [\`${{ steps.demo_preview.outputs.user_commit_sha }}\`](https://github.com/${{ github.repository }}/commit/${{ steps.demo_preview.outputs.user_commit_sha }}) (from your branch)
           - **GitHub merge commit SHA**: [\`${{ github.sha }}\`](https://github.com/${{ github.repository }}/commit/${{ github.sha }}) (GitHub's test merge)
 
