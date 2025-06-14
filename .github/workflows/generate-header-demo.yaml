@@ -267,12 +267,11 @@ jobs:
 
           COMMENT_BODY="$COMMENT_BODY
 
-          ### 📋 All Generated Demos (Alphabetical)
+          ### 📋 All Generated Demos
           "
 
           # Parse demo images and create alphabetical list
           if [ "$DEMO_IMAGES" != "❌ Failed to upload demo images" ]; then
-            # Sort demo names alphabetically
             SORTED_DEMOS=$(echo "$DEMO_IMAGES" | tr ' ' '\n' | grep ':' | cut -d':' -f1 | sort)
             
             for demo_name in $SORTED_DEMOS; do
