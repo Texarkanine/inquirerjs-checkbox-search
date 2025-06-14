@@ -164,7 +164,7 @@ jobs:
             fi
             
              # Copy the demo image with deterministic name using a temp directory
-             PR_IMAGE="${{ github.sha }}-header.gif"
+             PR_IMAGE="pr-${{ github.event.pull_request.number }}-${{ github.sha }}.gif"
              
              # Create a temporary directory to avoid polluting orphan branch
              mkdir -p /tmp/header-extract
