@@ -53,9 +53,24 @@ build_demo_list() {
     sorted_demos=$(echo "$demo_images" | tr ' ' '\n' | grep ':' | cut -d':' -f1 | sort)
     
     for demo_name in $sorted_demos; do
+        # Validate demo name (should be alphanumeric + hyphens/underscores only)
+        if [[ ! "$demo_name" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+            continue
+        fi
+        
+        # Skip empty demo names
+        if [ -z "$demo_name" ]; then
+            continue
+        fi
+        
         # Get the URL for this demo
         local demo_url
         demo_url=$(echo "$demo_images" | tr ' ' '\n' | grep "^${demo_name}:" | cut -d':' -f2-)
+        
+        # Validate URL format (should start with https://)
+        if [[ ! "$demo_url" =~ ^https://.*\.gif$ ]]; then
+            continue
+        fi
         
         # Check if this demo changed
         local is_changed=false
@@ -147,6 +162,15 @@ generate_demo_comment() {
     fi
     
     log_step "Generating demo comment from template: $template_file"
+    
+    # Debug: Show raw data if DEBUG is set
+    if [ "${DEBUG:-}" = "true" ]; then
+        log_info "🐛 DEBUG MODE: Raw environment data:"
+        log_info "  DEMO_IMAGES length: ${#DEMO_IMAGES}"
+        log_info "  DEMO_IMAGES content: '$DEMO_IMAGES'"
+        log_info "  CHANGED_DEMOS: '$CHANGED_DEMOS'"
+        log_info "  DEMO_CHANGED: '$DEMO_CHANGED'"
+    fi
     
     # Set up additional environment variables for template
     set_change_status_message

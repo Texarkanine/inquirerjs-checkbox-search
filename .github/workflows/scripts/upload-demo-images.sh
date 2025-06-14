@@ -100,27 +100,66 @@ upload_demo_images() {
     local demo_images=""
     log_step "Processing backed up demo files:"
     
+    # Validate backup directory exists and has files
+    if [ ! -d "/tmp/demo-backup" ]; then
+        log_error "Backup directory /tmp/demo-backup not found"
+        exit 1
+    fi
+    
+    local processed_count=0
     for demo_file in /tmp/demo-backup/*-demo.gif; do
-        if [ -f "$demo_file" ]; then
-            local demo_name
-            demo_name=$(basename "$demo_file" | sed 's/-demo\.gif$//')
-            local pr_image="pr-${pr_number}-${commit_sha}-${demo_name}.gif"
-            
-            cp "$demo_file" "$pr_image"
-            log_info "Copied: $demo_file -> $pr_image"
+        # Skip if glob doesn't match any files
+        if [ ! -f "$demo_file" ]; then
+            log_warning "No demo files found matching pattern: $demo_file"
+            continue
+        fi
+        
+        # Extract demo name and validate it
+        local demo_name
+        demo_name=$(basename "$demo_file" | sed 's/-demo\.gif$//')
+        
+        # Validate demo name (should be alphanumeric + hyphens/underscores only)
+        if [[ ! "$demo_name" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+            log_warning "Skipping invalid demo name: '$demo_name' from file: $demo_file"
+            continue
+        fi
+        
+        # Validate demo name is not empty
+        if [ -z "$demo_name" ]; then
+            log_warning "Skipping empty demo name from file: $demo_file"
+            continue
+        fi
+        
+        local pr_image="pr-${pr_number}-${commit_sha}-${demo_name}.gif"
+        
+        # Copy file and validate success
+        if cp "$demo_file" "$pr_image"; then
+            log_info "✅ Copied: $(basename "$demo_file") -> $pr_image"
             
             # Build the image URL
             local image_url="https://raw.githubusercontent.com/${repository}/demo-images/$pr_image"
+            
+            # Add to demo images list
             if [ -z "$demo_images" ]; then
                 demo_images="$demo_name:$image_url"
             else
                 demo_images="$demo_images $demo_name:$image_url"
             fi
-            log_info "Added to DEMO_IMAGES: $demo_name -> $image_url"
+            
+            log_info "✅ Added to DEMO_IMAGES: $demo_name -> $image_url"
+            ((processed_count++))
         else
-            log_warning "File not found: $demo_file"
+            log_error "Failed to copy: $demo_file -> $pr_image"
         fi
     done
+    
+    log_info "Successfully processed $processed_count demo files"
+    
+    # Validate we have at least one demo
+    if [ $processed_count -eq 0 ]; then
+        log_error "No valid demo files were processed"
+        demo_images="❌ No valid demo files found"
+    fi
     
     log_info "Final DEMO_IMAGES: '$demo_images'"
     

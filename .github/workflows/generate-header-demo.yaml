@@ -106,18 +106,18 @@ jobs:
             --repository="${{ github.repository }}" \
             --head-ref="${{ github.head_ref || github.ref_name }}" \
             2>"$UPLOAD_STDERR")
-
+          
           # Extract user commit SHA from stderr
           USER_COMMIT_SHA=$(grep "USER_COMMIT_SHA=" "$UPLOAD_STDERR" | cut -d'=' -f2)
-
+          
           # Clean up temp file
           rm -f "$UPLOAD_STDERR"
-
+          
           # Store outputs for downstream steps
           echo "demo_images<<EOF" >> $GITHUB_OUTPUT
           echo "$DEMO_IMAGES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-
+          
           echo "user_commit_sha=$USER_COMMIT_SHA" >> $GITHUB_OUTPUT
 
       - name: Check which demos changed (using git)
@@ -125,11 +125,11 @@ jobs:
         run: |
           # Call detection script and parse output
           DETECTION_OUTPUT=$(.github/workflows/scripts/detect-demo-changes.sh --verbose)
-
+          
           # Extract values from the output
           CHANGED_DEMOS=$(echo "$DETECTION_OUTPUT" | grep "CHANGED_DEMOS=" | cut -d"'" -f2)
           DEMO_CHANGED=$(echo "$DETECTION_OUTPUT" | grep "DEMO_CHANGED=" | cut -d"'" -f2)
-
+          
           # Set GitHub Action outputs
           echo "changed_demos=$CHANGED_DEMOS" >> $GITHUB_OUTPUT
           echo "demo_changed=$DEMO_CHANGED" >> $GITHUB_OUTPUT
@@ -155,17 +155,18 @@ jobs:
         if: steps.context.outputs.is_pr == 'true' && steps.context.outputs.is_release_please == 'false'
         id: generate_comment
         env:
-          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REPOSITORY: ${{ github.repository }}  
           GITHUB_SHA: ${{ github.sha }}
           USER_COMMIT_SHA: ${{ steps.demo_preview.outputs.user_commit_sha }}
           DEMO_CHANGED: ${{ steps.check_changes.outputs.demo_changed }}
           DEMO_IMAGES: ${{ steps.demo_preview.outputs.demo_images }}
           CHANGED_DEMOS: ${{ steps.check_changes.outputs.changed_demos }}
+          DEBUG: "true"
         run: |
           # Generate comment using template
           COMMENT_BODY=$(.github/workflows/scripts/generate-demo-comment.sh \
             --template-file=.github/workflows/scripts/templates/demo-comment.md)
-
+          
           # Save comment body to output using heredoc
           echo "comment_body<<EOF" >> $GITHUB_OUTPUT
           echo "$COMMENT_BODY" >> $GITHUB_OUTPUT
