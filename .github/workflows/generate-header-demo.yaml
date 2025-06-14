@@ -111,6 +111,22 @@ jobs:
           # Get the user's actual commit SHA (from the PR branch)
           USER_COMMIT_SHA=$(git rev-parse HEAD)
 
+          # FIRST: Backup all generated demos BEFORE switching branches
+          echo "📁 Backing up generated demos before branch switch..."
+          mkdir -p /tmp/demo-backup
+          echo "🔍 Looking for *-demo.gif files in current directory:"
+          ls -la docs/img/*-demo.gif 2>/dev/null || echo "📁 No *-demo.gif files found"
+
+          if ls docs/img/*-demo.gif 1> /dev/null 2>&1; then
+            cp docs/img/*-demo.gif /tmp/demo-backup/
+            echo "✅ Backed up $(ls docs/img/*-demo.gif | wc -l) demo files to /tmp/demo-backup/"
+            echo "📋 Backed up files:"
+            ls -la /tmp/demo-backup/
+          else
+            echo "❌ No demo files found to backup"
+            exit 1
+          fi
+
           git add . && git stash || true
 
           # Create or switch to demo-images orphan branch
@@ -128,18 +144,11 @@ jobs:
             git commit -m "Initialize demo-images branch"
           fi
 
-          # Create a temporary directory to avoid polluting orphan branch
-          mkdir -p /tmp/demo-extract
-          git checkout "$CURRENT_SHA" -- docs/img/
-
-          # Copy all demo images with PR-specific naming
+          # Copy all demo images with PR-specific naming from backup directory
           DEMO_IMAGES=""
-          echo "🔍 Listing all files in docs/img/:"
-          ls -la docs/img/ || echo "📁 docs/img/ directory not found"
-          echo "🔍 Looking for *-demo.gif files:"
-          ls -la docs/img/*-demo.gif 2>/dev/null || echo "📁 No *-demo.gif files found"
+          echo "🔍 Processing backed up demo files:"
 
-          for demo_file in docs/img/*-demo.gif; do
+          for demo_file in /tmp/demo-backup/*-demo.gif; do
             if [ -f "$demo_file" ]; then
               demo_name=$(basename "$demo_file" | sed 's/-demo\.gif$//')
               PR_IMAGE="pr-${{ github.event.pull_request.number }}-${{ github.sha }}-${demo_name}.gif"
@@ -157,9 +166,6 @@ jobs:
           done
 
           echo "📋 Final DEMO_IMAGES: '$DEMO_IMAGES'"
-
-          # Clean up temp docs directory
-          rm -rf docs/
 
           # Add all PR-specific images
           git add pr-${{ github.event.pull_request.number }}-${{ github.sha }}-*.gif
@@ -202,7 +208,11 @@ jobs:
             if [ -f "$demo_file" ]; then
               demo_name=$(basename "$demo_file" | sed 's/-demo\.gif$//')
               
-              if ! git diff --quiet "$demo_file"; then
+              # Check if file exists in git history (to handle new demos)
+              if ! git ls-files --error-unmatch "$demo_file" >/dev/null 2>&1; then
+                echo "🆕 New demo (not in git history): $demo_name"
+                CHANGED_DEMOS="$CHANGED_DEMOS $demo_name"
+              elif ! git diff --quiet "$demo_file"; then
                 echo "✅ Demo changed: $demo_name"
                 CHANGED_DEMOS="$CHANGED_DEMOS $demo_name"
               else
@@ -289,13 +299,24 @@ jobs:
               
               # Use <details open> for changed demos, <details> for unchanged
               if [ "$IS_CHANGED" = true ]; then
-                COMMENT_BODY="$COMMENT_BODY
+                # Check if this is a new demo or changed demo
+                if ! git ls-files --error-unmatch "docs/img/${demo_name}-demo.gif" >/dev/null 2>&1; then
+                  COMMENT_BODY="$COMMENT_BODY
+          <details open>
+          <summary>🆕 demos/${demo_name}.gif (NEW)</summary>
+
+          ![${demo_name}-demo]($DEMO_URL)
+          </details>
+          "
+                else
+                  COMMENT_BODY="$COMMENT_BODY
           <details open>
           <summary>🔥 demos/${demo_name}.gif (CHANGED)</summary>
 
           ![${demo_name}-demo]($DEMO_URL)
           </details>
           "
+                fi
               else
                 COMMENT_BODY="$COMMENT_BODY
           <details>
