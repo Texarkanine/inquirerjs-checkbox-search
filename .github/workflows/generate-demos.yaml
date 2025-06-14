@@ -4,21 +4,9 @@ on:
   pull_request:
     branches:
       - main
-    paths:
-      - 'examples/**'
-      - 'demos/**'
-      - 'src/**'
-      - 'package*.json'
-      - '.github/workflows/**'
   push:
     branches:
       - main
-    paths:
-      - 'examples/**'
-      - 'demos/**'
-      - 'src/**'
-      - 'package*.json'
-      - '.github/workflows/**'
   workflow_dispatch:
     inputs:
       commit_updates:
