@@ -83,9 +83,10 @@
     "prepublishOnly": "npm run clean && npm run build && npm run test:ci && npm run attw",
     "demo:docker:build": "docker build -f demos/Dockerfile -t vhs-node-demo .",
     "demo:docker:run": "docker run --rm -v $PWD/docs/img:/workspace/docs/img vhs-node-demo",
-    "demo:generate:basic": "npm run demo:docker:build && npm run demo:docker:run demos/basic.tape",
-    "demo:generate:all": "npm run demo:generate:basic",
-    "demo:generate": "npm run demo:generate:basic"
+    "demo:generate": "node scripts/generate-demo.js",
+    "demo:generate:basic": "node scripts/generate-demo.js basic",
+    "demo:generate:validation": "node scripts/generate-demo.js validation",
+    "demo:generate:all": "node scripts/generate-demo.js all"
   },
   "dependencies": {
     "@inquirer/core": "^10.1.13",
