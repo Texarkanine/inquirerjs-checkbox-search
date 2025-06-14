@@ -186,11 +186,9 @@ upload_demo_images() {
     git stash pop 2>/dev/null || true
     set -e
     
-    # Output the demo images list for use by other scripts
-    echo "$demo_images"
-    
-    # Also output user commit SHA for downstream use
-    echo "USER_COMMIT_SHA=$user_commit_sha" >&2
+    # Output structured data for downstream use (all to stdout)
+    echo "USER_COMMIT_SHA=$user_commit_sha"
+    echo "DEMO_IMAGES=$demo_images"
 }
 
 # Main execution
