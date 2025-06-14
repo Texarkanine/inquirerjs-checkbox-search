@@ -22,10 +22,10 @@ jobs:
   generate-demos:
     name: 'Generate'
     runs-on: ubuntu-latest
-permissions:
-  contents: write
-  pull-requests: write
-  issues: write
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
 
   steps:
     - name: Checkout repository
