@@ -1,20 +1,23 @@
 # Workflow Scripts Refactoring Task List
 
 ## 🎯 Objective
+
 Refactor GitHub workflow shell scripts out of YAML files into standalone, testable scripts with CLI interfaces and template-based comment generation.
 
 ## 📋 Tasks
 
 ### Phase 1: Infrastructure Setup
+
 - [x] Create `.github/workflows/scripts/` directory structure
 - [x] Create `.github/workflows/scripts/templates/` directory
 - [x] Create `common.sh` with shared utilities (git config, error handling)
 
 ### Phase 2: Script Extraction & Creation
+
 - [x] **cleanup-demo-images.sh** - Extract cleanup logic from `cleanup-demo-images.yaml`
   - CLI args: `--event-name`, `--pr-number`, `--gh-token`
   - Handle both single PR and bulk cleanup modes
-- [x] **upload-demo-images.sh** - Extract upload logic from `generate-header-demo.yaml`  
+- [x] **upload-demo-images.sh** - Extract upload logic from `generate-header-demo.yaml`
   - CLI args: `--pr-number`, `--commit-sha`, `--repository`, `--head-ref`
   - Output demo images list in structured format
 - [x] **detect-demo-changes.sh** - Extract change detection logic
@@ -27,25 +30,30 @@ Refactor GitHub workflow shell scripts out of YAML files into standalone, testab
   - CLI args: `--retry-count`, `--branch`, `--commit-message`
 
 ### Phase 3: Template Creation
+
 - [x] **demo-comment.md** - Main comment template with `${VAR}` placeholders
 - [ ] **demo-item-new.md** - Template for NEW demo items
-- [ ] **demo-item-changed.md** - Template for CHANGED demo items  
+- [ ] **demo-item-changed.md** - Template for CHANGED demo items
 - [ ] **demo-item-unchanged.md** - Template for unchanged demo items
 
 ### Phase 4: Workflow Updates
+
 - [x] **Update cleanup-demo-images.yaml** - Replace inline scripts with script calls
 - [x] **Update generate-header-demo.yaml** - Replace inline scripts with script calls
   - Pass GitHub context via environment variables
   - Chain scripts with proper data flow
 
 ### Phase 5: Testing & Validation
+
 - [x] Test cleanup workflow functionality
-- [x] Test demo generation workflow functionality  
+- [x] Test demo generation workflow functionality
 - [x] Verify templates render correctly
 - [x] Test script CLI interfaces locally
+- [x] **Fix `set -e` conflicts with expected-to-fail commands**
 - [ ] Run full workflow test
 
 ## 🎯 Success Criteria
+
 - [x] All inline shell scripts moved to separate files
 - [x] Scripts accept input via CLI flags (no envvar reading)
 - [x] Templates use `${VAR}` syntax with `envsubst`
@@ -54,4 +62,5 @@ Refactor GitHub workflow shell scripts out of YAML files into standalone, testab
 - [x] All existing functionality preserved
 
 ---
-**Status**: ✅ **COMPLETED** - Major refactoring complete! 
+
+**Status**: ✅ **COMPLETED** - Major refactoring complete!

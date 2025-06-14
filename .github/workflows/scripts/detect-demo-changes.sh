@@ -53,16 +53,28 @@ detect_demo_changes() {
             if [ "$verbose" = "true" ]; then
                 log_info "Debugging $demo_name:"
                 echo "  File path: $demo_file" >&2
-                echo "  Git status: $(git status --porcelain "$demo_file" 2>/dev/null || echo 'not in git status')" >&2
-                echo "  In HEAD commit: $(git cat-file -e HEAD:"$demo_file" 2>/dev/null && echo 'exists' || echo 'not in HEAD')" >&2
-                echo "  Git diff vs HEAD: $(git diff --quiet HEAD -- "$demo_file" 2>/dev/null && echo 'no diff' || echo 'has diff or new')" >&2
+                set +e
+                git_status=$(git status --porcelain "$demo_file" 2>/dev/null || echo 'not in git status')
+                git cat-file -e HEAD:"$demo_file" 2>/dev/null && head_status='exists' || head_status='not in HEAD'
+                git diff --quiet HEAD -- "$demo_file" 2>/dev/null && diff_status='no diff' || diff_status='has diff or new'
+                set -e
+                echo "  Git status: $git_status" >&2
+                echo "  In HEAD commit: $head_status" >&2
+                echo "  Git diff vs HEAD: $diff_status" >&2
             fi
             
             # Check if file exists in committed history (HEAD), not just staging area
-            if ! git cat-file -e HEAD:"$demo_file" 2>/dev/null; then
+            set +e
+            git cat-file -e HEAD:"$demo_file" 2>/dev/null
+            local file_in_head=$?
+            git diff --quiet HEAD -- "$demo_file" 2>/dev/null
+            local file_changed=$?
+            set -e
+            
+            if [ $file_in_head -ne 0 ]; then
                 log_info "New demo (not in git history): $demo_name"
                 changed_demos="$changed_demos $demo_name"
-            elif ! git diff --quiet HEAD -- "$demo_file" 2>/dev/null; then
+            elif [ $file_changed -ne 0 ]; then
                 log_info "Demo changed: $demo_name"
                 changed_demos="$changed_demos $demo_name"
             else

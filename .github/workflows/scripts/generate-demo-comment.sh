@@ -3,7 +3,7 @@
 # Generate Demo Comment Script
 # Generates PR comments from templates using environment variable substitution
 
-set -euo pipefail
+set -uo pipefail
 
 # Source common utilities
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -69,7 +69,11 @@ build_demo_list() {
         # Use <details open> for changed demos, <details> for unchanged
         if [ "$is_changed" = true ]; then
             # Check if this is a new demo or changed demo (check committed history, not staging)
-            if ! git cat-file -e HEAD:"docs/img/${demo_name}-demo.gif" 2>/dev/null; then
+            set +e
+            git cat-file -e HEAD:"docs/img/${demo_name}-demo.gif" 2>/dev/null
+            local demo_is_new=$?
+            set -e
+            if [ $demo_is_new -ne 0 ]; then
                 demo_list="$demo_list
 <details open>
 <summary>🆕 demos/${demo_name}.gif (NEW)</summary>

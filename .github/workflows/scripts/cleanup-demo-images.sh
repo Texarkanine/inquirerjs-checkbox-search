@@ -202,7 +202,9 @@ cleanup_demo_images() {
         git push --force-with-lease origin demo-images
         
         # Clean up backup branch
+        set +e
         git branch -D demo-images-backup 2>/dev/null || true
+        set -e
         
     else
         if [ "$cleanup_mode" = "single_pr" ]; then

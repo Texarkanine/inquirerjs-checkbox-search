@@ -58,7 +58,9 @@ upload_demo_images() {
     log_step "Backing up generated demos before branch switch..."
     mkdir -p /tmp/demo-backup
     log_info "Looking for *-demo.gif files in current directory:"
+    set +e
     ls -la docs/img/*-demo.gif 2>/dev/null || log_info "No *-demo.gif files found"
+    set -e
     
     if ls docs/img/*-demo.gif 1> /dev/null 2>&1; then
         cp docs/img/*-demo.gif /tmp/demo-backup/
@@ -73,7 +75,9 @@ upload_demo_images() {
     fi
     
     # Stash any uncommitted changes
+    set +e
     git add . && git stash || true
+    set -e
     
     # Create or switch to demo-images orphan branch
     if branch_exists "demo-images" "remote"; then
@@ -83,7 +87,9 @@ upload_demo_images() {
     else
         log_step "Creating new demo-images orphan branch"
         git checkout --orphan demo-images
+        set +e
         git rm -rf . 2>/dev/null || true
+        set -e
         echo "# Demo Images Branch" > README.md
         echo "This branch contains demo images for PR previews." >> README.md
         git add README.md
@@ -133,7 +139,9 @@ upload_demo_images() {
     
     # Switch back to original branch
     git checkout "$current_branch"
+    set +e
     git stash pop 2>/dev/null || true
+    set -e
     
     # Output the demo images list for use by other scripts
     echo "$demo_images"
