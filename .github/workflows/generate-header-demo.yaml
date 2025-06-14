@@ -8,7 +8,7 @@ on:
       - 'examples/**'
       - 'demos/**'
       - 'src/**'
-      - '.github/workflows/generate-header-demo.yml'
+      - '.github/workflows/generate-header-demo.yaml'
   push:
     branches:
       - main
@@ -16,7 +16,7 @@ on:
       - 'examples/**'
       - 'demos/**'
       - 'src/**'
-      - '.github/workflows/generate-header-demo.yml'
+      - '.github/workflows/generate-header-demo.yaml'
   workflow_dispatch:
     inputs:
       header_example:
@@ -65,13 +65,16 @@ jobs:
 
       - name: Determine release-please context
         id: context
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          HEAD_MSG: ${{ github.event.head_commit.message }}
         run: |
           # Check commit message for release-please pattern (works for both PRs and commits)
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            commit_message="${{ github.event.pull_request.title }}"
+            commit_message="$PR_TITLE"
             echo "is_pr=true" >> $GITHUB_OUTPUT
           else
-            commit_message="${{ github.event.head_commit.message }}"
+            commit_message="$HEAD_MSG"
             echo "is_pr=false" >> $GITHUB_OUTPUT
           fi
 
@@ -237,7 +240,7 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: 'github-actions[bot]'
-          body-includes: 'Header Demo MP4'
+          body-includes: 'Header Demo GIF'
 
       - name: Comment on demo changes (changed)
         if: steps.context.outputs.is_pr == 'true' && steps.context.outputs.is_release_please == 'false' && steps.check_changes.outputs.demo_changed == 'true'
@@ -323,7 +326,7 @@ jobs:
             git reset --hard origin/main
             
             # Regenerate demo to ensure we have latest
-            npm run demo:generate:basic
+            npm run demo:generate:${{ steps.header.outputs.example }}
             
             # Add and commit
             git add docs/img/*.gif
@@ -333,7 +336,7 @@ jobs:
               break
             fi
             
-            if git commit --no-gpg-sign -m "docs: Update demo MP4s [skip ci]"; then
+            if git commit --no-gpg-sign -m "docs: Update demo GIFs [skip ci]"; then
               if git push; then
                 echo "✅ Successfully committed and pushed demo changes"
                 break
