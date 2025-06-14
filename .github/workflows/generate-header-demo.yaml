@@ -208,6 +208,13 @@ jobs:
             if [ -f "$demo_file" ]; then
               demo_name=$(basename "$demo_file" | sed 's/-demo\.gif$//')
               
+              # Debug: Check git status of this file
+              echo "🔍 Debugging $demo_name:"
+              echo "  File path: $demo_file"
+              echo "  Git status: $(git status --porcelain "$demo_file" || echo 'not in git status')"
+              echo "  Git ls-files check: $(git ls-files --error-unmatch "$demo_file" 2>&1 || echo 'not tracked')"
+              echo "  Git diff check: $(git diff --quiet "$demo_file" && echo 'no diff' || echo 'has diff')"
+              
               # Check if file exists in git history (to handle new demos)
               if ! git ls-files --error-unmatch "$demo_file" >/dev/null 2>&1; then
                 echo "🆕 New demo (not in git history): $demo_name"
