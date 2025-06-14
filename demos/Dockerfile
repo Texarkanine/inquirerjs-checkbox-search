@@ -16,8 +16,8 @@ WORKDIR /workspace
 # Copy package files first for better caching
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install dependencies (need dev deps to run VHS)
+RUN npm ci
 
 # Copy source code
 COPY . .
