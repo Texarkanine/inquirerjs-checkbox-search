@@ -108,6 +108,8 @@ upload_demo_images() {
     
     local processed_count=0
     for demo_file in /tmp/demo-backup/*-demo.gif; do
+        log_info "🔍 Processing: $demo_file"
+        
         # Skip if glob doesn't match any files
         if [ ! -f "$demo_file" ]; then
             log_warning "No demo files found matching pattern: $demo_file"
@@ -117,6 +119,7 @@ upload_demo_images() {
         # Extract demo name and validate it
         local demo_name
         demo_name=$(basename "$demo_file" | sed 's/-demo\.gif$//')
+        log_info "🔍 Extracted demo name: '$demo_name'"
         
         # Validate demo name (should be alphanumeric + hyphens/underscores only)
         if [[ ! "$demo_name" =~ ^[a-zA-Z0-9_-]+$ ]]; then
@@ -131,6 +134,7 @@ upload_demo_images() {
         fi
         
         local pr_image="pr-${pr_number}-${commit_sha}-${demo_name}.gif"
+        log_info "🔍 Target filename: $pr_image"
         
         # Copy file and validate success
         if cp "$demo_file" "$pr_image"; then
@@ -138,6 +142,7 @@ upload_demo_images() {
             
             # Build the image URL
             local image_url="https://raw.githubusercontent.com/${repository}/demo-images/$pr_image"
+            log_info "🔍 Generated URL: $image_url"
             
             # Add to demo images list
             if [ -z "$demo_images" ]; then
@@ -147,9 +152,11 @@ upload_demo_images() {
             fi
             
             log_info "✅ Added to DEMO_IMAGES: $demo_name -> $image_url"
+            log_info "🔍 Current demo_images string: '$demo_images'"
             ((processed_count++))
         else
             log_error "Failed to copy: $demo_file -> $pr_image"
+            exit 1
         fi
     done
     
@@ -164,19 +171,27 @@ upload_demo_images() {
     log_info "Final DEMO_IMAGES: '$demo_images'"
     
     # Add all PR-specific images
-    git add pr-${pr_number}-${commit_sha}-*.gif
-    
-    if git commit -m "Add demo images for PR #${pr_number}"; then
-        log_success "Added new demo images"
+    log_info "🔍 Adding files to git: pr-${pr_number}-${commit_sha}-*.gif"
+    if git add pr-${pr_number}-${commit_sha}-*.gif; then
+        log_info "✅ Files added to git successfully"
     else
-        log_info "Demo images unchanged"
+        log_error "❌ Failed to add files to git"
+        exit 1
+    fi
+    
+    log_info "🔍 Attempting to commit..."
+    if git commit -m "Add demo images for PR #${pr_number}"; then
+        log_success "✅ Added new demo images"
+    else
+        log_info "ℹ️  Demo images unchanged (no commit needed)"
     fi
     
     # Push to demo-images branch
+    log_info "🔍 Pushing to demo-images branch..."
     if git push origin demo-images; then
-        log_success "Uploaded all demos to demo-images branch"
+        log_success "✅ Uploaded all demos to demo-images branch"
     else
-        log_error "Failed to push to demo-images branch"
+        log_error "❌ Failed to push to demo-images branch"
         demo_images="❌ Failed to upload demo images"
     fi
     
