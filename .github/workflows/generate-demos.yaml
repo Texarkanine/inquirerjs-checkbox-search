@@ -19,8 +19,9 @@ jobs:
   generate-demos:
     name: 'Generate'
     runs-on: ubuntu-latest
-    # Skip if latest commit was made by demo generation to prevent infinite loops
-    if: github.event.pull_request.head.commit.author.name != 'demo-generation-bot'
+    # Skip if latest commit was committed by demo generation to prevent infinite loops
+    # Note: We check committer (not author) because git commit --amend preserves author but changes committer
+    if: github.event.pull_request.head.commit.committer.name != 'demo-generation-bot'
     permissions:
       contents: write
       pull-requests: write
