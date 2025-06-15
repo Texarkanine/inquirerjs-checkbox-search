@@ -16,13 +16,90 @@ concurrency:
   cancel-in-progress: ${{ !startsWith(github.head_ref, 'release-please-') }}
 
 jobs:
+  check-skip:
+    name: 'Check if should skip'
+    runs-on: ubuntu-latest
+    outputs:
+      should_skip: ${{ steps.check.outputs.should_skip }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          
+      - name: Check if we should skip demo generation
+        id: check
+        env:
+          PR_HEAD_REF: ${{ github.head_ref }}
+        run: |
+          echo "🔍 Checking if we should skip demo generation..."
+          echo ""
+          
+          # Comprehensive GitHub context debugging
+          echo "🐛 COMPREHENSIVE GITHUB CONTEXT DEBUG:"
+          echo "  === Basic Event Info ==="
+          echo "  github.event_name: '${{ github.event_name }}'"
+          echo "  github.head_ref: '${{ github.head_ref }}'"
+          echo "  github.ref: '${{ github.ref }}'"
+          echo "  github.ref_name: '${{ github.ref_name }}'"
+          echo "  github.sha: '${{ github.sha }}'"
+          echo ""
+          
+          echo "  === PR Head Commit Context ==="
+          echo "  github.event.pull_request.head.sha: '${{ github.event.pull_request.head.sha }}'"
+          echo "  github.event.pull_request.head.commit.author.name: '${{ github.event.pull_request.head.commit.author.name }}'"
+          echo "  github.event.pull_request.head.commit.author.email: '${{ github.event.pull_request.head.commit.author.email }}'"
+          echo "  github.event.pull_request.head.commit.author.date: '${{ github.event.pull_request.head.commit.author.date }}'"
+          echo "  github.event.pull_request.head.commit.committer.name: '${{ github.event.pull_request.head.commit.committer.name }}'"
+          echo "  github.event.pull_request.head.commit.committer.email: '${{ github.event.pull_request.head.commit.committer.email }}'"
+          echo "  github.event.pull_request.head.commit.committer.date: '${{ github.event.pull_request.head.commit.committer.date }}'"
+          echo "  github.event.pull_request.head.commit.message: '${{ github.event.pull_request.head.commit.message }}'"
+          echo "  github.event.pull_request.head.commit.tree.sha: '${{ github.event.pull_request.head.commit.tree.sha }}'"
+          echo "  github.event.pull_request.head.commit.url: '${{ github.event.pull_request.head.commit.url }}'"
+          echo ""
+          
+          echo "  === Actor & Triggering User Info ==="
+          echo "  github.actor: '${{ github.actor }}'"
+          echo "  github.triggering_actor: '${{ github.triggering_actor }}'"
+          echo "  github.event.sender.login: '${{ github.event.sender.login }}'"
+          echo "  github.event.sender.type: '${{ github.event.sender.type }}'"
+          echo ""
+          
+          echo "  === Git Commit Info (from actual git) ==="
+          echo "  git log -1 --format='%H' (commit hash): '$(git log -1 --format='%H')'"
+          echo "  git log -1 --format='%an' (author name): '$(git log -1 --format='%an')'"
+          echo "  git log -1 --format='%ae' (author email): '$(git log -1 --format='%ae')'"
+          echo "  git log -1 --format='%ad' (author date): '$(git log -1 --format='%ad')'"
+          echo "  git log -1 --format='%cn' (committer name): '$(git log -1 --format='%cn')'"
+          echo "  git log -1 --format='%ce' (committer email): '$(git log -1 --format='%ce')'"
+          echo "  git log -1 --format='%cd' (committer date): '$(git log -1 --format='%cd')'"
+          echo "  git log -1 --format='%s' (subject): '$(git log -1 --format='%s')'"
+          echo ""
+          
+          # For non-release-please PRs, never skip
+          if [[ ! "$PR_HEAD_REF" =~ ^release-please- ]]; then
+            echo "should_skip=false" >> $GITHUB_OUTPUT
+            echo "✅ Regular PR - proceeding with demo generation"
+            exit 0
+          fi
+          
+          # For release-please PRs, check actual git committer
+          COMMITTER_NAME=$(git show -s --format='%cn' HEAD)
+          echo "🔍 Release-please PR - checking committer: '$COMMITTER_NAME'"
+          
+          if [ "$COMMITTER_NAME" = "demo-generation-bot" ]; then
+            echo "should_skip=true" >> $GITHUB_OUTPUT
+            echo "🚫 Skipping: This commit was made by demo-generation-bot"
+          else
+            echo "should_skip=false" >> $GITHUB_OUTPUT
+            echo "✅ Original release-please commit - proceeding"
+          fi
+
   generate-demos:
     name: 'Generate'
     runs-on: ubuntu-latest
-    # Skip if this is a release-please PR with demo-generation-bot as committer (prevents infinite loops)
-    # For release-please PRs: skip if committed by demo-generation-bot  
-    # For regular PRs: always run (committer identity doesn't matter)
-    if: "!(startsWith(github.head_ref, 'release-please-') && github.event.pull_request.head.commit.committer.name == 'demo-generation-bot')"
+    needs: check-skip
+    if: needs.check-skip.outputs.should_skip != 'true'
     permissions:
       contents: write
       pull-requests: write
@@ -54,11 +131,21 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Determine release-please context
+      - name: Debug GitHub context and determine release-please context
         id: context
         env:
           PR_HEAD_REF: ${{ github.head_ref }}
         run: |
+          # Debug: dump GitHub context to understand what's available
+          echo "🐛 DEBUG: GitHub Event Context"
+          echo "  github.event_name: ${{ github.event_name }}"
+          echo "  github.head_ref: ${{ github.head_ref }}"
+          echo "  github.event.pull_request.head.sha: ${{ github.event.pull_request.head.sha }}"
+          echo "  github.event.pull_request.head.commit.author.name: ${{ github.event.pull_request.head.commit.author.name }}"
+          echo "  github.event.pull_request.head.commit.committer.name: ${{ github.event.pull_request.head.commit.committer.name }}"
+          echo "  github.event.pull_request.head.commit.message: ${{ github.event.pull_request.head.commit.message }}"
+          echo ""
+
           # Since we only run on PRs now, we can simplify
           echo "is_pr=true" >> $GITHUB_OUTPUT
 
@@ -66,8 +153,21 @@ jobs:
           if [[ "$PR_HEAD_REF" =~ ^release-please- ]]; then
             echo "is_release_please=true" >> $GITHUB_OUTPUT
             echo "🔍 Release-please PR detected: $PR_HEAD_REF"
+            
+            # For release-please PRs, check the actual git commit to see if we should skip
+            COMMITTER_NAME=$(git show -s --format='%cn' HEAD)
+            echo "🔍 Actual git committer name: '$COMMITTER_NAME'"
+            
+            if [ "$COMMITTER_NAME" = "demo-generation-bot" ]; then
+              echo "should_skip=true" >> $GITHUB_OUTPUT
+              echo "🚫 Skipping: This commit was made by demo-generation-bot"
+            else
+              echo "should_skip=false" >> $GITHUB_OUTPUT
+              echo "✅ Proceeding: This is an original release-please commit"
+            fi
           else
             echo "is_release_please=false" >> $GITHUB_OUTPUT
+            echo "should_skip=false" >> $GITHUB_OUTPUT
             echo "🔍 Regular PR detected: $PR_HEAD_REF"
           fi
 
