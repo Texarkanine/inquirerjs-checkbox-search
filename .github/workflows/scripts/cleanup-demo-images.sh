@@ -237,7 +237,7 @@ cleanup_demo_images() {
 # Main execution
 main() {
     # Check required commands
-    check_required_commands git git-filter-repo du ls grep tr
+    check_required_commands git git-filter-repo du ls grep tr sed
     
     # Parse arguments
     parse_args "$@"

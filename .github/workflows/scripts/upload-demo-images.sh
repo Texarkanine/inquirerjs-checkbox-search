@@ -197,7 +197,7 @@ upload_demo_images() {
 # Main execution
 main() {
     # Check required commands
-    check_required_commands git cp ls mktemp sed
+    check_required_commands git cp ls mktemp sed basename wc
     
     # Parse arguments
     parse_args "$@"

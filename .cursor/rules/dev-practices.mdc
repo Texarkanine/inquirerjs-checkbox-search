@@ -19,5 +19,9 @@ The `--reporter=verbose` option doesn't do anything; don't use it with tests.
 
 **ONLY** use the following methods to run code quality checks:
 
-1. lint: `npm run lint:check` to see problems, or `npm run lint` to potentially fix problems too
-2. formatting: `npm run format:check` to see problems, or `npm run format` to potentially fix problems too
+1. All Quality: `npm run quality:check` to see problems, or `npm run quality` to potentially fix problems, too
+    1. lint: `npm run lint:check` to see problems, or `npm run lint` to potentially fix problems too
+    2. formatting: `npm run format:check` to see problems, or `npm run format` to potentially fix problems too
+    3. type-checking: `npm run typecheck` to see problems (there is no auto-fix)
+
+**IMPORTANT:** `npm run format` (with fix) **must** be run before pushing commits, as CI in [pr.yaml](mdc:.github/workflows/pr.yaml) will fail incorrectly-formatted files.

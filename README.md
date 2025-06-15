@@ -236,6 +236,12 @@ npm run prepublishOnly    # Full build + test + validation pipeline
 └── .prettierrc          # Formatting config
 ```
 
+#### Demo Generation
+
+Demo GIFs are automatically generated in CI for PRs and releases: The [vhs](https://github.com/charmbracelet/vhs) tool is used to record the [examples](./examples/) and save them to GIFs in [`docs/img/`](./docs/img/)
+
+To generate demos locally, run `npm run demo:generate:all` (requires `docker`).
+
 #### Quality Assurance Workflow
 
 1. **Before Committing**
