@@ -13,7 +13,7 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-demo-gif
-  cancel-in-progress: ${{ !contains(github.event.pull_request.title, 'chore(main):') }}
+  cancel-in-progress: ${{ !startsWith(github.head_ref, 'release-please-') }}
 
 jobs:
   generate-demos:
@@ -53,18 +53,18 @@ jobs:
       - name: Determine release-please context
         id: context
         env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_HEAD_REF: ${{ github.head_ref }}
         run: |
           # Since we only run on PRs now, we can simplify
           echo "is_pr=true" >> $GITHUB_OUTPUT
 
-          # Check if this is a release-please PR by looking at the title
-          if [[ "$PR_TITLE" =~ ^chore\(main\): ]]; then
+          # Check if this is a release-please PR by looking at the branch name
+          if [[ "$PR_HEAD_REF" =~ ^release-please- ]]; then
             echo "is_release_please=true" >> $GITHUB_OUTPUT
-            echo "🔍 Release-please PR detected: $PR_TITLE"
+            echo "🔍 Release-please PR detected: $PR_HEAD_REF"
           else
             echo "is_release_please=false" >> $GITHUB_OUTPUT
-            echo "🔍 Regular PR detected: $PR_TITLE"
+            echo "🔍 Regular PR detected: $PR_HEAD_REF"
           fi
 
       - name: Generate all demo GIFs
