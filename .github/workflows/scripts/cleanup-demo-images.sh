@@ -172,10 +172,20 @@ cleanup_demo_images() {
                 fi
             done < "$paths_file"
             
+            # Save the original remote URL before git-filter-repo removes it
+            local origin_url
+            origin_url=$(git remote get-url origin)
+            log_info "Saving origin remote URL: $origin_url"
+            
             # Use git-filter-repo to rewrite history
-            log_step "Rewriting git history with git-filter-repo (faster than filter-branch)..."
+            log_step "Rewriting git history with git-filter-repo..."
             if git filter-repo --force --paths-from-file "$paths_file"; then
                 log_success "History rewritten successfully with git-filter-repo"
+                
+                # git-filter-repo removes the origin remote, so we need to restore it
+                log_step "Restoring origin remote..."
+                git remote add origin "$origin_url"
+                log_success "Origin remote restored"
                 
                 # git-filter-repo automatically handles cleanup, but let's ensure optimal packing
                 git gc --prune=now --aggressive
