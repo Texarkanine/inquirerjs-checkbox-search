@@ -161,8 +161,9 @@ jobs:
           echo "🔄 Amending release-please PR with updated demo GIFs..."
 
           # Configure git with distinctive identity for demo commits to enable loop detection
-          git config --global user.name "demo-generation-bot"
-          git config --global user.email "demo-generation-bot@users.noreply.github.com"
+          # Use --local to override any global/system config that might interfere
+          git config --local user.name "demo-generation-bot"
+          git config --local user.email "demo-generation-bot@users.noreply.github.com"
 
           # Switch to the PR branch
           git checkout "$PR_HEAD_REF"
