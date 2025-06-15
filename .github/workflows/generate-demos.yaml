@@ -19,9 +19,10 @@ jobs:
   generate-demos:
     name: 'Generate'
     runs-on: ubuntu-latest
-    # Skip if commit shows signs of being amended (committer date significantly after author date)
-    # This indicates demo generation already ran and amended the commit
-    if: github.event.pull_request.head.commit.author.date == github.event.pull_request.head.commit.committer.date
+    # Skip if this is a release-please PR with demo-generation-bot as committer (prevents infinite loops)
+    # For release-please PRs: skip if committed by demo-generation-bot  
+    # For regular PRs: always run (committer identity doesn't matter)
+    if: "!(startsWith(github.head_ref, 'release-please-') && github.event.pull_request.head.commit.committer.name == 'demo-generation-bot')"
     permissions:
       contents: write
       pull-requests: write
