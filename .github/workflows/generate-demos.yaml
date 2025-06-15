@@ -13,7 +13,7 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-demo-gif
-  cancel-in-progress: true
+  cancel-in-progress: ${{ !contains(github.event.pull_request.title, 'chore(main):') }}
 
 jobs:
   generate-demos:
@@ -118,12 +118,20 @@ jobs:
 
       - name: Check which demos changed (using git)
         id: check_changes
+        env:
+          IS_RELEASE_PLEASE: ${{ steps.context.outputs.is_release_please }}
         run: |
           # Ensure we have the latest main branch for comparison
           git fetch origin main:main || true
 
-          # Call detection script and parse output
-          DETECTION_OUTPUT=$(.github/workflows/scripts/detect-demo-changes.sh --verbose)
+          # For release-please PRs, compare to previous commit; for feature branches, compare to main
+          if [ "$IS_RELEASE_PLEASE" = "true" ]; then
+            echo "🔍 Release-please PR: comparing to previous commit (HEAD~1)"
+            DETECTION_OUTPUT=$(.github/workflows/scripts/detect-demo-changes.sh --verbose --compare-to=HEAD~1)
+          else
+            echo "🔍 Feature branch PR: comparing to main branch"
+            DETECTION_OUTPUT=$(.github/workflows/scripts/detect-demo-changes.sh --verbose)
+          fi
 
           # Extract values from the output
           CHANGED_DEMOS=$(echo "$DETECTION_OUTPUT" | grep "CHANGED_DEMOS=" | cut -d"'" -f2)
@@ -133,13 +141,13 @@ jobs:
           echo "changed_demos=$CHANGED_DEMOS" >> $GITHUB_OUTPUT
           echo "demo_changed=$DEMO_CHANGED" >> $GITHUB_OUTPUT
 
-      - name: Amend release-please PR with demo changes
+      - name: Add demo changes to release-please PR
         if: steps.context.outputs.is_release_please == 'true' && steps.context.outputs.is_pr == 'true' && steps.check_changes.outputs.demo_changed == 'true'
         env:
           PR_HEAD_REF: ${{ github.head_ref || github.ref_name }}
           GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
         run: |
-          echo "🔄 Amending release-please PR with updated demo GIFs..."
+          echo "🔄 Adding demo changes to release-please PR..."
 
           # Configure git
           git config --global user.name "github-actions[bot]"
@@ -151,16 +159,16 @@ jobs:
           # Add the demo files
           git add docs/img/*.gif
 
-          # Amend the existing commit
-          git commit --amend --no-edit --no-gpg-sign
+          # Create a new commit with [skip ci] to prevent infinite loops
+          git commit -m "chore: update demo GIFs [skip ci]" --no-gpg-sign
 
-          # Force push to update the PR (using the app token)
-          git push --force-with-lease origin "$PR_HEAD_REF"
+          # Regular push (no force needed)
+          git push origin "$PR_HEAD_REF"
 
-          echo "✅ Successfully amended release-please PR with demo updates"
+          echo "✅ Successfully added demo updates to release-please PR"
 
       - name: Find existing demo comment
-        if: steps.context.outputs.is_pr == 'true' && steps.context.outputs.is_release_please == 'false'
+        if: steps.context.outputs.is_pr == 'true'
         uses: peter-evans/find-comment@v3
         id: find_comment
         with:
@@ -169,7 +177,7 @@ jobs:
           body-includes: 'Demo Previews'
 
       - name: Generate demo preview comment
-        if: steps.context.outputs.is_pr == 'true' && steps.context.outputs.is_release_please == 'false'
+        if: steps.context.outputs.is_pr == 'true'
         id: generate_comment
         env:
           GITHUB_REPOSITORY: ${{ github.repository }}
@@ -196,7 +204,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Post/update demo preview comment
-        if: steps.context.outputs.is_pr == 'true' && steps.context.outputs.is_release_please == 'false'
+        if: steps.context.outputs.is_pr == 'true'
         uses: peter-evans/create-or-update-comment@v4
         with:
           comment-id: ${{ steps.find_comment.outputs.comment-id }}

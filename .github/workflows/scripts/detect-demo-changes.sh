@@ -13,9 +13,11 @@ source "$SCRIPT_DIR/common.sh"
 usage() {
     show_usage "$(basename "$0")" \
         "[--output-format <env|json>]" \
+        "[--compare-to <ref>]" \
         "[--verbose]"
     echo "Options:"
     echo "  --output-format  Output format: 'env' for environment variables, 'json' for JSON (default: env)"
+    echo "  --compare-to     Git reference to compare against (default: origin/main)"
     echo "  --verbose        Enable verbose debugging output"
     echo "  --help           Show this help message"
     echo
@@ -38,9 +40,10 @@ usage() {
 # Detect which demos have changed
 detect_demo_changes() {
     local output_format="${ARG_OUTPUT_FORMAT:-env}"
+    local compare_to="${ARG_COMPARE_TO:-origin/main}"
     local verbose="${ARG_VERBOSE:-false}"
     
-    log_step "Checking for demo changes..."
+    log_step "Checking for demo changes against $compare_to..."
     
     local -a changed_demos=()
     
@@ -55,31 +58,31 @@ detect_demo_changes() {
                 echo "  File path: $demo_file" >&2
                 set +e
                 git_status=$(git status --porcelain "$demo_file" 2>/dev/null || echo 'not in git status')
-                git cat-file -e origin/main:"$demo_file" 2>/dev/null && main_status='exists' || main_status='not in main'
-                git diff --quiet origin/main -- "$demo_file" 2>/dev/null && diff_status='no diff' || diff_status='has diff or new'
+                git cat-file -e "$compare_to":"$demo_file" 2>/dev/null && ref_status='exists' || ref_status='not in ref'
+                git diff --quiet "$compare_to" -- "$demo_file" 2>/dev/null && diff_status='no diff' || diff_status='has diff or new'
                 set -e
                 echo "  Git status: $git_status" >&2
-                echo "  In main branch: $main_status" >&2
-                echo "  Git diff vs main: $diff_status" >&2
+                echo "  In $compare_to: $ref_status" >&2
+                echo "  Git diff vs $compare_to: $diff_status" >&2
             fi
             
-            # Check if file exists in main branch and compare against it
+            # Check if file exists in comparison ref and compare against it
             set +e
-            git cat-file -e origin/main:"$demo_file" 2>/dev/null
-            local file_in_main=$?
-            git diff --quiet origin/main -- "$demo_file" 2>/dev/null
-            local file_changed_from_main=$?
+            git cat-file -e "$compare_to":"$demo_file" 2>/dev/null
+            local file_in_ref=$?
+            git diff --quiet "$compare_to" -- "$demo_file" 2>/dev/null
+            local file_changed_from_ref=$?
             set -e
             
-            if [ $file_in_main -ne 0 ]; then
-                log_info "New demo (not in main branch): $demo_name"
+            if [ $file_in_ref -ne 0 ]; then
+                log_info "New demo (not in $compare_to): $demo_name"
                 changed_demos+=("$demo_name")
-            elif [ $file_changed_from_main -ne 0 ]; then
-                log_info "Demo changed from main: $demo_name"
+            elif [ $file_changed_from_ref -ne 0 ]; then
+                log_info "Demo changed from $compare_to: $demo_name"
                 changed_demos+=("$demo_name")
             else
                 if [ "$verbose" = "true" ]; then
-                    log_info "Demo unchanged from main: $demo_name"
+                    log_info "Demo unchanged from $compare_to: $demo_name"
                 fi
             fi
     done
