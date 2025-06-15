@@ -29,7 +29,6 @@ jobs:
         id: release
         with:
           token: ${{ steps.generate-token.outputs.token }}
-          release-type: node
 
       # Publish to npm if a release was created
       - uses: actions/checkout@v4
