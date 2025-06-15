@@ -2,9 +2,8 @@
   "release-type": "node",
   "bump-minor-pre-major": true,
   "bump-patch-for-minor-pre-major": true,
+  "pull-request-header": ":service_dog: I have created a release \\*bark\\* \\*woof\\*",
   "packages": {
-    ".": {
-      "pull-request-header": ":service_dog: I have created a release *bark* *woof*"
-    }
+    ".": {}
   }
 }
