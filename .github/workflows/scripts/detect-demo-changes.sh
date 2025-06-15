@@ -24,12 +24,11 @@ usage() {
     echo "Environment Output Format:"
     echo "  CHANGED_DEMOS='demo1 demo2 demo3'    # Space-separated list of changed demo names"
     echo "  NEW_DEMOS='demo1 demo3'              # Space-separated list of new demo names"
-    echo "  DEMO_CHANGED='true'|'false'          # Overall change status"
     echo
     echo "JSON Output Format:"
     echo "  {"
     echo "    \"changed_demos\": [\"demo1\", \"demo2\", \"demo3\"],"
-    echo "    \"demo_changed\": true"
+    echo "    \"new_demos\": [\"demo1\", \"demo3\"]"
     echo "  }"
     echo
     echo "Examples:"
@@ -108,13 +107,10 @@ detect_demo_changes() {
         new_demos_string=""
     fi
     
-    # Determine overall change status
-    local demo_changed
+    # Log overall status
     if [ ${#changed_demos[@]} -gt 0 ]; then
-        demo_changed="true"
         log_success "Overall: Demo changes detected"
     else
-        demo_changed="false"
         log_info "Overall: No demo changes"
     fi
     
@@ -123,7 +119,6 @@ detect_demo_changes() {
         env)
             echo "CHANGED_DEMOS='$changed_demos_string'"
             echo "NEW_DEMOS='$new_demos_string'"
-            echo "DEMO_CHANGED='$demo_changed'"
             ;;
         json)
             # Convert array to JSON array
@@ -142,9 +137,25 @@ detect_demo_changes() {
                 json_array_string="${json_array_string%, }"  # trim trailing comma and space
             fi
             
+            # Convert new_demos array to JSON array
+            local -a new_json_array=()
+            if [ ${#new_demos[@]} -gt 0 ]; then
+                # Build JSON array from new_demos array
+                for demo in "${new_demos[@]}"; do
+                    new_json_array+=("\"$demo\"")
+                done
+            fi
+            
+            # Convert array to comma-separated string for JSON
+            local new_json_array_string=""
+            if [ ${#new_json_array[@]} -gt 0 ]; then
+                printf -v new_json_array_string '%s, ' "${new_json_array[@]}"
+                new_json_array_string="${new_json_array_string%, }"  # trim trailing comma and space
+            fi
+            
             echo "{"
             echo "  \"changed_demos\": [$json_array_string],"
-            echo "  \"demo_changed\": $demo_changed"
+            echo "  \"new_demos\": [$new_json_array_string]"
             echo "}"
             ;;
         *)

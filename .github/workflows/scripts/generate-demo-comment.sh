@@ -13,31 +13,34 @@ source "$SCRIPT_DIR/common.sh"
 usage() {
     show_usage "$(basename "$0")" \
         "--template-file <path>" \
+        "--github-repository <owner/repo>" \
+        "--github-sha <sha>" \
+        "--user-commit-sha <sha>" \
+        "--demo-images <images>" \
+        "[--changed-demos <demos>]" \
+        "[--new-demos <demos>]" \
         "[--output-file <path>]"
     echo "Options:"
-    echo "  --template-file   Path to the comment template file (required)"
-    echo "  --output-file     Output file path (default: stdout)"
-    echo "  --help            Show this help message"
-    echo
-    echo "Required Environment Variables:"
-    echo "  GITHUB_REPOSITORY     Repository in 'owner/repo' format"
-    echo "  GITHUB_SHA           GitHub's merge commit SHA"
-    echo "  USER_COMMIT_SHA      User's actual commit SHA"
-    echo "  DEMO_CHANGED         'true' or 'false' - whether demos changed"
-    echo "  DEMO_IMAGES          Space-separated 'name:url' pairs"
-    echo "  CHANGED_DEMOS        Space-separated list of changed demo names"
-    echo "  NEW_DEMOS            Space-separated list of new demo names"
+    echo "  --template-file       Path to the comment template file (required)"
+    echo "  --github-repository   Repository in 'owner/repo' format (required)"
+    echo "  --github-sha         GitHub's merge commit SHA (required)"
+    echo "  --user-commit-sha    User's actual commit SHA (required)"
+    echo "  --demo-images        Space-separated 'name:url' pairs (required)"
+    echo "  --changed-demos      Space-separated list of changed demo names (optional)"
+    echo "  --new-demos          Space-separated list of new demo names (optional)"
+    echo "  --output-file        Output file path (default: stdout)"
+    echo "  --help               Show this help message"
     echo
     echo "Examples:"
-    echo "  $0 --template-file=template.md                    # Output to stdout"
-    echo "  $0 --template-file=template.md --output-file=out.md   # Output to file"
+    echo "  $0 --template-file=template.md --github-repository=owner/repo --github-sha=abc123 --user-commit-sha=def456 --demo-images='basic:https://example.com/basic.gif'"
+    echo "  $0 --template-file=template.md --github-repository=owner/repo --github-sha=abc123 --user-commit-sha=def456 --demo-images='basic:https://example.com/basic.gif' --changed-demos='basic' --new-demos='validation'"
 }
 
-# Build demo list section from environment variables
+# Build demo list section from provided arguments
 build_demo_list() {
-    local demo_images="$DEMO_IMAGES"
-    local changed_demos="$CHANGED_DEMOS"
-    local new_demos="$NEW_DEMOS"
+    local demo_images="$1"
+    local changed_demos="${2:-}"
+    local new_demos="${3:-}"
     local demo_list=""
     
     if [ "$demo_images" = "❌ Failed to upload demo images" ]; then
@@ -127,7 +130,16 @@ build_demo_list() {
 
 # Set change status message based on demo changes
 set_change_status_message() {
-    if [ "$DEMO_CHANGED" = "true" ]; then
+    local changed_demos="${1:-}"
+    local new_demos="${2:-}"
+    
+    # Compute demo_changed from the lists (true if either list is non-empty)
+    local demo_changed="false"
+    if [ -n "$changed_demos" ] || [ -n "$new_demos" ]; then
+        demo_changed="true"
+    fi
+    
+    if [ "$demo_changed" = "true" ]; then
         export CHANGE_STATUS_MESSAGE="⚠️ **Changes detected** - Please review the generated demos to ensure they accurately represent the library."
     else
         export CHANGE_STATUS_MESSAGE="✅ **Demos are stable** - No changes detected in demo output."
@@ -138,6 +150,12 @@ set_change_status_message() {
 generate_demo_comment() {
     local template_file="$ARG_TEMPLATE_FILE"
     local output_file="${ARG_OUTPUT_FILE:-}"
+    local github_repository="$ARG_GITHUB_REPOSITORY"
+    local github_sha="$ARG_GITHUB_SHA"
+    local user_commit_sha="$ARG_USER_COMMIT_SHA"
+    local demo_images="$ARG_DEMO_IMAGES"
+    local changed_demos="${ARG_CHANGED_DEMOS:-}"
+    local new_demos="${ARG_NEW_DEMOS:-}"
     
     # Validate template file exists
     if [ ! -f "$template_file" ]; then
@@ -145,43 +163,26 @@ generate_demo_comment() {
         exit 1
     fi
     
-    # Validate required environment variables
-    local required_vars=(
-        "GITHUB_REPOSITORY"
-        "GITHUB_SHA" 
-        "USER_COMMIT_SHA"
-        "DEMO_CHANGED"
-        "DEMO_IMAGES"
-        "CHANGED_DEMOS"
-    )
-    
-    local missing_vars=()
-    for var in "${required_vars[@]}"; do
-        if [ -z "${!var:-}" ]; then
-            missing_vars+=("$var")
-        fi
-    done
-    
-    if [ ${#missing_vars[@]} -gt 0 ]; then
-        log_error "Missing required environment variables: ${missing_vars[*]}"
-        exit 1
-    fi
-    
     log_step "Generating demo comment from template: $template_file"
     
     # Debug: Show raw data if DEBUG is set
     if [ "${DEBUG:-}" = "true" ]; then
-        log_info "🐛 DEBUG MODE: Raw environment data:"
-        log_info "  DEMO_IMAGES length: ${#DEMO_IMAGES}"
-        log_info "  DEMO_IMAGES content: '$DEMO_IMAGES'"
-        log_info "  CHANGED_DEMOS: '$CHANGED_DEMOS'"
-        log_info "  DEMO_CHANGED: '$DEMO_CHANGED'"
+        log_info "🐛 DEBUG MODE: Raw input data:"
+        log_info "  DEMO_IMAGES length: ${#demo_images}"
+        log_info "  DEMO_IMAGES content: '$demo_images'"
+        log_info "  CHANGED_DEMOS: '$changed_demos'"
+        log_info "  NEW_DEMOS: '$new_demos'"
     fi
     
-    # Set up additional environment variables for template
-    set_change_status_message
+    # Set up environment variables for template substitution
+    export GITHUB_REPOSITORY="$github_repository"
+    export GITHUB_SHA="$github_sha"
+    export USER_COMMIT_SHA="$user_commit_sha"
+    
+    # Set up computed environment variables for template
+    set_change_status_message "$changed_demos" "$new_demos"
     export DEMO_LIST
-    DEMO_LIST=$(build_demo_list)
+    DEMO_LIST=$(build_demo_list "$demo_images" "$changed_demos" "$new_demos")
     
     # Generate comment using envsubst
     if [ -n "$output_file" ]; then
@@ -209,7 +210,7 @@ main() {
     fi
     
     # Validate required arguments
-    require_args "template-file"
+    require_args "template-file" "github-repository" "github-sha" "user-commit-sha" "demo-images"
     
     # Run generation
     generate_demo_comment

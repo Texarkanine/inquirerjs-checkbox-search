@@ -136,7 +136,13 @@ jobs:
           # Extract values from the output
           CHANGED_DEMOS=$(echo "$DETECTION_OUTPUT" | grep "CHANGED_DEMOS=" | cut -d"'" -f2)
           NEW_DEMOS=$(echo "$DETECTION_OUTPUT" | grep "NEW_DEMOS=" | cut -d"'" -f2)
-          DEMO_CHANGED=$(echo "$DETECTION_OUTPUT" | grep "DEMO_CHANGED=" | cut -d"'" -f2)
+
+          # Compute demo_changed from the lists (true if either list is non-empty)
+          if [ -n "$CHANGED_DEMOS" ] || [ -n "$NEW_DEMOS" ]; then
+            DEMO_CHANGED="true"
+          else
+            DEMO_CHANGED="false"
+          fi
 
           # Set GitHub Action outputs
           echo "changed_demos=$CHANGED_DEMOS" >> $GITHUB_OUTPUT
@@ -182,26 +188,25 @@ jobs:
         if: steps.context.outputs.is_pr == 'true'
         id: generate_comment
         env:
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_SHA: ${{ github.sha }}
-          USER_COMMIT_SHA: ${{ steps.demo_preview.outputs.user_commit_sha }}
-          DEMO_CHANGED: ${{ steps.check_changes.outputs.demo_changed }}
-          DEMO_IMAGES: ${{ steps.demo_preview.outputs.demo_images }}
-          CHANGED_DEMOS: ${{ steps.check_changes.outputs.changed_demos }}
-          NEW_DEMOS: ${{ steps.check_changes.outputs.new_demos }}
           DEBUG: 'true'
         run: |
-          # Debug: Show environment variables for comment generation
+          # Debug: Show variables for comment generation
           echo "🔍 Comment Generation Debug:"
-          echo "  - GITHUB_SHA (merge commit): $GITHUB_SHA"
-          echo "  - USER_COMMIT_SHA (user commit): $USER_COMMIT_SHA"
-          echo "  - Are they different? $([ "$GITHUB_SHA" != "$USER_COMMIT_SHA" ] && echo "YES ✅" || echo "NO ❌")"
-          echo "  - NEW_DEMOS: '$NEW_DEMOS'"
-          echo "  - CHANGED_DEMOS: '$CHANGED_DEMOS'"
+          echo "  - GITHUB_SHA (merge commit): ${{ github.sha }}"
+          echo "  - USER_COMMIT_SHA (user commit): ${{ steps.demo_preview.outputs.user_commit_sha }}"
+          echo "  - Are they different? $([ "${{ github.sha }}" != "${{ steps.demo_preview.outputs.user_commit_sha }}" ] && echo "YES ✅" || echo "NO ❌")"
+          echo "  - NEW_DEMOS: '${{ steps.check_changes.outputs.new_demos }}'"
+          echo "  - CHANGED_DEMOS: '${{ steps.check_changes.outputs.changed_demos }}'"
 
-          # Generate comment using template
+          # Generate comment using template with flags
           COMMENT_BODY=$(.github/workflows/scripts/generate-demo-comment.sh \
-            --template-file=.github/workflows/scripts/templates/demo-comment.md)
+            --template-file=.github/workflows/scripts/templates/demo-comment.md \
+            --github-repository="${{ github.repository }}" \
+            --github-sha="${{ github.sha }}" \
+            --user-commit-sha="${{ steps.demo_preview.outputs.user_commit_sha }}" \
+            --demo-images="${{ steps.demo_preview.outputs.demo_images }}" \
+            --changed-demos="${{ steps.check_changes.outputs.changed_demos }}" \
+            --new-demos="${{ steps.check_changes.outputs.new_demos }}")
 
           # Save comment body to output using heredoc
           echo "comment_body<<EOF" >> $GITHUB_OUTPUT
