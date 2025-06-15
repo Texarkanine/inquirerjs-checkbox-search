@@ -218,7 +218,10 @@ cleanup_demo_images() {
         
         # Force push the rewritten history
         log_step "Force pushing rewritten history..."
-        git push --force-with-lease origin demo-images
+        # Fetch latest state to avoid stale info errors
+        git fetch origin demo-images
+        # Use force push since we're rewriting history
+        git push --force origin demo-images
         
     else
         if [ "$cleanup_mode" = "single_pr" ]; then
