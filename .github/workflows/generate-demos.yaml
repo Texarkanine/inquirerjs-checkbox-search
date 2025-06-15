@@ -1,0 +1,206 @@
+name: Demo GIFs
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      commit_updates:
+        description: 'Commit updates back to branch?'
+        required: false
+        default: 'false'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-demo-gif
+  cancel-in-progress: true
+
+jobs:
+  generate-demos:
+    name: 'Generate'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Determine release-please context
+        id: context
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          # Since we only run on PRs now, we can simplify
+          echo "is_pr=true" >> $GITHUB_OUTPUT
+
+          # Check if this is a release-please PR by looking at the title
+          if [[ "$PR_TITLE" =~ ^chore\(main\): ]]; then
+            echo "is_release_please=true" >> $GITHUB_OUTPUT
+            echo "🔍 Release-please PR detected: $PR_TITLE"
+          else
+            echo "is_release_please=false" >> $GITHUB_OUTPUT
+            echo "🔍 Regular PR detected: $PR_TITLE"
+          fi
+
+      - name: Generate all demo GIFs
+        run: |
+          # Set deterministic timestamp for consistent builds
+          export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
+
+          # Generate all demos
+          echo "🎬 Generating all demos..."
+          npm run demo:generate:all
+
+      - name: Upload demo artifacts (always upload regardless of changes)
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-gifs-${{ github.run_id }}
+          path: docs/img/*.gif
+          retention-days: 30
+
+      - name: Upload all demos to orphan branch and prepare preview
+        if: steps.context.outputs.is_pr == 'true'
+        id: demo_preview
+        env:
+          PR_HEAD_REF: ${{ github.head_ref || github.ref_name }}
+        run: |
+          # For PRs, use the actual PR head commit, not the merge commit
+          PR_HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+
+          # Debug: Show SHA values being used
+          echo "🔍 SHA Debug Information:"
+          echo "  - github.sha (merge commit): ${{ github.sha }}"
+          echo "  - PR head SHA (user commit): $PR_HEAD_SHA"
+          echo "  - Are they different? $([ "${{ github.sha }}" != "$PR_HEAD_SHA" ] && echo "YES ✅" || echo "NO ❌")"
+
+          # Call upload script and capture structured output
+          UPLOAD_OUTPUT=$(.github/workflows/scripts/upload-demo-images.sh \
+            --pr-number="${{ github.event.pull_request.number }}" \
+            --commit-sha="$PR_HEAD_SHA" \
+            --repository="${{ github.repository }}" \
+            --head-ref="$PR_HEAD_REF")
+
+          # Parse structured output
+          USER_COMMIT_SHA=$(echo "$UPLOAD_OUTPUT" | grep "^USER_COMMIT_SHA=" | cut -d'=' -f2)
+          DEMO_IMAGES=$(echo "$UPLOAD_OUTPUT" | grep "^DEMO_IMAGES=" | cut -d'=' -f2-)
+
+          # Store outputs for downstream steps
+          echo "demo_images<<EOF" >> $GITHUB_OUTPUT
+          echo "$DEMO_IMAGES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          echo "user_commit_sha=$USER_COMMIT_SHA" >> $GITHUB_OUTPUT
+
+      - name: Check which demos changed (using git)
+        id: check_changes
+        run: |
+          # Ensure we have the latest main branch for comparison
+          git fetch origin main:main || true
+
+          # Call detection script and parse output
+          DETECTION_OUTPUT=$(.github/workflows/scripts/detect-demo-changes.sh --verbose)
+
+          # Extract values from the output
+          CHANGED_DEMOS=$(echo "$DETECTION_OUTPUT" | grep "CHANGED_DEMOS=" | cut -d"'" -f2)
+          DEMO_CHANGED=$(echo "$DETECTION_OUTPUT" | grep "DEMO_CHANGED=" | cut -d"'" -f2)
+
+          # Set GitHub Action outputs
+          echo "changed_demos=$CHANGED_DEMOS" >> $GITHUB_OUTPUT
+          echo "demo_changed=$DEMO_CHANGED" >> $GITHUB_OUTPUT
+
+      - name: Amend release-please PR with demo changes
+        if: steps.context.outputs.is_release_please == 'true' && steps.context.outputs.is_pr == 'true' && steps.check_changes.outputs.demo_changed == 'true'
+        env:
+          PR_HEAD_REF: ${{ github.head_ref || github.ref_name }}
+        run: |
+          echo "🔄 Amending release-please PR with updated demo GIFs..."
+
+          # Configure git
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Switch to the PR branch
+          git checkout "$PR_HEAD_REF"
+
+          # Add the demo files
+          git add docs/img/*.gif
+
+          # Amend the existing commit
+          git commit --amend --no-edit --no-gpg-sign
+
+          # Force push to update the PR
+          git push --force-with-lease origin "$PR_HEAD_REF"
+
+          echo "✅ Successfully amended release-please PR with demo updates"
+
+      - name: Find existing demo comment
+        if: steps.context.outputs.is_pr == 'true' && steps.context.outputs.is_release_please == 'false'
+        uses: peter-evans/find-comment@v3
+        id: find_comment
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: 'Demo Previews'
+
+      - name: Generate demo preview comment
+        if: steps.context.outputs.is_pr == 'true' && steps.context.outputs.is_release_please == 'false'
+        id: generate_comment
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SHA: ${{ github.sha }}
+          USER_COMMIT_SHA: ${{ steps.demo_preview.outputs.user_commit_sha }}
+          DEMO_CHANGED: ${{ steps.check_changes.outputs.demo_changed }}
+          DEMO_IMAGES: ${{ steps.demo_preview.outputs.demo_images }}
+          CHANGED_DEMOS: ${{ steps.check_changes.outputs.changed_demos }}
+          DEBUG: 'true'
+        run: |
+          # Debug: Show environment variables for comment generation
+          echo "🔍 Comment Generation Debug:"
+          echo "  - GITHUB_SHA (merge commit): $GITHUB_SHA"
+          echo "  - USER_COMMIT_SHA (user commit): $USER_COMMIT_SHA"
+          echo "  - Are they different? $([ "$GITHUB_SHA" != "$USER_COMMIT_SHA" ] && echo "YES ✅" || echo "NO ❌")"
+
+          # Generate comment using template
+          COMMENT_BODY=$(.github/workflows/scripts/generate-demo-comment.sh \
+            --template-file=.github/workflows/scripts/templates/demo-comment.md)
+
+          # Save comment body to output using heredoc
+          echo "comment_body<<EOF" >> $GITHUB_OUTPUT
+          echo "$COMMENT_BODY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Post/update demo preview comment
+        if: steps.context.outputs.is_pr == 'true' && steps.context.outputs.is_release_please == 'false'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ steps.find_comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          edit-mode: replace
+          body: ${{ steps.generate_comment.outputs.comment_body }}
+          reactions: 'eyes'
+
+      - name: Summary
+        run: |
+          echo "## 📊 Demo Generation Summary"
+          echo "- Event: ${{ github.event_name }}"
+          echo "- Demo changed: ${{ steps.check_changes.outputs.demo_changed }}"
+          echo "- Is PR: ${{ steps.context.outputs.is_pr }}"
+          echo "- Is release-please: ${{ steps.context.outputs.is_release_please }}"

@@ -2,7 +2,7 @@
 
 A multi-select prompt with text filtering/search capability for [inquirer.js](https://github.com/SBoudrias/Inquirer.js).
 
-<img src="docs/img/header.gif" alt="Demo showing inquirerjs-checkbox-search in action" width="100%">
+![Demo showing inquirerjs-checkbox-search in action](docs/img/basic-demo.gif)
 
 This prompt combines the functionality of `@inquirer/checkbox` and `@inquirer/search`, allowing you to:
 
@@ -235,6 +235,12 @@ npm run prepublishOnly    # Full build + test + validation pipeline
 ├── eslint.config.js     # Linting config
 └── .prettierrc          # Formatting config
 ```
+
+#### Demo Generation
+
+Demo GIFs are automatically generated in CI for PRs and releases: The [vhs](https://github.com/charmbracelet/vhs) tool is used to record the [examples](./examples/) and save them to GIFs in [`docs/img/`](./docs/img/)
+
+To generate demos locally, run `npm run demo:generate:all` (requires `docker`).
 
 #### Quality Assurance Workflow
 

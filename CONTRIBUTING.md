@@ -80,6 +80,10 @@ The project follows these standards:
 - No unused variables or imports
 - Proper JSDoc comments for public APIs
 
+### Demo Generation
+
+Demo GIFs in the README are automatically generated in CI; when you open a PR you'll get a comment on the PR with previews of any demos that changed as a result of your PR.
+
 ## Commit Message Convention
 
 This project uses [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) for automated releases and changelog generation.

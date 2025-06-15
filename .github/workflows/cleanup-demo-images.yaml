@@ -7,18 +7,11 @@ on:
     # Run weekly cleanup on Sundays at 2 AM UTC
     - cron: '0 2 * * 0'
   workflow_dispatch:
-    inputs:
-      cleanup_older_than_days:
-        description: 'Remove demo images older than X days'
-        required: false
-        default: '30'
-        type: string
 
 jobs:
-  cleanup-demo-image:
-    name: 'Remove PR Demo Image'
+  cleanup-demo-images:
+    name: 'Cleanup Demo Images'
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
     permissions:
       contents: write
 
@@ -29,198 +22,40 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - name: Remove demo image from orphan branch
-        run: |
-          echo "🧹 Cleaning up demo image for closed PR #${{ github.event.pull_request.number }}"
-
-          # Configure git
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-
-          # Check if demo-images branch exists
-          if git ls-remote --heads origin demo-images | grep -q demo-images; then
-            echo "📁 Switching to demo-images branch"
-            git fetch origin demo-images
-            git checkout demo-images
-            
-            # Get the head commit SHA for this PR to find SHA-based images
-            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-            SHA_IMAGE="${HEAD_SHA}-header.gif"
-            
-            if [ -f "$SHA_IMAGE" ]; then
-              echo "🗑️ Removing $SHA_IMAGE"
-              git rm "$SHA_IMAGE"
-              
-              if git commit -m "Remove demo image for PR #${{ github.event.pull_request.number }} (commit $HEAD_SHA)"; then
-                git push origin demo-images
-                echo "✅ Successfully removed demo image"
-              else
-                echo "⚠️ No changes to commit (image already removed)"
-              fi
-            else
-              echo "📷 No demo image found for PR #${{ github.event.pull_request.number }} (commit $HEAD_SHA)"
-            fi
-          else
-            echo "📁 demo-images branch does not exist"
-          fi
-
-      - name: Summary
-        run: |
-          echo "## 🧹 Demo Image Cleanup Summary"
-          echo "- PR: #${{ github.event.pull_request.number }}"
-          echo "- Action: ${{ github.event.action }}"
-          echo "- SHA-based image: ${{ github.event.pull_request.head.sha }}-header.gif"
-
-  periodic-cleanup:
-    name: 'Periodic Cleanup'
-    runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-    permissions:
-      contents: write
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          fetch-depth: 0
+          python-version: '3.x'
 
-      - name: Cleanup old demo images
+      - name: Install git-filter-repo
         run: |
-          # Set cleanup threshold
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            DAYS_OLD="${{ github.event.inputs.cleanup_older_than_days }}"
+          echo "📦 Installing git-filter-repo for faster history rewriting..."
+          pip install --user git-filter-repo
+          echo "✅ git-filter-repo installed successfully"
+
+          # Verify installation
+          git-filter-repo --version || echo "⚠️  git-filter-repo installation verification failed"
+
+      - name: Cleanup demo images
+        run: |
+          # Call cleanup script with appropriate arguments
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            .github/workflows/scripts/cleanup-demo-images.sh \
+              --event-name="pull_request" \
+              --pr-number="${{ github.event.pull_request.number }}"
           else
-            DAYS_OLD="30"  # Default for scheduled runs
-          fi
-
-          echo "🧹 Cleaning up demo images older than $DAYS_OLD days"
-
-          # Configure git
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-
-          # Check if demo-images branch exists
-          if git ls-remote --heads origin demo-images | grep -q demo-images; then
-            echo "📁 Switching to demo-images branch"
-            git fetch origin demo-images
-            git checkout demo-images
-            
-            # Get initial stats
-            INITIAL_SIZE=$(du -sb . 2>/dev/null | cut -f1 || echo "0")
-            INITIAL_COUNT=$(ls -1 *-header.gif 2>/dev/null | wc -l || echo "0")
-            
-            # Find files to remove (but don't remove them yet)
-            CUTOFF_DATE=$(date -d "$DAYS_OLD days ago" +%s)
-            FILES_TO_REMOVE=""
-            REMOVE_COUNT=0
-            
-            for file in *-header.gif; do
-              if [ -f "$file" ]; then
-                # Get file modification time from git log
-                FILE_TIME=$(git log -1 --format=%ct -- "$file" 2>/dev/null || echo "0")
-                
-                if [ "$FILE_TIME" -lt "$CUTOFF_DATE" ]; then
-                  echo "🗑️ Will remove from history: $file ($(date -d "@$FILE_TIME" '+%Y-%m-%d'))"
-                  FILES_TO_REMOVE="$FILES_TO_REMOVE $file"
-                  REMOVE_COUNT=$((REMOVE_COUNT + 1))
-                fi
-              fi
-            done
-            
-            if [ "$REMOVE_COUNT" -gt 0 ]; then
-              echo "🔄 Rewriting git history to completely remove $REMOVE_COUNT old files..."
-              
-              # Create a list of files to keep (inverse of files to remove)
-              KEEP_PATTERN=""
-              for file in *-header.gif README.md; do
-                if [ -f "$file" ]; then
-                  # Check if this file should be kept
-                  SHOULD_KEEP=true
-                  for remove_file in $FILES_TO_REMOVE; do
-                    if [ "$file" = "$remove_file" ]; then
-                      SHOULD_KEEP=false
-                      break
-                    fi
-                  done
-                  
-                  if [ "$SHOULD_KEEP" = true ]; then
-                    if [ -z "$KEEP_PATTERN" ]; then
-                      KEEP_PATTERN="$file"
-                    else
-                      KEEP_PATTERN="$KEEP_PATTERN|$file"
-                    fi
-                  fi
-                fi
-              done
-              
-              # Use git filter-branch to rewrite history, keeping only desired files
-              if [ -n "$KEEP_PATTERN" ]; then
-                echo "📝 Keeping files matching: $KEEP_PATTERN"
-                
-                # Backup current branch
-                git branch demo-images-backup
-                
-                # Filter branch to keep only desired files
-                git filter-branch --force --index-filter "
-                  git ls-files -z | 
-                  grep -zZE '^($KEEP_PATTERN)$' | 
-                  git update-index --index-info --stdin || 
-                  git rm --cached --ignore-unmatch -r .
-                " --prune-empty -- demo-images
-                
-                # Clean up filter-branch refs
-                git for-each-ref --format='delete %(refname)' refs/original | git update-ref --stdin
-                git reflog expire --expire=now --all
-                git gc --prune=now --aggressive
-                
-                echo "✅ History rewritten successfully"
-              else
-                echo "⚠️ No files to keep - this would delete the entire branch"
-                echo "🔄 Falling back to regular file deletion..."
-                
-                # Fallback to regular deletion
-                for file in $FILES_TO_REMOVE; do
-                  if [ -f "$file" ]; then
-                    git rm "$file"
-                  fi
-                done
-                
-                if git commit -m "Cleanup: Remove $REMOVE_COUNT demo images older than $DAYS_OLD days"; then
-                  echo "✅ Files removed with regular commit"
-                fi
-              fi
-              
-              # Force push the rewritten history
-              echo "🚀 Force pushing rewritten history..."
-              git push --force-with-lease origin demo-images
-              
-              # Clean up backup branch
-              git branch -D demo-images-backup 2>/dev/null || true
-              
-            else
-              echo "📷 No old demo images found to remove"
-            fi
-            
-            # Report final stats
-            FINAL_SIZE=$(du -sb . 2>/dev/null | cut -f1 || echo "0")
-            FINAL_COUNT=$(ls -1 *-header.gif 2>/dev/null | wc -l || echo "0")
-            SAVED_BYTES=$((INITIAL_SIZE - FINAL_SIZE))
-            
-            echo "📊 Cleanup results:"
-            echo "- Files before: $INITIAL_COUNT"
-            echo "- Files after: $FINAL_COUNT"
-            echo "- Files removed: $((INITIAL_COUNT - FINAL_COUNT))"
-            echo "- Space saved: $(numfmt --to=iec $SAVED_BYTES 2>/dev/null || echo "$SAVED_BYTES bytes")"
-            echo "- Current branch size: $(du -sh . 2>/dev/null | cut -f1)"
-            
-          else
-            echo "📁 demo-images branch does not exist"
+            .github/workflows/scripts/cleanup-demo-images.sh \
+              --event-name="${{ github.event_name }}" \
+              --gh-token="${{ secrets.GITHUB_TOKEN }}"
           fi
 
       - name: Summary
         run: |
-          echo "## 🧹 Periodic Cleanup Summary"
-          echo "- Trigger: ${{ github.event_name }}"
-          echo "- Cleanup threshold: ${{ github.event.inputs.cleanup_older_than_days || '30' }} days"
-          echo "- Branch: demo-images"
+          echo "## 🧹 Cleanup Summary"
+          echo "- Event: ${{ github.event_name }}"
+          echo "- Completed: $(date)"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "- PR: #${{ github.event.pull_request.number }}"
+          else
+            echo "- Method: GitHub CLI PR status check"
+          fi
