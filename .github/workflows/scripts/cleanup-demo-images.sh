@@ -160,7 +160,7 @@ cleanup_demo_images() {
             # Create temporary file with files to keep (one per line)
             local paths_file
             paths_file=$(mktemp)
-            trap "rm -f '$paths_file'" EXIT
+            trap "rm -f \"$paths_file\"" EXIT
             
             # Convert pattern to individual file paths
             echo "$keep_pattern" | tr '|' '\n' > "$paths_file"

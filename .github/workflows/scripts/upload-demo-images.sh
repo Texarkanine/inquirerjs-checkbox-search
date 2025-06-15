@@ -60,7 +60,7 @@ upload_demo_images() {
     backup_dir=$(mktemp -d)
     
     # Set up cleanup trap
-    trap "rm -rf '$backup_dir'" EXIT
+    trap "rm -rf \"$backup_dir\"" EXIT
     
     log_info "Created temporary backup directory: $backup_dir"
     log_info "Looking for *-demo.gif files in current directory:"
