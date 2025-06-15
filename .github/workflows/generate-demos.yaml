@@ -34,6 +34,10 @@ jobs:
         run: |
           echo "🔍 Checking if we should skip demo generation..."
           echo ""
+          echo "🤖 NEW APPROACH: Primary loop detection is now via job-level conditional"
+          echo "   - Job will skip if github.actor == 'demo-generation-doggo[bot]'"
+          echo "   - This check-skip job is now mainly for debugging and backup detection"
+          echo ""
 
           # Comprehensive GitHub context debugging
           echo "🐛 COMPREHENSIVE GITHUB CONTEXT DEBUG:"
@@ -58,7 +62,13 @@ jobs:
           echo "  github.event.pull_request.head.commit.url: '${{ github.event.pull_request.head.commit.url }}'"
           echo ""
 
-          echo "  === Actor & Triggering User Info ==="
+          echo "  === PR User Info ==="
+          echo "  github.event.pull_request.user.login: '${{ github.event.pull_request.user.login }}'"
+          echo "  github.event.pull_request.user.type: '${{ github.event.pull_request.user.type }}'"
+          echo "  github.event.pull_request.user.id: '${{ github.event.pull_request.user.id }}'"
+          echo ""
+
+          echo "  === Actor & Triggering User Info (KEY FOR NEW DETECTION) ==="
           echo "  github.actor: '${{ github.actor }}'"
           echo "  github.triggering_actor: '${{ github.triggering_actor }}'"
           echo "  github.event.sender.login: '${{ github.event.sender.login }}'"
@@ -70,10 +80,24 @@ jobs:
           echo "  git log -1 --format='%an' (author name): '$(git log -1 --format='%an')'"
           echo "  git log -1 --format='%ae' (author email): '$(git log -1 --format='%ae')'"
           echo "  git log -1 --format='%ad' (author date): '$(git log -1 --format='%ad')'"
+          echo "  git log -1 --format='%at' (author timestamp): '$(git log -1 --format='%at')'"
           echo "  git log -1 --format='%cn' (committer name): '$(git log -1 --format='%cn')'"
           echo "  git log -1 --format='%ce' (committer email): '$(git log -1 --format='%ce')'"
           echo "  git log -1 --format='%cd' (committer date): '$(git log -1 --format='%cd')'"
+          echo "  git log -1 --format='%ct' (committer timestamp): '$(git log -1 --format='%ct')'"
           echo "  git log -1 --format='%s' (subject): '$(git log -1 --format='%s')'"
+          echo ""
+
+          # Enhanced debugging to find distinguishing characteristics
+          echo "  === COMMIT ANALYSIS ==="
+          AUTHOR_TIMESTAMP=$(git log -1 --format='%at')
+          COMMITTER_TIMESTAMP=$(git log -1 --format='%ct')
+          TIMESTAMP_DIFF=$((COMMITTER_TIMESTAMP - AUTHOR_TIMESTAMP))
+          echo "  - Author timestamp: $AUTHOR_TIMESTAMP"
+          echo "  - Committer timestamp: $COMMITTER_TIMESTAMP"
+          echo "  - Timestamp difference (seconds): $TIMESTAMP_DIFF"
+          echo "  - Files changed in this commit:"
+          git show --name-only --format="" HEAD | sed 's/^/    /'
           echo ""
 
           # For non-release-please PRs, never skip
@@ -83,40 +107,44 @@ jobs:
             exit 0
           fi
 
-          # For release-please PRs, check actual git committer
-          COMMITTER_NAME=$(git show -s --format='%cn' HEAD)
-          echo "🔍 Release-please PR - checking committer: '$COMMITTER_NAME'"
+          # For release-please PRs, the main detection is now at job level
+          # But we can still do backup detection here for debugging
+          echo "🔍 Release-please PR detected - main detection is at job level"
+          echo "   - Job conditional: github.actor != 'demo-generation-doggo[bot]'"
+          echo "   - Current PR user: '${{ github.event.pull_request.user.login }}'"
 
-          if [ "$COMMITTER_NAME" = "demo-generation-bot" ]; then
+          if [ "${{ github.actor }}" = "demo-generation-doggo[bot]" ]; then
+            echo "🚫 BACKUP DETECTION: Action triggered by demo-generation-doggo[bot]"
             echo "should_skip=true" >> $GITHUB_OUTPUT
-            echo "🚫 Skipping: This commit was made by demo-generation-bot"
+            echo "🚫 Skipping: This action was triggered by the demo bot"
           else
+            echo "✅ Action triggered by: '${{ github.actor }}' (not demo bot)"
             echo "should_skip=false" >> $GITHUB_OUTPUT
-            echo "✅ Original release-please commit - proceeding"
+            echo "✅ Proceeding: This action was not triggered by the demo bot"
           fi
 
   generate-demos:
     name: 'Generate'
     runs-on: ubuntu-latest
     needs: check-skip
-    if: needs.check-skip.outputs.should_skip != 'true'
+    if: needs.check-skip.outputs.should_skip != 'true' && github.actor != 'demo-generation-doggo[bot]'
     permissions:
       contents: write
       pull-requests: write
       issues: write
 
     steps:
-      - name: Generate GitHub App Token
-        id: generate-token
+      - name: Generate GitHub App Token for Demo Bot
+        id: generate-demo-token
         uses: actions/create-github-app-token@v2
         with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          app-id: ${{ vars.DEMO_BOT_APP_ID }}
+          private-key: ${{ secrets.DEMO_BOT_PRIVATE_KEY }}
 
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          token: ${{ steps.generate-token.outputs.token }}
+          token: ${{ steps.generate-demo-token.outputs.token }}
           fetch-depth: 0
 
       - name: Setup Node.js
@@ -257,14 +285,14 @@ jobs:
         if: steps.context.outputs.is_release_please == 'true' && steps.context.outputs.is_pr == 'true' && steps.check_changes.outputs.demo_changed == 'true'
         env:
           PR_HEAD_REF: ${{ github.head_ref || github.ref_name }}
-          GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
+          GITHUB_TOKEN: ${{ steps.generate-demo-token.outputs.token }}
         run: |
           echo "🔄 Amending release-please PR with updated demo GIFs..."
 
-          # Configure git with distinctive identity for demo commits to enable loop detection
+          # Configure git with demo-generation-doggo bot identity for loop detection
           # Use --local to override any global/system config that might interfere
-          git config --local user.name "demo-generation-bot"
-          git config --local user.email "demo-generation-bot@users.noreply.github.com"
+          git config --local user.name "demo-generation-doggo[bot]"
+          git config --local user.email "demo-generation-doggo[bot]@users.noreply.github.com"
 
           # Switch to the PR branch
           git checkout "$PR_HEAD_REF"
@@ -272,10 +300,10 @@ jobs:
           # Add the demo files
           git add docs/img/*.gif
 
-          # Amend the existing commit (this will change the committer date for detection)
+          # Amend the existing commit (this will change the committer for detection)
           git commit --amend --no-edit --no-gpg-sign
 
-          # Force push using the app token
+          # Force push using the demo bot token
           git push --force-with-lease origin "$PR_HEAD_REF"
 
           echo "✅ Successfully amended release-please PR with demo updates"
