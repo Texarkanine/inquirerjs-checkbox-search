@@ -19,6 +19,8 @@ jobs:
   generate-demos:
     name: 'Generate'
     runs-on: ubuntu-latest
+    # Skip if latest commit was made by demo generation to prevent infinite loops
+    if: github.event.pull_request.head.commit.author.name != 'demo-generation-bot'
     permissions:
       contents: write
       pull-requests: write
@@ -157,9 +159,9 @@ jobs:
         run: |
           echo "🔄 Amending release-please PR with updated demo GIFs..."
 
-          # Configure git to use the app token
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          # Configure git with distinctive identity for demo commits to enable loop detection
+          git config --global user.name "demo-generation-bot"
+          git config --global user.email "demo-generation-bot@users.noreply.github.com"
 
           # Switch to the PR branch
           git checkout "$PR_HEAD_REF"
