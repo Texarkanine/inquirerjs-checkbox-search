@@ -19,9 +19,9 @@ jobs:
   generate-demos:
     name: 'Generate'
     runs-on: ubuntu-latest
-    # Skip if latest commit was committed by demo generation to prevent infinite loops
-    # Note: We check committer (not author) because git commit --amend preserves author but changes committer
-    if: github.event.pull_request.head.commit.committer.name != 'demo-generation-bot'
+    # Skip if commit shows signs of being amended (committer date significantly after author date)
+    # This indicates demo generation already ran and amended the commit
+    if: github.event.pull_request.head.commit.author.date == github.event.pull_request.head.commit.committer.date
     permissions:
       contents: write
       pull-requests: write
@@ -171,7 +171,7 @@ jobs:
           # Add the demo files
           git add docs/img/*.gif
 
-          # Amend the existing commit (this will use HEAD~1 comparison logic)
+          # Amend the existing commit (this will change the committer date for detection)
           git commit --amend --no-edit --no-gpg-sign
 
           # Force push using the app token
