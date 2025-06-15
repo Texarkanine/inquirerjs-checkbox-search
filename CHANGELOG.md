@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.5.0](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v0.4.0...v0.5.0) (2025-06-15)
+
+
+### Features
+
+* **demo:** implement PR-based demo naming and smart cleanup system ([#15](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/15)) ([bec7b99](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/bec7b996dda5cbece92ed41e0e01c2ed7e24dc47))
+
+
+### Bug Fixes
+
+* **ci:** restore origin remote after git-filter-repo in cleanup script ([abb4126](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/abb41269153dbe62845e3b163ccec826f07326eb))
+* remove task list ([3c8df25](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/3c8df2542c2742f401f6cbffa2e9f6df6c6fc449))
+
 ## [0.4.0](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v0.3.0...v0.4.0) (2025-06-14)
 
 
