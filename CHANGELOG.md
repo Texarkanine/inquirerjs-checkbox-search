@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.5.0](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v0.4.0...v0.5.0) (2025-06-15)
+
+
+### Features
+
+* **demo:** implement PR-based demo naming and smart cleanup system ([#15](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/15)) ([bec7b99](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/bec7b996dda5cbece92ed41e0e01c2ed7e24dc47))
+
+
+### Bug Fixes
+
+* **ci:** bark and woof ([2754d1d](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/2754d1dabd83bfb72e851998d87a65e936f81d81))
+* **ci:** consistent detection of new vs changed demos ([f846faf](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/f846fafd0d332014b7346be0e69327f2a2ad7918))
+* **ci:** demo comparison on release PRs comparied to main instead of previous commit ([b986713](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/b98671381f31f86bf53c88397fe35d700541b632))
+* **ci:** demo generation around releases ([a6bf4f9](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/a6bf4f9e604b02f56483709719361ac54b767d38))
+* **ci:** detect release-please w/ branch name, not PR title ([eaaaba8](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/eaaaba8f6a3f26908f001c682c67d525879b939f))
+* **ci:** do NOT let rp run in parallel ([84b824d](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/84b824d064287422564c9b50cf72a6039bee0eaf))
+* **ci:** restore origin remote after git-filter-repo in cleanup script ([abb4126](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/abb41269153dbe62845e3b163ccec826f07326eb))
+* handle stale info errors in cleanup script ([642458d](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/642458d8945e88c481e6f2cdd3b37f72ef1e5054))
+* remove task list ([3c8df25](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/3c8df2542c2742f401f6cbffa2e9f6df6c6fc449))
+
 ## [0.4.0](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v0.3.0...v0.4.0) (2025-06-14)
 
 
