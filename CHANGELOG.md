@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v0.5.0...v0.5.1) (2025-06-15)
+
+
+### Bug Fixes
+
+* strip whitespace from wc output to prevent arithmetic expansion errors ([877b5f9](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/877b5f90f93a642ac849080adc8cccbd101eb81e))
+
 ## [0.5.0](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v0.4.0...v0.5.0) (2025-06-15)
 
 
