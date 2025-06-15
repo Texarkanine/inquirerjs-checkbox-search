@@ -4,9 +4,6 @@ on:
   pull_request:
     branches:
       - main
-  push:
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       commit_updates:
@@ -50,23 +47,17 @@ jobs:
         id: context
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
-          HEAD_MSG: ${{ github.event.head_commit.message }}
         run: |
-          # Check commit message for release-please pattern (works for both PRs and commits)
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            commit_message="$PR_TITLE"
-            echo "is_pr=true" >> $GITHUB_OUTPUT
-          else
-            commit_message="$HEAD_MSG"
-            echo "is_pr=false" >> $GITHUB_OUTPUT
-          fi
+          # Since we only run on PRs now, we can simplify
+          echo "is_pr=true" >> $GITHUB_OUTPUT
 
-          if [[ "$commit_message" =~ ^chore\(main\): ]]; then
+          # Check if this is a release-please PR by looking at the title
+          if [[ "$PR_TITLE" =~ ^chore\(main\): ]]; then
             echo "is_release_please=true" >> $GITHUB_OUTPUT
-            echo "🔍 Release-please detected: $commit_message"
+            echo "🔍 Release-please PR detected: $PR_TITLE"
           else
             echo "is_release_please=false" >> $GITHUB_OUTPUT
-            echo "🔍 Regular change detected: $commit_message"
+            echo "🔍 Regular PR detected: $PR_TITLE"
           fi
 
       - name: Generate all demo GIFs
@@ -135,13 +126,30 @@ jobs:
           echo "changed_demos=$CHANGED_DEMOS" >> $GITHUB_OUTPUT
           echo "demo_changed=$DEMO_CHANGED" >> $GITHUB_OUTPUT
 
-      - name: Handle release-please with demo changes (fail build)
+      - name: Amend release-please PR with demo changes
         if: steps.context.outputs.is_release_please == 'true' && steps.context.outputs.is_pr == 'true' && steps.check_changes.outputs.demo_changed == 'true'
+        env:
+          PR_HEAD_REF: ${{ github.head_ref || github.ref_name }}
         run: |
-          echo "❌ ERROR: Demo GIF has changed in release-please PR!"
-          echo "Demo changes should not be included in release PRs."
-          echo "Please update the demo in a separate PR before the release."
-          exit 1
+          echo "🔄 Amending release-please PR with updated demo GIFs..."
+
+          # Configure git
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Switch to the PR branch
+          git checkout "$PR_HEAD_REF"
+
+          # Add the demo files
+          git add docs/img/*.gif
+
+          # Amend the existing commit
+          git commit --amend --no-edit --no-gpg-sign
+
+          # Force push to update the PR
+          git push --force-with-lease origin "$PR_HEAD_REF"
+
+          echo "✅ Successfully amended release-please PR with demo updates"
 
       - name: Find existing demo comment
         if: steps.context.outputs.is_pr == 'true' && steps.context.outputs.is_release_please == 'false'
@@ -188,18 +196,6 @@ jobs:
           edit-mode: replace
           body: ${{ steps.generate_comment.outputs.comment_body }}
           reactions: 'eyes'
-
-      - name: Commit demo changes (normal commits to main only)
-        if: |
-          steps.context.outputs.is_pr == 'false' && 
-          steps.check_changes.outputs.demo_changed == 'true' && 
-          (
-            steps.context.outputs.is_release_please == 'false' ||
-            github.event.inputs.commit_updates == 'true'
-          )
-        run: |
-          # Call commit script with default settings
-          .github/workflows/scripts/commit-demo-changes.sh
 
       - name: Summary
         run: |
