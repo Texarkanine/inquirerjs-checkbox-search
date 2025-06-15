@@ -26,6 +26,7 @@ usage() {
     echo "  DEMO_CHANGED         'true' or 'false' - whether demos changed"
     echo "  DEMO_IMAGES          Space-separated 'name:url' pairs"
     echo "  CHANGED_DEMOS        Space-separated list of changed demo names"
+    echo "  NEW_DEMOS            Space-separated list of new demo names"
     echo
     echo "Examples:"
     echo "  $0 --template-file=template.md                    # Output to stdout"
@@ -36,6 +37,7 @@ usage() {
 build_demo_list() {
     local demo_images="$DEMO_IMAGES"
     local changed_demos="$CHANGED_DEMOS"
+    local new_demos="$NEW_DEMOS"
     local demo_list=""
     
     if [ "$demo_images" = "❌ Failed to upload demo images" ]; then
@@ -83,15 +85,19 @@ build_demo_list() {
         
         # Use <details open> for changed demos, <details> for unchanged
         if [ "$is_changed" = true ]; then
-            # Check if this is a new demo or changed demo (check committed history, not staging)
-            set +e
-            git cat-file -e HEAD:"docs/img/${demo_name}-demo.gif" 2>/dev/null
-            local demo_is_new=$?
-            set -e
-            if [ $demo_is_new -ne 0 ]; then
+            # Check if this demo is in the new_demos list (pre-computed)
+            local demo_is_new=false
+            for new_demo in $new_demos; do
+                if [ "$new_demo" = "$demo_name" ]; then
+                    demo_is_new=true
+                    break
+                fi
+            done
+            
+            if [ "$demo_is_new" = true ]; then
                 demo_list="$demo_list
 <details open>
-<summary>🆕 demos/${demo_name}.gif (NEW)</summary>
+<summary>✨ demos/${demo_name}.gif (NEW)</summary>
 
 ![${demo_name}-demo]($demo_url)
 </details>
@@ -191,7 +197,7 @@ generate_demo_comment() {
 # Main execution
 main() {
     # Check required commands
-    check_required_commands envsubst git
+    check_required_commands envsubst
     
     # Parse arguments
     parse_args "$@"

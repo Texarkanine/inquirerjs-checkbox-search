@@ -135,21 +135,23 @@ jobs:
 
           # Extract values from the output
           CHANGED_DEMOS=$(echo "$DETECTION_OUTPUT" | grep "CHANGED_DEMOS=" | cut -d"'" -f2)
+          NEW_DEMOS=$(echo "$DETECTION_OUTPUT" | grep "NEW_DEMOS=" | cut -d"'" -f2)
           DEMO_CHANGED=$(echo "$DETECTION_OUTPUT" | grep "DEMO_CHANGED=" | cut -d"'" -f2)
 
           # Set GitHub Action outputs
           echo "changed_demos=$CHANGED_DEMOS" >> $GITHUB_OUTPUT
+          echo "new_demos=$NEW_DEMOS" >> $GITHUB_OUTPUT
           echo "demo_changed=$DEMO_CHANGED" >> $GITHUB_OUTPUT
 
-      - name: Add demo changes to release-please PR
+      - name: Amend release-please PR with demo changes
         if: steps.context.outputs.is_release_please == 'true' && steps.context.outputs.is_pr == 'true' && steps.check_changes.outputs.demo_changed == 'true'
         env:
           PR_HEAD_REF: ${{ github.head_ref || github.ref_name }}
           GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
         run: |
-          echo "🔄 Adding demo changes to release-please PR..."
+          echo "🔄 Amending release-please PR with updated demo GIFs..."
 
-          # Configure git
+          # Configure git to use the app token
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
@@ -159,13 +161,13 @@ jobs:
           # Add the demo files
           git add docs/img/*.gif
 
-          # Create a new commit with [skip ci] to prevent infinite loops
-          git commit -m "chore: update demo GIFs [skip ci]" --no-gpg-sign
+          # Amend the existing commit (this will use HEAD~1 comparison logic)
+          git commit --amend --no-edit --no-gpg-sign
 
-          # Regular push (no force needed)
-          git push origin "$PR_HEAD_REF"
+          # Force push using the app token
+          git push --force-with-lease origin "$PR_HEAD_REF"
 
-          echo "✅ Successfully added demo updates to release-please PR"
+          echo "✅ Successfully amended release-please PR with demo updates"
 
       - name: Find existing demo comment
         if: steps.context.outputs.is_pr == 'true'
@@ -186,6 +188,7 @@ jobs:
           DEMO_CHANGED: ${{ steps.check_changes.outputs.demo_changed }}
           DEMO_IMAGES: ${{ steps.demo_preview.outputs.demo_images }}
           CHANGED_DEMOS: ${{ steps.check_changes.outputs.changed_demos }}
+          NEW_DEMOS: ${{ steps.check_changes.outputs.new_demos }}
           DEBUG: 'true'
         run: |
           # Debug: Show environment variables for comment generation
@@ -193,6 +196,8 @@ jobs:
           echo "  - GITHUB_SHA (merge commit): $GITHUB_SHA"
           echo "  - USER_COMMIT_SHA (user commit): $USER_COMMIT_SHA"
           echo "  - Are they different? $([ "$GITHUB_SHA" != "$USER_COMMIT_SHA" ] && echo "YES ✅" || echo "NO ❌")"
+          echo "  - NEW_DEMOS: '$NEW_DEMOS'"
+          echo "  - CHANGED_DEMOS: '$CHANGED_DEMOS'"
 
           # Generate comment using template
           COMMENT_BODY=$(.github/workflows/scripts/generate-demo-comment.sh \

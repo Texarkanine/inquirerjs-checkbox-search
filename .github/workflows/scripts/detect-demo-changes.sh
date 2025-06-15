@@ -23,6 +23,7 @@ usage() {
     echo
     echo "Environment Output Format:"
     echo "  CHANGED_DEMOS='demo1 demo2 demo3'    # Space-separated list of changed demo names"
+    echo "  NEW_DEMOS='demo1 demo3'              # Space-separated list of new demo names"
     echo "  DEMO_CHANGED='true'|'false'          # Overall change status"
     echo
     echo "JSON Output Format:"
@@ -46,6 +47,7 @@ detect_demo_changes() {
     log_step "Checking for demo changes against $compare_to..."
     
     local -a changed_demos=()
+    local -a new_demos=()
     
     # Check each demo file
     shopt -s nullglob
@@ -77,6 +79,7 @@ detect_demo_changes() {
             if [ $file_in_ref -ne 0 ]; then
                 log_info "New demo (not in $compare_to): $demo_name"
                 changed_demos+=("$demo_name")
+                new_demos+=("$demo_name")
             elif [ $file_changed_from_ref -ne 0 ]; then
                 log_info "Demo changed from $compare_to: $demo_name"
                 changed_demos+=("$demo_name")
@@ -88,13 +91,21 @@ detect_demo_changes() {
     done
     shopt -u nullglob
     
-    # Convert array to space-separated string for output
+    # Convert arrays to space-separated strings for output
     local changed_demos_string
     if [ ${#changed_demos[@]} -gt 0 ]; then
         printf -v changed_demos_string '%s ' "${changed_demos[@]}"
         changed_demos_string="${changed_demos_string% }"  # trim trailing space
     else
         changed_demos_string=""
+    fi
+    
+    local new_demos_string
+    if [ ${#new_demos[@]} -gt 0 ]; then
+        printf -v new_demos_string '%s ' "${new_demos[@]}"
+        new_demos_string="${new_demos_string% }"  # trim trailing space
+    else
+        new_demos_string=""
     fi
     
     # Determine overall change status
@@ -111,6 +122,7 @@ detect_demo_changes() {
     case "$output_format" in
         env)
             echo "CHANGED_DEMOS='$changed_demos_string'"
+            echo "NEW_DEMOS='$new_demos_string'"
             echo "DEMO_CHANGED='$demo_changed'"
             ;;
         json)
