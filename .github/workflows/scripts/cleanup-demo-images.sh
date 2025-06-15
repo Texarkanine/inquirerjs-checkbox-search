@@ -76,7 +76,8 @@ cleanup_demo_images() {
     # Get initial stats
     local initial_size initial_count
     initial_size=$(get_file_size ".")
-    initial_count=$(ls -1 pr-*-*.gif 2>/dev/null | wc -l || echo "0")
+    initial_count=$(ls -1 pr-*-*.gif 2>/dev/null | wc -l | tr -d '[:space:]')
+    [ -z "$initial_count" ] && initial_count=0
     
     # Handle cleanup based on mode
     local -a files_to_remove=()
@@ -235,7 +236,8 @@ cleanup_demo_images() {
     if [ "$cleanup_mode" != "single_pr" ]; then
         local final_size final_count saved_bytes
         final_size=$(get_file_size ".")
-        final_count=$(ls -1 pr-*-*.gif 2>/dev/null | wc -l || echo "0")
+        final_count=$(ls -1 pr-*-*.gif 2>/dev/null | wc -l | tr -d '[:space:]')
+        [ -z "$final_count" ] && final_count=0
         saved_bytes=$((initial_size - final_size))
         
         log_success "Cleanup results:"
