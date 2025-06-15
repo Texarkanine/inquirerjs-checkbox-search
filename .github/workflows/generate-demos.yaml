@@ -16,125 +16,28 @@ concurrency:
   cancel-in-progress: ${{ !startsWith(github.head_ref, 'release-please-') }}
 
 jobs:
-  check-skip:
-    name: 'Check if should skip'
-    runs-on: ubuntu-latest
-    outputs:
-      should_skip: ${{ steps.check.outputs.should_skip }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
-
-      - name: Check if we should skip demo generation
-        id: check
-        env:
-          PR_HEAD_REF: ${{ github.head_ref }}
-        run: |
-          echo "🔍 Checking if we should skip demo generation..."
-          echo ""
-          echo "🤖 NEW APPROACH: Primary loop detection is now via job-level conditional"
-          echo "   - Job will skip if github.actor == 'demo-generation-doggo[bot]'"
-          echo "   - This check-skip job is now mainly for debugging and backup detection"
-          echo ""
-
-          # Comprehensive GitHub context debugging
-          echo "🐛 COMPREHENSIVE GITHUB CONTEXT DEBUG:"
-          echo "  === Basic Event Info ==="
-          echo "  github.event_name: '${{ github.event_name }}'"
-          echo "  github.head_ref: '${{ github.head_ref }}'"
-          echo "  github.ref: '${{ github.ref }}'"
-          echo "  github.ref_name: '${{ github.ref_name }}'"
-          echo "  github.sha: '${{ github.sha }}'"
-          echo ""
-
-          echo "  === PR Head Commit Context ==="
-          echo "  github.event.pull_request.head.sha: '${{ github.event.pull_request.head.sha }}'"
-          echo "  github.event.pull_request.head.commit.author.name: '${{ github.event.pull_request.head.commit.author.name }}'"
-          echo "  github.event.pull_request.head.commit.author.email: '${{ github.event.pull_request.head.commit.author.email }}'"
-          echo "  github.event.pull_request.head.commit.author.date: '${{ github.event.pull_request.head.commit.author.date }}'"
-          echo "  github.event.pull_request.head.commit.committer.name: '${{ github.event.pull_request.head.commit.committer.name }}'"
-          echo "  github.event.pull_request.head.commit.committer.email: '${{ github.event.pull_request.head.commit.committer.email }}'"
-          echo "  github.event.pull_request.head.commit.committer.date: '${{ github.event.pull_request.head.commit.committer.date }}'"
-          echo "  github.event.pull_request.head.commit.message: '${{ github.event.pull_request.head.commit.message }}'"
-          echo "  github.event.pull_request.head.commit.tree.sha: '${{ github.event.pull_request.head.commit.tree.sha }}'"
-          echo "  github.event.pull_request.head.commit.url: '${{ github.event.pull_request.head.commit.url }}'"
-          echo ""
-
-          echo "  === PR User Info ==="
-          echo "  github.event.pull_request.user.login: '${{ github.event.pull_request.user.login }}'"
-          echo "  github.event.pull_request.user.type: '${{ github.event.pull_request.user.type }}'"
-          echo "  github.event.pull_request.user.id: '${{ github.event.pull_request.user.id }}'"
-          echo ""
-
-          echo "  === Actor & Triggering User Info (KEY FOR NEW DETECTION) ==="
-          echo "  github.actor: '${{ github.actor }}'"
-          echo "  github.triggering_actor: '${{ github.triggering_actor }}'"
-          echo "  github.event.sender.login: '${{ github.event.sender.login }}'"
-          echo "  github.event.sender.type: '${{ github.event.sender.type }}'"
-          echo ""
-
-          echo "  === Git Commit Info (from actual git) ==="
-          echo "  git log -1 --format='%H' (commit hash): '$(git log -1 --format='%H')'"
-          echo "  git log -1 --format='%an' (author name): '$(git log -1 --format='%an')'"
-          echo "  git log -1 --format='%ae' (author email): '$(git log -1 --format='%ae')'"
-          echo "  git log -1 --format='%ad' (author date): '$(git log -1 --format='%ad')'"
-          echo "  git log -1 --format='%at' (author timestamp): '$(git log -1 --format='%at')'"
-          echo "  git log -1 --format='%cn' (committer name): '$(git log -1 --format='%cn')'"
-          echo "  git log -1 --format='%ce' (committer email): '$(git log -1 --format='%ce')'"
-          echo "  git log -1 --format='%cd' (committer date): '$(git log -1 --format='%cd')'"
-          echo "  git log -1 --format='%ct' (committer timestamp): '$(git log -1 --format='%ct')'"
-          echo "  git log -1 --format='%s' (subject): '$(git log -1 --format='%s')'"
-          echo ""
-
-          # Enhanced debugging to find distinguishing characteristics
-          echo "  === COMMIT ANALYSIS ==="
-          AUTHOR_TIMESTAMP=$(git log -1 --format='%at')
-          COMMITTER_TIMESTAMP=$(git log -1 --format='%ct')
-          TIMESTAMP_DIFF=$((COMMITTER_TIMESTAMP - AUTHOR_TIMESTAMP))
-          echo "  - Author timestamp: $AUTHOR_TIMESTAMP"
-          echo "  - Committer timestamp: $COMMITTER_TIMESTAMP"
-          echo "  - Timestamp difference (seconds): $TIMESTAMP_DIFF"
-          echo "  - Files changed in this commit:"
-          git show --name-only --format="" HEAD | sed 's/^/    /'
-          echo ""
-
-          # For non-release-please PRs, never skip
-          if [[ ! "$PR_HEAD_REF" =~ ^release-please- ]]; then
-            echo "should_skip=false" >> $GITHUB_OUTPUT
-            echo "✅ Regular PR - proceeding with demo generation"
-            exit 0
-          fi
-
-          # For release-please PRs, the main detection is now at job level
-          # But we can still do backup detection here for debugging
-          echo "🔍 Release-please PR detected - main detection is at job level"
-          echo "   - Job conditional: github.actor != 'demo-generation-doggo[bot]'"
-          echo "   - Current PR user: '${{ github.event.pull_request.user.login }}'"
-
-          if [ "${{ github.actor }}" = "demo-generation-doggo[bot]" ]; then
-            echo "🚫 BACKUP DETECTION: Action triggered by demo-generation-doggo[bot]"
-            echo "should_skip=true" >> $GITHUB_OUTPUT
-            echo "🚫 Skipping: This action was triggered by the demo bot"
-          else
-            echo "✅ Action triggered by: '${{ github.actor }}' (not demo bot)"
-            echo "should_skip=false" >> $GITHUB_OUTPUT
-            echo "✅ Proceeding: This action was not triggered by the demo bot"
-          fi
-
   generate-demos:
     name: 'Generate'
     runs-on: ubuntu-latest
-    needs: check-skip
-    if: needs.check-skip.outputs.should_skip != 'true' && github.actor != 'demo-generation-doggo[bot]'
     permissions:
       contents: write
       pull-requests: write
       issues: write
 
     steps:
+      - name: Check if triggered by demo bot
+        id: check_demo_bot
+        run: |
+          if [ "${{ github.actor }}" = "demo-generation-doggo[bot]" ]; then
+            echo "🤖 Triggered by demo-generation-doggo[bot] - exiting successfully to satisfy required check"
+            echo "is_demo_bot=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Triggered by ${{ github.actor }} - proceeding with demo generation"
+            echo "is_demo_bot=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Generate GitHub App Token for Demo Bot
+        if: steps.check_demo_bot.outputs.is_demo_bot != 'true'
         id: generate-demo-token
         uses: actions/create-github-app-token@v2
         with:
@@ -142,24 +45,29 @@ jobs:
           private-key: ${{ secrets.DEMO_BOT_PRIVATE_KEY }}
 
       - name: Checkout repository
+        if: steps.check_demo_bot.outputs.is_demo_bot != 'true'
         uses: actions/checkout@v4
         with:
           token: ${{ steps.generate-demo-token.outputs.token }}
           fetch-depth: 0
 
       - name: Setup Node.js
+        if: steps.check_demo_bot.outputs.is_demo_bot != 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
       - name: Install dependencies
+        if: steps.check_demo_bot.outputs.is_demo_bot != 'true'
         run: npm ci
 
       - name: Set up Docker Buildx
+        if: steps.check_demo_bot.outputs.is_demo_bot != 'true'
         uses: docker/setup-buildx-action@v3
 
       - name: Debug GitHub context and determine release-please context
+        if: steps.check_demo_bot.outputs.is_demo_bot != 'true'
         id: context
         env:
           PR_HEAD_REF: ${{ github.head_ref }}
@@ -200,6 +108,7 @@ jobs:
           fi
 
       - name: Generate all demo GIFs
+        if: steps.check_demo_bot.outputs.is_demo_bot != 'true'
         run: |
           # Set deterministic timestamp for consistent builds
           export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
@@ -209,6 +118,7 @@ jobs:
           npm run demo:generate:all
 
       - name: Upload demo artifacts (always upload regardless of changes)
+        if: steps.check_demo_bot.outputs.is_demo_bot != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: demo-gifs-${{ github.run_id }}
@@ -216,7 +126,7 @@ jobs:
           retention-days: 30
 
       - name: Upload all demos to orphan branch and prepare preview
-        if: steps.context.outputs.is_pr == 'true'
+        if: steps.check_demo_bot.outputs.is_demo_bot != 'true' && steps.context.outputs.is_pr == 'true'
         id: demo_preview
         env:
           PR_HEAD_REF: ${{ github.head_ref || github.ref_name }}
@@ -249,6 +159,7 @@ jobs:
           echo "user_commit_sha=$USER_COMMIT_SHA" >> $GITHUB_OUTPUT
 
       - name: Check which demos changed (using git)
+        if: steps.check_demo_bot.outputs.is_demo_bot != 'true'
         id: check_changes
         env:
           IS_RELEASE_PLEASE: ${{ steps.context.outputs.is_release_please }}
@@ -259,10 +170,10 @@ jobs:
           # For release-please PRs, compare to previous commit; for feature branches, compare to main
           if [ "$IS_RELEASE_PLEASE" = "true" ]; then
             echo "🔍 Release-please PR: comparing to previous commit (HEAD~1)"
-            DETECTION_OUTPUT=$(.github/workflows/scripts/detect-demo-changes.sh --verbose --compare-to=HEAD~1)
+            DETECTION_OUTPUT=$(.github/workflows/scripts/detect-demo-changes.sh --compare-to=HEAD~1)
           else
             echo "🔍 Feature branch PR: comparing to main branch"
-            DETECTION_OUTPUT=$(.github/workflows/scripts/detect-demo-changes.sh --verbose)
+            DETECTION_OUTPUT=$(.github/workflows/scripts/detect-demo-changes.sh)
           fi
 
           # Extract values from the output
@@ -282,7 +193,7 @@ jobs:
           echo "demo_changed=$DEMO_CHANGED" >> $GITHUB_OUTPUT
 
       - name: Amend release-please PR with demo changes
-        if: steps.context.outputs.is_release_please == 'true' && steps.context.outputs.is_pr == 'true' && steps.check_changes.outputs.demo_changed == 'true'
+        if: steps.check_demo_bot.outputs.is_demo_bot != 'true' && steps.context.outputs.is_release_please == 'true' && steps.context.outputs.is_pr == 'true' && steps.check_changes.outputs.demo_changed == 'true'
         env:
           PR_HEAD_REF: ${{ github.head_ref || github.ref_name }}
           GITHUB_TOKEN: ${{ steps.generate-demo-token.outputs.token }}
@@ -309,7 +220,7 @@ jobs:
           echo "✅ Successfully amended release-please PR with demo updates"
 
       - name: Find existing demo comment
-        if: steps.context.outputs.is_pr == 'true'
+        if: steps.check_demo_bot.outputs.is_demo_bot != 'true' && steps.context.outputs.is_pr == 'true'
         uses: peter-evans/find-comment@v3
         id: find_comment
         with:
@@ -318,19 +229,9 @@ jobs:
           body-includes: 'Demo Previews'
 
       - name: Generate demo preview comment
-        if: steps.context.outputs.is_pr == 'true'
+        if: steps.check_demo_bot.outputs.is_demo_bot != 'true' && steps.context.outputs.is_pr == 'true'
         id: generate_comment
-        env:
-          DEBUG: 'true'
         run: |
-          # Debug: Show variables for comment generation
-          echo "🔍 Comment Generation Debug:"
-          echo "  - GITHUB_SHA (merge commit): ${{ github.sha }}"
-          echo "  - USER_COMMIT_SHA (user commit): ${{ steps.demo_preview.outputs.user_commit_sha }}"
-          echo "  - Are they different? $([ "${{ github.sha }}" != "${{ steps.demo_preview.outputs.user_commit_sha }}" ] && echo "YES ✅" || echo "NO ❌")"
-          echo "  - NEW_DEMOS: '${{ steps.check_changes.outputs.new_demos }}'"
-          echo "  - CHANGED_DEMOS: '${{ steps.check_changes.outputs.changed_demos }}'"
-
           # Generate comment using template with flags
           COMMENT_BODY=$(.github/workflows/scripts/generate-demo-comment.sh \
             --template-file=.github/workflows/scripts/templates/demo-comment.md \
@@ -347,16 +248,17 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Post/update demo preview comment
-        if: steps.context.outputs.is_pr == 'true'
+        if: steps.check_demo_bot.outputs.is_demo_bot != 'true' && steps.context.outputs.is_pr == 'true'
         uses: peter-evans/create-or-update-comment@v4
         with:
           comment-id: ${{ steps.find_comment.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
           edit-mode: replace
           body: ${{ steps.generate_comment.outputs.comment_body }}
-          reactions: 'eyes'
+          token: ${{ steps.generate-demo-token.outputs.token }}
 
       - name: Summary
+        if: steps.check_demo_bot.outputs.is_demo_bot != 'true'
         run: |
           echo "## 📊 Demo Generation Summary"
           echo "- Event: ${{ github.event_name }}"
