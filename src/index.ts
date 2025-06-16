@@ -795,16 +795,16 @@ export default createPrompt(
       return undefined;
     }, [active, filteredItems]);
 
-    // Create renderItem function that's reactive to current state
-    const renderItem = useMemo(() => {
-      // Helper function to resolve icon (string or function)
-      const resolveIcon = (
-        icon: string | ((text: string) => string),
-        choiceText: string,
-      ): string => {
-        return typeof icon === 'function' ? icon(choiceText) : icon;
-      };
+    // Helper function to resolve icon (string or function)
+    const resolveIcon = (
+      icon: string | ((text: string) => string),
+      choiceText: string,
+    ): string => {
+      return typeof icon === 'function' ? icon(choiceText) : icon;
+    };
 
+    // Create renderItem function that's reactive to current state but minimizes recreations
+    const renderItem = useMemo(() => {
       return ({ item, isActive }: { item: Item<Value>; isActive: boolean }) => {
         const line: string[] = [];
 
@@ -812,14 +812,10 @@ export default createPrompt(
           return colors.dim(item.separator);
         }
 
-        // Look up checked state directly from allItems to get the current state
-        const currentItem = allItems.find(
-          (allItem) =>
-            !Separator.isSeparator(allItem) &&
-            allItem.value === (item as NormalizedChoice<Value>).value,
-        ) as NormalizedChoice<Value> | undefined;
-
-        const isChecked = currentItem?.checked || false;
+        // Direct access to the checked state (item is from the same source as allItems)
+        const isChecked =
+          !Separator.isSeparator(item) &&
+          (item as NormalizedChoice<Value>).checked;
 
         const choiceName = (item as NormalizedChoice<Value>).name;
         const checkbox = resolveIcon(
@@ -858,7 +854,7 @@ export default createPrompt(
 
         return line.join(' ');
       };
-    }, [allItems, theme, config.theme]);
+    }, [theme, config.theme]);
 
     // Setup pagination
     const page = usePagination<Item<Value>>({
