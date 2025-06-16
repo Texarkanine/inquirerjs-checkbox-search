@@ -353,7 +353,7 @@ export function resolvePageSize<Value>(
       pageSize.autoBufferCountsLineWidth || false,
     );
   }
-  
+
   // 2c: Add buffer value (always if specified)
   buffer += pageSize.buffer || 0;
 
