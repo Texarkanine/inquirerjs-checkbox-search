@@ -18,11 +18,11 @@ Sleep 1s
 # Wait for the prompt to appear, then interact with it
 Show
 
-Sleep 1s
+Sleep 2s
 
 # Uncheck Alice first to get down to 1 selection
 Tab
-Sleep 1s
+Sleep 2s
 
 # Now try to submit with only 1 selection (Bob) - should show validation error
 Enter

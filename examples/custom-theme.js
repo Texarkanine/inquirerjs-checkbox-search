@@ -39,10 +39,10 @@ async function main() {
         nocursor: '  ', // Two spaces to match the emoji width
       },
       style: {
-        highlight: (text) => `\x1b[1m${text}\x1b[0m`,
+        highlight: (text) => `\x1b[34m${text}\x1b[0m`,
         description: (text) => `💬 ${text}`,
         searchTerm: (text) => `🔍 ${text}`,
-        checked: (text) => `\x1b[1m${text}\x1b[0m`, // Custom styling for checked items
+        checked: (text) => `\x1b[1m\x1b[34m${text}\x1b[0m`,
       },
     },
   });
