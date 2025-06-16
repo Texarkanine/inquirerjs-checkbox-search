@@ -805,9 +805,6 @@ export default createPrompt(
         return typeof icon === 'function' ? icon(choiceText) : icon;
       };
 
-      // Use the theme's nocursor property when cursor is not active
-      const noCursorIcon = theme.icon.nocursor || ' ';
-
       return ({ item, isActive }: { item: Item<Value>; isActive: boolean }) => {
         const line: string[] = [];
 
@@ -832,7 +829,7 @@ export default createPrompt(
         // If active, use the cursor icon, otherwise use appropriate spacing to align items
         const cursor = isActive
           ? resolveIcon(theme.icon.cursor, choiceName)
-          : resolveIcon(noCursorIcon, choiceName);
+          : resolveIcon(theme.icon.nocursor ?? ' ', choiceName);
 
         // Keep cursor and checkbox as separate elements so join(' ') adds the proper space between them
         line.push(cursor, checkbox);
