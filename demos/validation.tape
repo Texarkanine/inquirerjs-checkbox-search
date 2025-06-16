@@ -18,6 +18,8 @@ Sleep 1s
 # Wait for the prompt to appear, then interact with it
 Show
 
+Sleep 1s
+
 # Uncheck Alice first to get down to 1 selection
 Tab
 Sleep 1s

@@ -18,6 +18,8 @@ Sleep 1s
 # Wait for the prompt to appear, then interact with it
 Show
 
+Sleep 1s
+
 # The basic example shows a multi-select with React, Vue, Angular, etc.
 
 # First, let's search for "react" to filter

@@ -18,6 +18,8 @@ Sleep 1s
 # Wait for the prompt to appear, then interact with it
 Show
 
+Sleep 1s
+
 # The custom theme example shows fruit options with custom emoji icons
 
 # First, let's search for "apple" to filter
