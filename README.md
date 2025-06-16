@@ -104,6 +104,7 @@ type CheckboxSearchTheme = {
     checked: string | ((text: string) => string);   // Icon for checked items
     unchecked: string | ((text: string) => string); // Icon for unchecked items
     cursor: string | ((text: string) => string);    // Icon for cursor/current item
+    nocursor?: string;                              // Icon/space placeholder for cursor
   };
   style: {
     message: (text: string) => string;      // Style for prompt message
