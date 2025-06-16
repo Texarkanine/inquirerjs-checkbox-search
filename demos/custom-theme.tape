@@ -47,10 +47,6 @@ Sleep 1s
 # Navigate to Grape and select it
 Down
 Tab
-Sleep 1s
 
-# Submit the selection
-Enter
-
-# Let people process the results with custom emoji output
+# Let people process
 Sleep 3s

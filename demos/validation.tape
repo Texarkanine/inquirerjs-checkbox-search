@@ -60,10 +60,6 @@ Sleep 2s
 # Fix it by unchecking Eve to get back to 4
 # Uncheck Eve
 Tab
-Sleep 2s
-
-# Now submit with valid selection (Alice, Bob, Carol, David = 4 people)
-Enter
 
 # Let people process
 Sleep 3s

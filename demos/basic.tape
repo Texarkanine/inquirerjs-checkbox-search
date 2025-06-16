@@ -42,10 +42,6 @@ Sleep 1s
 # Navigate to Angular and select it
 Down
 Tab
-Sleep 1s
-
-# Submit the selection
-Enter
 
 # Let people process
 Sleep 3s
