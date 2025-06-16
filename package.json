@@ -86,6 +86,7 @@
     "demo:generate": "node scripts/generate-demo.js",
     "demo:generate:basic": "node scripts/generate-demo.js basic",
     "demo:generate:validation": "node scripts/generate-demo.js validation",
+    "demo:generate:custom-theme": "node scripts/generate-demo.js custom-theme",
     "demo:generate:all": "node scripts/generate-demo.js all"
   },
   "dependencies": {

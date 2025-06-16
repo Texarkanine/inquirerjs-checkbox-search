@@ -7,6 +7,7 @@ import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 const DEMOS_DIR = 'demos';
+const DEFAULT_OUTPUT_DIR = 'docs/img';
 
 // Configuration constants
 const DEFAULT_MAX_PARALLELISM = 4;
@@ -39,14 +40,16 @@ async function runCommandAsync(command, tapeName) {
 
 function generateDemo(tapeFile) {
   const tapeName = basename(tapeFile, '.tape');
+  const outputPath = `${DEFAULT_OUTPUT_DIR}/${tapeName}-demo.gif`;
   console.log(`🎬 Generating demo: ${tapeName}`);
   runCommand(`npm run demo:docker:build`);
-  runCommand(`npm run demo:docker:run -- "${tapeFile}"`);
+  runCommand(`npm run demo:docker:run -- "${tapeFile}" --output "${outputPath}"`);
 }
 
 async function generateDemoParallel(tapeFile) {
   const tapeName = basename(tapeFile, '.tape');
-  const command = `npm run demo:docker:run -- "${tapeFile}"`;
+  const outputPath = `${DEFAULT_OUTPUT_DIR}/${tapeName}-demo.gif`;
+  const command = `npm run demo:docker:run -- "${tapeFile}" --output "${outputPath}"`;
   return await runCommandAsync(command, tapeName);
 }
 

@@ -1,6 +1,5 @@
 # VHS Tape File for recording a demo of an example
 # vhs documentation: https://github.com/charmbracelet/vhs
-Output docs/img/validation-demo.gif
 
 # Terminal appearance settings for deterministic output
 Set FontSize 30
