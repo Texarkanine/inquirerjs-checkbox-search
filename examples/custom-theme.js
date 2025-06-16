@@ -6,7 +6,8 @@
  * What it demonstrates:
  * - Custom icons (✅, ⬜, 👉)
  * - Custom styling functions with emojis
- * - Theme configuration options
+ * - Theme configuration options including checked item styling
+ * - Pre-selected items to showcase checked styling
  *
  * Run it:
  * node examples/custom-theme.js
@@ -24,7 +25,7 @@ const fruits = [
 
 async function main() {
   console.log('🎨 Custom Theme Example\n');
-  console.log('💡 This example uses custom icons and colors\n');
+  console.log('💡 This example uses custom icons, colors, and checked item styling\n');
 
   const selected = await checkboxSearch({
     message: 'Select your favorite fruits:',
@@ -36,9 +37,10 @@ async function main() {
         cursor: '👉',
       },
       style: {
-        highlight: (text) => `🌟 ${text}`,
+        highlight: (text) => `\x1b[1m${text}\x1b[0m`,
         description: (text) => `💬 ${text}`,
         searchTerm: (text) => `🔍 ${text}`,
+        checked: (text) => `\x1b[1m${text}\x1b[0m`, // Custom styling for checked items
       },
     },
   });

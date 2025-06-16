@@ -19,6 +19,53 @@ import figures from '@inquirer/figures';
 import ansiEscapes from 'ansi-escapes';
 
 /**
+ * Calculate the visual width of a string, accounting for emoji and other wide characters
+ * @param str - The string to measure
+ * @returns The visual width of the string
+ */
+function getStringWidth(str: string): number {
+  // Remove ANSI escape codes first
+  const cleanStr = str.replace(/\u001b\[[0-9;]*m/g, '');
+  
+  let width = 0;
+  for (const char of cleanStr) {
+    const code = char.codePointAt(0);
+    if (!code) continue;
+    
+    // Emoji and wide characters (simplified detection)
+    if (
+      (code >= 0x1f000 && code <= 0x1faff) || // Various emoji blocks
+      (code >= 0x2600 && code <= 0x26ff) ||   // Miscellaneous symbols
+      (code >= 0x2700 && code <= 0x27bf) ||   // Dingbats
+      (code >= 0xfe00 && code <= 0xfe0f) ||   // Variation selectors
+      (code >= 0x1f600 && code <= 0x1f64f) || // Emoticons
+      (code >= 0x1f300 && code <= 0x1f5ff) || // Miscellaneous symbols and pictographs
+      (code >= 0x1f680 && code <= 0x1f6ff) || // Transport and map symbols
+      (code >= 0x1f1e6 && code <= 0x1f1ff)    // Regional indicator symbols
+    ) {
+      width += 2; // Most emoji are double-width
+    } else if (code >= 0x1100 && (
+      (code <= 0x115f) || // Hangul Jamo
+      (code >= 0x2329 && code <= 0x232a) || // Left/right-pointing angle brackets
+      (code >= 0x2e80 && code <= 0xa4cf) || // CJK radicals, Kangxi radicals, ideographic description characters, CJK symbols and punctuation, Hiragana, Katakana, Bopomofo, Hangul compatibility Jamo, Kanbun, Bopomofo extended, CJK strokes, Katakana phonetic extensions, enclosed CJK letters and months, CJK compatibility, CJK unified ideographs extension A, Yijing hexagram symbols, CJK unified ideographs, Yi syllables, Yi radicals
+      (code >= 0xac00 && code <= 0xd7a3) || // Hangul syllables
+      (code >= 0xf900 && code <= 0xfaff) || // CJK compatibility ideographs
+      (code >= 0xfe10 && code <= 0xfe19) || // Vertical forms
+      (code >= 0xfe30 && code <= 0xfe6f) || // CJK compatibility forms
+      (code >= 0xff00 && code <= 0xff60) || // Fullwidth forms
+      (code >= 0xffe0 && code <= 0xffe6) || // Fullwidth forms
+      (code >= 0x20000 && code <= 0x2fffd) || // CJK unified ideographs extension B, CJK unified ideographs extension C, CJK unified ideographs extension D
+      (code >= 0x30000 && code <= 0x3fffd) // CJK unified ideographs extension E
+    )) {
+      width += 2; // East Asian wide characters
+    } else {
+      width += 1; // Regular characters
+    }
+  }
+  return width;
+}
+
+/**
  * Theme configuration for the checkbox-search prompt
  */
 type CheckboxSearchTheme = {
@@ -795,6 +842,23 @@ export default createPrompt(
 
     // Create renderItem function that's reactive to current state
     const renderItem = useMemo(() => {
+      // Helper function to resolve icon (string or function)
+      const resolveIcon = (
+        icon: string | ((text: string) => string),
+        choiceText: string,
+      ): string => {
+        return typeof icon === 'function' ? icon(choiceText) : icon;
+      };
+
+      // Calculate cursor width and appropriate spacing for alignment
+      const sampleCursorIcon = resolveIcon(theme.icon.cursor, 'sample');
+      const cursorWidth = getStringWidth(sampleCursorIcon);
+      
+      // For default ASCII cursors (width 1), use a single space for compatibility
+      // For wider cursors like emoji (width > 1), use appropriate spacing to match
+      const isEmojiOrWideChar = cursorWidth > 1;
+      const cursorSpacing = isEmojiOrWideChar ? ' '.repeat(cursorWidth) : ' ';
+
       return ({ item, isActive }: { item: Item<Value>; isActive: boolean }) => {
         const line: string[] = [];
 
@@ -811,22 +875,17 @@ export default createPrompt(
 
         const isChecked = currentItem?.checked || false;
 
-        // Helper function to resolve icon (string or function)
-        const resolveIcon = (
-          icon: string | ((text: string) => string),
-          choiceText: string,
-        ): string => {
-          return typeof icon === 'function' ? icon(choiceText) : icon;
-        };
-
         const choiceName = (item as NormalizedChoice<Value>).name;
         const checkbox = resolveIcon(
           isChecked ? theme.icon.checked : theme.icon.unchecked,
           choiceName,
         );
+        // If active, use the cursor icon, otherwise use appropriate spacing to align items
         const cursor = isActive
           ? resolveIcon(theme.icon.cursor, choiceName)
-          : ' ';
+          : cursorSpacing;
+        
+        // Keep cursor and checkbox as separate elements so join(' ') adds the proper space between them
         line.push(cursor, checkbox);
 
         let text = (item as NormalizedChoice<Value>).name;
