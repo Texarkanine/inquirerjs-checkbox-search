@@ -5,6 +5,7 @@
  *
  * What it demonstrates:
  * - Custom icons (✅, ⬜, 👉)
+ * - Custom nocursor spacing for emoji alignment
  * - Custom styling functions with emojis
  * - Theme configuration options including checked item styling
  * - Pre-selected items to showcase checked styling
@@ -25,7 +26,7 @@ const fruits = [
 
 async function main() {
   console.log('🎨 Custom Theme Example\n');
-  console.log('💡 This example uses custom icons, colors, and checked item styling\n');
+  console.log('💡 This example uses custom icons, cursor alignment, colors, and checked item styling\n');
 
   const selected = await checkboxSearch({
     message: 'Select your favorite fruits:',
@@ -35,6 +36,7 @@ async function main() {
         checked: '✅',
         unchecked: '⬜',
         cursor: '👉',
+        nocursor: '  ', // Two spaces to match the emoji width
       },
       style: {
         highlight: (text) => `\x1b[1m${text}\x1b[0m`,
