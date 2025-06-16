@@ -8,7 +8,7 @@ Set Height 600
 Set TypingSpeed 100ms
 Set Theme "iTerm2 Smoooooth"
 Set Padding 20
-Set PlaybackSpeed 1.0
+Set PlaybackSpeed 0.75
 
 # Setup
 Hide
