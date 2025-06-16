@@ -28,7 +28,6 @@ type CheckboxSearchTheme = {
     cursor: string | ((text: string) => string);
   };
   style: {
-    answer: (text: string) => string;
     message: (text: string) => string;
     error: (text: string) => string;
     help: (text: string) => string;
@@ -36,6 +35,7 @@ type CheckboxSearchTheme = {
     searchTerm: (text: string) => string;
     description: (text: string) => string;
     disabled: (text: string) => string;
+    checked: (text: string) => string;
   };
   helpMode: 'always' | 'never' | 'auto';
 };
@@ -50,7 +50,6 @@ const checkboxSearchTheme: CheckboxSearchTheme = {
     cursor: figures.pointer,
   },
   style: {
-    answer: colors.cyan,
     message: colors.cyan,
     error: (text: string) => colors.yellow(`> ${text}`),
     help: colors.dim,
@@ -58,6 +57,7 @@ const checkboxSearchTheme: CheckboxSearchTheme = {
     searchTerm: colors.cyan,
     description: colors.cyan,
     disabled: colors.dim,
+    checked: colors.green,
   },
   helpMode: 'always',
 };
@@ -835,6 +835,8 @@ export default createPrompt(
           // NOTE: Description is now calculated via useMemo, not side-effect mutation
         } else if ((item as NormalizedChoice<Value>).disabled) {
           text = theme.style.disabled(text);
+        } else if (isChecked) {
+          text = theme.style.checked(text);
         }
 
         line.push(text);
