@@ -51,7 +51,7 @@ Sleep 1s
 Down
 # Check Eve
 Tab
-Sleep 1s
+Sleep 2s
 
 # Now we have 5 selected, try to submit - should show validation error
 Enter
@@ -60,7 +60,7 @@ Sleep 2s
 # Fix it by unchecking Eve to get back to 4
 # Uncheck Eve
 Tab
-Sleep 1s
+Sleep 2s
 
 # Now submit with valid selection (Alice, Bob, Carol, David = 4 people)
 Enter

@@ -43,7 +43,9 @@ function generateDemo(tapeFile) {
   const outputPath = `${DEFAULT_OUTPUT_DIR}/${tapeName}-demo.gif`;
   console.log(`🎬 Generating demo: ${tapeName}`);
   runCommand(`npm run demo:docker:build`);
-  runCommand(`npm run demo:docker:run -- "${tapeFile}" --output "${outputPath}"`);
+  runCommand(
+    `npm run demo:docker:run -- "${tapeFile}" --output "${outputPath}"`,
+  );
 }
 
 async function generateDemoParallel(tapeFile) {

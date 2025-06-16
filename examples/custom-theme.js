@@ -26,7 +26,9 @@ const fruits = [
 
 async function main() {
   console.log('🎨 Custom Theme Example\n');
-  console.log('💡 This example uses custom icons, cursor alignment, colors, and checked item styling\n');
+  console.log(
+    '💡 This example uses custom icons, cursor alignment, colors, and checked item styling\n',
+  );
 
   const selected = await checkboxSearch({
     message: 'Select your favorite fruits:',

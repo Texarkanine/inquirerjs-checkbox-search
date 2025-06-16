@@ -60,12 +60,12 @@ console.log('Selected:', selected);
 
 ```typescript
 type Choice<Value = any> = {
-  value: Value;                 // The value returned when selected
-  name?: string;                // Display text (defaults to value)
-  description?: string;         // Additional description shown below
-  short?: string;               // Shorter text for final answer
-  disabled?: boolean | string;  // Whether choice is selectable
-  checked?: boolean;            // Initially selected
+  value: Value; // The value returned when selected
+  name?: string; // Display text (defaults to value)
+  description?: string; // Additional description shown below
+  short?: string; // Shorter text for final answer
+  disabled?: boolean | string; // Whether choice is selectable
+  checked?: boolean; // Initially selected
 };
 ```
 
@@ -75,13 +75,13 @@ The `pageSize` property accepts either a number (for simple fixed sizing) or a `
 
 ```typescript
 type PageSizeConfig = {
-  base?: number;                       // Starting page size (if not specified, auto-calculated from terminal)
-  max?: number;                        // Maximum page size (absolute constraint)
-  min?: number;                        // Minimum page size (absolute constraint, defaults to 1)
-  buffer?: number;                     // Fixed buffer lines to subtract from page size
-  autoBufferDescriptions?: boolean;    // Auto-reserve space for descriptions
+  base?: number; // Starting page size (if not specified, auto-calculated from terminal)
+  max?: number; // Maximum page size (absolute constraint)
+  min?: number; // Minimum page size (absolute constraint, defaults to 1)
+  buffer?: number; // Fixed buffer lines to subtract from page size
+  autoBufferDescriptions?: boolean; // Auto-reserve space for descriptions
   autoBufferCountsLineWidth?: boolean; // Consider terminal width when counting description lines
-  minBuffer?: number;                  // Minimum buffer lines (applied after auto/manual buffer)
+  minBuffer?: number; // Minimum buffer lines (applied after auto/manual buffer)
 };
 ```
 
@@ -101,22 +101,22 @@ type PageSizeConfig = {
 ```typescript
 type CheckboxSearchTheme = {
   icon: {
-    checked: string | ((text: string) => string);   // Icon for checked items
+    checked: string | ((text: string) => string); // Icon for checked items
     unchecked: string | ((text: string) => string); // Icon for unchecked items
-    cursor: string | ((text: string) => string);    // Icon for cursor/current item
-    nocursor?: string;                              // Icon/space placeholder for cursor
+    cursor: string | ((text: string) => string); // Icon for cursor/current item
+    nocursor?: string; // Icon/space placeholder for cursor
   };
   style: {
-    message: (text: string) => string;      // Style for prompt message
-    error: (text: string) => string;        // Style for error messages
-    help: (text: string) => string;         // Style for help text
-    highlight: (text: string) => string;    // Style for highlighted items (takes precedence)
-    searchTerm: (text: string) => string;   // Style for search term display
-    description: (text: string) => string;  // Style for item descriptions
-    disabled: (text: string) => string;     // Style for disabled items
-    checked: (text: string) => string;      // Style for checked items
+    message: (text: string) => string; // Style for prompt message
+    error: (text: string) => string; // Style for error messages
+    help: (text: string) => string; // Style for help text
+    highlight: (text: string) => string; // Style for highlighted items (takes precedence)
+    searchTerm: (text: string) => string; // Style for search term display
+    description: (text: string) => string; // Style for item descriptions
+    disabled: (text: string) => string; // Style for disabled items
+    checked: (text: string) => string; // Style for checked items
   };
-  helpMode: 'always' | 'never' | 'auto';    // When to show help text
+  helpMode: 'always' | 'never' | 'auto'; // When to show help text
 };
 ```
 
