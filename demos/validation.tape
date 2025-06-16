@@ -32,6 +32,8 @@ Sleep 2s
 # Check Alice back
 Tab
 Sleep 1s
+# Move to Bob
+Down
 # Move to Carol
 Down
 # Check Carol
@@ -44,11 +46,13 @@ Down
 # Check David
 Tab
 Sleep 1s
+
 # Move to Eve
 Down
 # Check Eve
 Tab
 Sleep 1s
+
 # Move to Frank
 Down
 # Check Frank
