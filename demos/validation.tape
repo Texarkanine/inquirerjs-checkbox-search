@@ -53,18 +53,12 @@ Down
 Tab
 Sleep 1s
 
-# Move to Frank
-Down
-# Check Frank
-Tab
-Sleep 1s
-
 # Now we have 5 selected, try to submit - should show validation error
 Enter
 Sleep 2s
 
-# Fix it by unchecking Frank to get back to 4
-# Uncheck Frank
+# Fix it by unchecking Eve to get back to 4
+# Uncheck Eve
 Tab
 Sleep 1s
 
