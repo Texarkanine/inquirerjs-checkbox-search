@@ -352,10 +352,10 @@ export function resolvePageSize<Value>(
       items,
       pageSize.autoBufferCountsLineWidth || false,
     );
-  } else {
-    // 2c: Add buffer value (only if not auto-buffering)
-    buffer += pageSize.buffer || 0;
   }
+  
+  // 2c: Add buffer value (always if specified)
+  buffer += pageSize.buffer || 0;
 
   // 2d: Ensure at least minBuffer
   if (pageSize.minBuffer !== undefined) {
