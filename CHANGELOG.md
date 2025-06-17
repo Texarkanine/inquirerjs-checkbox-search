@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.6.0](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v0.5.1...v0.6.0) (2025-06-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* **ui:** always add buffer value if specified
+
+### Features
+
+* **demos:** Add custom theme demo and refactor generation process ([#30](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/30)) ([c12918d](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/c12918da468712aeeb5488159cde7e6fadfc6068))
+* **theme:** add theme.icon.nocursor option for custom cursor spacing ([c12918d](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/c12918da468712aeeb5488159cde7e6fadfc6068))
+
+
+### Bug Fixes
+
+* **ci:** was not correctly detecting demo preview comments on PRs ([c12918d](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/c12918da468712aeeb5488159cde7e6fadfc6068))
+* **perf:** micro-optimize don't re-resolve noCursorIcon each time ([c12918d](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/c12918da468712aeeb5488159cde7e6fadfc6068))
+* **perf:** optimize renderItem function to avoid O(N²) operations and unnecessary closures ([c12918d](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/c12918da468712aeeb5488159cde7e6fadfc6068))
+* **ui:** always add buffer value if specified ([c12918d](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/c12918da468712aeeb5488159cde7e6fadfc6068))
+
 ## [0.5.1](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v0.5.0...v0.5.1) (2025-06-15)
 
 
