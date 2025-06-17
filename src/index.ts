@@ -26,9 +26,9 @@ type CheckboxSearchTheme = {
     checked: string | ((text: string) => string);
     unchecked: string | ((text: string) => string);
     cursor: string | ((text: string) => string);
+    nocursor?: string | ((text: string) => string); // Space placeholder when cursor is not active
   };
   style: {
-    answer: (text: string) => string;
     message: (text: string) => string;
     error: (text: string) => string;
     help: (text: string) => string;
@@ -36,6 +36,7 @@ type CheckboxSearchTheme = {
     searchTerm: (text: string) => string;
     description: (text: string) => string;
     disabled: (text: string) => string;
+    checked: (text: string) => string;
   };
   helpMode: 'always' | 'never' | 'auto';
 };
@@ -48,9 +49,9 @@ const checkboxSearchTheme: CheckboxSearchTheme = {
     checked: colors.green(figures.circleFilled),
     unchecked: figures.circle,
     cursor: figures.pointer,
+    nocursor: ' ', // Default: single space when cursor is not active
   },
   style: {
-    answer: colors.cyan,
     message: colors.cyan,
     error: (text: string) => colors.yellow(`> ${text}`),
     help: colors.dim,
@@ -58,6 +59,7 @@ const checkboxSearchTheme: CheckboxSearchTheme = {
     searchTerm: colors.cyan,
     description: colors.cyan,
     disabled: colors.dim,
+    checked: colors.green,
   },
   helpMode: 'always',
 };
@@ -350,10 +352,10 @@ export function resolvePageSize<Value>(
       items,
       pageSize.autoBufferCountsLineWidth || false,
     );
-  } else {
-    // 2c: Add buffer value (only if not auto-buffering)
-    buffer += pageSize.buffer || 0;
   }
+
+  // 2c: Add buffer value (always if specified)
+  buffer += pageSize.buffer || 0;
 
   // 2d: Ensure at least minBuffer
   if (pageSize.minBuffer !== undefined) {
@@ -793,7 +795,15 @@ export default createPrompt(
       return undefined;
     }, [active, filteredItems]);
 
-    // Create renderItem function that's reactive to current state
+    // Helper function to resolve icon (string or function)
+    const resolveIcon = (
+      icon: string | ((text: string) => string),
+      choiceText: string,
+    ): string => {
+      return typeof icon === 'function' ? icon(choiceText) : icon;
+    };
+
+    // Create renderItem function that's reactive to current state but minimizes recreations
     const renderItem = useMemo(() => {
       return ({ item, isActive }: { item: Item<Value>; isActive: boolean }) => {
         const line: string[] = [];
@@ -802,31 +812,22 @@ export default createPrompt(
           return colors.dim(item.separator);
         }
 
-        // Look up checked state directly from allItems to get the current state
-        const currentItem = allItems.find(
-          (allItem) =>
-            !Separator.isSeparator(allItem) &&
-            allItem.value === (item as NormalizedChoice<Value>).value,
-        ) as NormalizedChoice<Value> | undefined;
-
-        const isChecked = currentItem?.checked || false;
-
-        // Helper function to resolve icon (string or function)
-        const resolveIcon = (
-          icon: string | ((text: string) => string),
-          choiceText: string,
-        ): string => {
-          return typeof icon === 'function' ? icon(choiceText) : icon;
-        };
+        // Direct access to the checked state (item is from the same source as allItems)
+        const isChecked =
+          !Separator.isSeparator(item) &&
+          (item as NormalizedChoice<Value>).checked;
 
         const choiceName = (item as NormalizedChoice<Value>).name;
         const checkbox = resolveIcon(
           isChecked ? theme.icon.checked : theme.icon.unchecked,
           choiceName,
         );
+        // If active, use the cursor icon, otherwise use appropriate spacing to align items
         const cursor = isActive
           ? resolveIcon(theme.icon.cursor, choiceName)
-          : ' ';
+          : resolveIcon(theme.icon.nocursor ?? ' ', choiceName);
+
+        // Keep cursor and checkbox as separate elements so join(' ') adds the proper space between them
         line.push(cursor, checkbox);
 
         let text = (item as NormalizedChoice<Value>).name;
@@ -835,6 +836,8 @@ export default createPrompt(
           // NOTE: Description is now calculated via useMemo, not side-effect mutation
         } else if ((item as NormalizedChoice<Value>).disabled) {
           text = theme.style.disabled(text);
+        } else if (isChecked) {
+          text = theme.style.checked(text);
         }
 
         line.push(text);
@@ -851,7 +854,7 @@ export default createPrompt(
 
         return line.join(' ');
       };
-    }, [allItems, theme, config.theme]);
+    }, [theme, config.theme]);
 
     // Setup pagination
     const page = usePagination<Item<Value>>({

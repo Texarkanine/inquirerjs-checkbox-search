@@ -273,17 +273,17 @@ describe('PageSize Configuration', () => {
         expect(resolvePageSize(config, items)).toBe(22); // 30 - 8
       });
 
-      it('should ignore buffer when autoBufferDescriptions is enabled', () => {
+      it('should combine buffer with autoBufferDescriptions', () => {
         const config: PageSizeConfig = {
           base: 20,
           autoBufferDescriptions: true,
-          buffer: 10, // Should be ignored
+          buffer: 10,
         };
         const items = [
           createChoice('Single line'), // 1 line
         ];
 
-        expect(resolvePageSize(config, items)).toBe(19); // 20 - 1 (autoBuffer wins)
+        expect(resolvePageSize(config, items)).toBe(9); // 20 - (1 + 10)
       });
 
       it('should apply min constraint', () => {

@@ -225,7 +225,7 @@ jobs:
         id: find_comment
         with:
           issue-number: ${{ github.event.pull_request.number }}
-          comment-author: 'github-actions[bot]'
+          comment-author: 'demo-generation-doggo[bot]'
           body-includes: 'Demo Previews'
 
       - name: Generate demo preview comment

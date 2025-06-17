@@ -1,4 +1,4 @@
-# VHS Tape File for recording a demo of an example
+# VHS Tape File for recording a demo of the custom theme example
 # vhs documentation: https://github.com/charmbracelet/vhs
 
 # Terminal appearance settings for deterministic output
@@ -12,7 +12,7 @@ Set PlaybackSpeed 0.75
 
 # Setup
 Hide
-Type "node examples/basic.js"
+Type "node examples/custom-theme.js"
 Enter
 Sleep 1s
 # Wait for the prompt to appear, then interact with it
@@ -20,13 +20,13 @@ Show
 
 Sleep 1s
 
-# The basic example shows a multi-select with React, Vue, Angular, etc.
+# The custom theme example shows fruit options with custom emoji icons
 
-# First, let's search for "react" to filter
-Type "react"
+# First, let's search for "apple" to filter
+Type "apple"
 Sleep 1s
 
-# Select React (should be filtered to show only React)
+# Select Apple (should be filtered to show only Apple)
 Tab
 Sleep 1s
 
@@ -34,12 +34,17 @@ Sleep 1s
 Backspace 5
 Sleep 1s
 
-# Navigate to Vue and select it
-Down Down
+# Navigate to Banana and select it
+Down
 Tab
 Sleep 1s
 
-# Navigate to Angular and select it
+# Navigate to Orange and select it
+Down
+Tab
+Sleep 1s
+
+# Navigate to Grape and select it
 Down
 Tab
 
