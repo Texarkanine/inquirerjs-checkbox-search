@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.0.0](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v0.6.0...v1.0.0) (2025-09-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* drop Node 18, move oldest supported version to Node 20 ([#33](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/33))
+* **ci:** We no longer try to support Node 18. It might still work, we just aren't checking or trying.
+
+### Bug Fixes
+
+* **ci:** Demo generation nodejs installer got stale ([34d433a](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/34d433a9307ef2da664bc94f2335c5a0f3a06d80))
+* Explicitly exit major version 0 w/ previous breaking change. ([e0b5da3](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/e0b5da30f906b49b06b06a8d11b15dc66afacb0e))
+
+
+### Miscellaneous Chores
+
+* drop Node 18, move oldest supported version to Node 20 ([#33](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/33)) ([34d433a](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/34d433a9307ef2da664bc94f2335c5a0f3a06d80))
+
 ## [0.6.0](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v0.5.1...v0.6.0) (2025-06-17)
 
 
