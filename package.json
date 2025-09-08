@@ -105,7 +105,7 @@
     "@vitest/coverage-v8": "^3.2.3",
     "@vitest/ui": "^3.2.3",
     "eslint": "^9.0.0",
-    "eslint-config-prettier": "^9.0.0",
+    "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.0.0",
     "rimraf": "^6.0.0",
     "tshy": "^3.0.2",
