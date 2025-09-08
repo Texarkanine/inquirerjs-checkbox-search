@@ -31,7 +31,7 @@ jobs:
           token: ${{ steps.generate-token.outputs.token }}
 
       # Publish to npm if a release was created
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         if: ${{ steps.release.outputs.release_created }}
 
       - uses: actions/setup-node@v4
