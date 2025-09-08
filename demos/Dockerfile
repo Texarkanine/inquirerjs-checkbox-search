@@ -3,11 +3,11 @@
 
 FROM ghcr.io/charmbracelet/vhs:latest
 
-# Install Node.js 20
+# Install Node.js LTS directly from official binaries
+ARG NODE_VERSION=v22.19.0
 RUN apt-get update && apt-get install -y \
     curl \
-    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs \
+    && curl -fsSL https://nodejs.org/dist/${NODE_VERSION}/node-${NODE_VERSION}-linux-x64.tar.xz | tar -xJ -C /usr/local --strip-components=1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
