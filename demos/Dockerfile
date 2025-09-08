@@ -4,11 +4,11 @@
 FROM ghcr.io/charmbracelet/vhs:v0.10
 
 # Install Node.js
-RUN echo "deb http://deb.debian.org/debian bookworm main" > /etc/apt/sources.list && \
-    echo "deb http://deb.debian.org/debian bookworm-updates main" >> /etc/apt/sources.list && \
-    echo "deb http://security.debian.org/debian-security bookworm-security main" >> /etc/apt/sources.list && \
-    apt-get update && apt-get install -y \
-    curl \
+RUN sed -i 's/stable/bookworm/g' /etc/apt/sources.list && \
+    sed -i 's/stable/bookworm/g' /etc/apt/sources.list.d/*
+
+RUN apt-get update && apt-get install -y \
+    curl && \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
