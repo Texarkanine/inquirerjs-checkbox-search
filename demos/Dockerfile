@@ -1,9 +1,11 @@
 # Custom Docker image for VHS demo recording
 # Extends official VHS image with Node.js to run actual examples
 
-FROM ghcr.io/charmbracelet/vhs:latest
+FROM ghcr.io/charmbracelet/vhs:v0.10
 
-# Install Node.js 20
+# Install Node.js
+RUN sed -i 's/stable/bookworm/g' /etc/apt/sources.list.d/*
+
 RUN apt-get update && apt-get install -y \
     curl \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \

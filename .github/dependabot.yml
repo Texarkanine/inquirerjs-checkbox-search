@@ -1,0 +1,51 @@
+version: 2
+updates:
+  # Node.js dependencies - consolidated for both production and dev dependencies
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+    groups:
+      deps-minor-patch:
+        dependency-type: 'direct:production'
+        update-types:
+          - 'minor'
+          - 'patch'
+      dev-deps-minor-patch:
+        dependency-type: 'direct:development'
+        update-types:
+          - 'minor'
+          - 'patch'
+    open-pull-requests-limit: 10
+    reviewers:
+      - 'texarkanine'
+    assignees:
+      - 'texarkanine'
+    commit-message:
+      prefix: 'fix'
+      include: 'scope'
+
+  # GitHub Actions dependencies
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+    groups:
+      github-actions-minor-patch:
+        patterns:
+          - '*'
+        update-types:
+          - 'minor'
+          - 'patch'
+    open-pull-requests-limit: 5
+    reviewers:
+      - 'texarkanine'
+    assignees:
+      - 'texarkanine'
+    commit-message:
+      prefix: 'fix'
+      include: 'scope'
