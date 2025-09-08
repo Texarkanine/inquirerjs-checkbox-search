@@ -19,8 +19,6 @@ updates:
           - 'minor'
           - 'patch'
     open-pull-requests-limit: 10
-    reviewers:
-      - 'texarkanine'
     assignees:
       - 'texarkanine'
     commit-message:
@@ -42,8 +40,6 @@ updates:
           - 'minor'
           - 'patch'
     open-pull-requests-limit: 5
-    reviewers:
-      - 'texarkanine'
     assignees:
       - 'texarkanine'
     commit-message:
