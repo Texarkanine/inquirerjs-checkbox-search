@@ -9,12 +9,12 @@ updates:
       time: '09:00'
     groups:
       deps-minor-patch:
-        dependency-type: 'direct:production'
+        dependency-type: 'production'
         update-types:
           - 'minor'
           - 'patch'
       dev-deps-minor-patch:
-        dependency-type: 'direct:development'
+        dependency-type: 'development'
         update-types:
           - 'minor'
           - 'patch'
