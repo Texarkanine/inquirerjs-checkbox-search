@@ -1,5 +1,7 @@
 # inquirerjs-checkbox-search
 
+[![npm version](https://badge.fury.io/js/inquirerjs-checkbox-search.svg)](https://www.npmjs.com/package/inquirerjs-checkbox-search)
+
 A multi-select prompt with text filtering/search capability for [inquirer.js](https://github.com/SBoudrias/Inquirer.js).
 
 ![Demo showing inquirerjs-checkbox-search in action](docs/img/basic-demo.gif)
