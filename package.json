@@ -129,7 +129,7 @@
     }
   },
   "peerDependencies": {
-    "@types/node": ">=18"
+    "@types/node": ">=20"
   },
   "peerDependenciesMeta": {
     "@types/node": {
