@@ -43,5 +43,4 @@ updates:
     assignees:
       - 'texarkanine'
     commit-message:
-      prefix: 'chore'
-      include: 'scope'
+      prefix: 'chore(deps-ci)'
