@@ -43,5 +43,5 @@ updates:
     assignees:
       - 'texarkanine'
     commit-message:
-      prefix: 'fix'
+      prefix: 'chore'
       include: 'scope'
