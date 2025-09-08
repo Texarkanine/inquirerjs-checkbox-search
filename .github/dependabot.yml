@@ -1,0 +1,70 @@
+version: 2
+updates:
+  # Node.js dependencies - production dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    groups:
+      deps-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "texarkanine"
+    assignees:
+      - "texarkanine"
+    commit-message:
+      prefix: "fix"
+      include: "scope"
+
+  # Node.js dev dependencies - development dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    groups:
+      dev-deps-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "texarkanine"
+    assignees:
+      - "texarkanine"
+    commit-message:
+      prefix: "fix"
+      include: "scope"
+
+  # GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    groups:
+      github-actions-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "texarkanine"
+    assignees:
+      - "texarkanine"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
