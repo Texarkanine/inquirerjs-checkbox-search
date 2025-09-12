@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.0.2](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v1.0.1...v1.0.2) (2025-09-12)
+
+
+### Bug Fixes
+
+* **deps-dev:** bump eslint-config-prettier from 9.1.0 to 10.1.8 ([#42](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/42)) ([0c068da](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/0c068da0de51a77ca37d1c3c56d2fee6c53e29d9))
+* **deps-dev:** bump the dev-deps-minor-patch group with 9 updates ([#38](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/38)) ([aad8359](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/aad83593c7ddca462967cc1c2312ed847b6ed7ab))
+* **deps-dev:** bump vite in the npm_and_yarn group across 1 directory ([#47](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/47)) ([5cb8bef](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/5cb8bef65f564b39bcb2b5382db50096362e8edd))
+
 ## [1.0.1](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v1.0.0...v1.0.1) (2025-09-08)
 
 
