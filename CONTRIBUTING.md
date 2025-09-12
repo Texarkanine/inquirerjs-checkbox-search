@@ -120,7 +120,6 @@ Breaking changes should be indicated by:
 ## Pull Request Process
 
 1. **Before submitting**:
-
    - Ensure build succeeds: `npm run build`
    - Ensure all tests pass: `npm test`
    - Ensure code is properly formatted: `npm run format`
@@ -128,7 +127,6 @@ Breaking changes should be indicated by:
    - Ensure TypeScript compiles: `npm run typecheck`
 
 2. **Pull Request**:
-
    - Use a descriptive title following conventional commit format
    - Include a detailed description of changes
    - Reference any related issues
