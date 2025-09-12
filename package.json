@@ -99,7 +99,7 @@
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.1",
     "@inquirer/testing": "^2.1.47",
-    "@types/node": "^20.0.0",
+    "@types/node": "^24.3.2",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "@vitest/coverage-v8": "^3.2.3",
