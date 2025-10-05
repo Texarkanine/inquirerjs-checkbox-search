@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.4](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v1.0.3...v1.0.4) (2025-10-05)
+
+
+### Bug Fixes
+
+* **deps-dev:** bump the dev-deps-minor-patch group with 2 updates ([#54](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/54)) ([aa83d76](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/aa83d76f36ea0a620725a2fa56f74950154c0c85))
+* **deps:** bump ansi-escapes in the deps-minor-patch group ([#55](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/55)) ([ada682a](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/ada682a6424a9771b65d9ed5f0026391692bf5c5))
+
 ## [1.0.3](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v1.0.2...v1.0.3) (2025-09-23)
 
 
