@@ -249,7 +249,7 @@ jobs:
 
       - name: Post/update demo preview comment
         if: steps.check_demo_bot.outputs.is_demo_bot != 'true' && steps.context.outputs.is_pr == 'true'
-        uses: peter-evans/create-or-update-comment@v4
+        uses: peter-evans/create-or-update-comment@v5
         with:
           comment-id: ${{ steps.find_comment.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
