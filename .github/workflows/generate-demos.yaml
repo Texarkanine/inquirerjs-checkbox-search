@@ -221,7 +221,7 @@ jobs:
 
       - name: Find existing demo comment
         if: steps.check_demo_bot.outputs.is_demo_bot != 'true' && steps.context.outputs.is_pr == 'true'
-        uses: peter-evans/find-comment@v3
+        uses: peter-evans/find-comment@v4
         id: find_comment
         with:
           issue-number: ${{ github.event.pull_request.number }}
