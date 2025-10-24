@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.5](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v1.0.4...v1.0.5) (2025-10-24)
+
+
+### Bug Fixes
+
+* **deps-dev:** bump the dev-deps-minor-patch group with 3 updates ([#61](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/61)) ([b9ced3a](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/b9ced3a86da7f3160a8e25e2b41c3a84b12f6d08))
+* **deps-dev:** bump the dev-deps-minor-patch group with 5 updates ([#64](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/64)) ([94dfff3](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/94dfff35b840e3810521bdcc5b8da9a5ef390e89))
+* **deps-dev:** bump the dev-deps-minor-patch group with 6 updates ([#59](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/59)) ([5e5ccd4](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/5e5ccd47be4e8d7c1715c71c924fb466541f79aa))
+* **deps-dev:** bump vite in the npm_and_yarn group across 1 directory ([#65](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/65)) ([6ba4de4](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/6ba4de4a17e8416591a1f3deaa36b26ac3e502ec))
+* **deps:** bump the deps-minor-patch group with 3 updates ([#63](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/63)) ([6d78dbd](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/6d78dbd17675dbfcc6fed4a5645d3a2a2c98d052))
+
 ## [1.0.4](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v1.0.3...v1.0.4) (2025-10-05)
 
 
