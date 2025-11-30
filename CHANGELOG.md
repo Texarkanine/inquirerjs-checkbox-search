@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.0.6](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v1.0.5...v1.0.6) (2025-11-30)
+
+
+### Bug Fixes
+
+* **deps-dev:** bump all vitest deps to 4.0.x at once ([#84](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/84)) ([8f327c1](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/8f327c172049cc262afa7a2556830e99bd19dc0f))
+* **deps-dev:** bump glob from 10.4.5 to 10.5.0 ([#82](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/82)) ([917c5c8](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/917c5c804bb5b92b57e6a4f127f092b3c9bcd373))
+* **deps-dev:** bump js-yaml from 4.1.0 to 4.1.1 ([#77](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/77)) ([e5f6d28](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/e5f6d2843512a278eff7ad6fe457abbcbbd99bae))
+* **deps-dev:** bump the dev-deps-minor-patch group across 1 directory with 6 updates ([#78](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/78)) ([4482aca](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/4482aca124b8290a1ed64f9f34c693542cdc8710))
+* **deps-dev:** bump the dev-deps-minor-patch group with 3 updates ([#66](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/66)) ([b4ddba9](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/b4ddba9ac5ca6c6a7b3aad907ec23fd53c445b72))
+* **deps:** bump ansi-escapes ([#79](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/79)) ([1a46232](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/1a46232a001c1eab586d717f7e02ff4157485862))
+
 ## [1.0.5](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v1.0.4...v1.0.5) (2025-10-24)
 
 
