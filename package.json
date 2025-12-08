@@ -98,7 +98,7 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.1",
-    "@inquirer/testing": "^2.1.47",
+    "@inquirer/testing": "^3.0.2",
     "@types/node": "^20.0.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
