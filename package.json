@@ -110,7 +110,7 @@
     "rimraf": "^6.0.0",
     "tshy": "^3.0.2",
     "typescript": "^5.6.0",
-    "vitest": "^3.2.3"
+    "vitest": "^4.0.15"
   },
   "engines": {
     "node": ">=20"
