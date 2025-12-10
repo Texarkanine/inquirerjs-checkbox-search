@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.8](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v1.0.7...v1.0.8) (2025-12-10)
+
+
+### Bug Fixes
+
+* **deps-dev:** bump the dev-deps-minor-patch group with 4 updates ([#87](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/87)) ([346679f](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/346679f9d21b32f6cb5470018ae43ab3969ceda6))
+* **deps:** bump inquirer to 11.x, inquirer deps to 4.x and vitest deps to 4.x ([#96](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/96)) ([24b39d0](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/24b39d052f30e8da3861287ed2c7883d7b73ab2c))
+
 ## [1.0.7](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v1.0.6...v1.0.7) (2025-11-30)
 
 
