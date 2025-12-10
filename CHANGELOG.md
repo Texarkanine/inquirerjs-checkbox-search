@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.12](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v1.0.11...v1.0.12) (2025-12-10)
+
+
+### Bug Fixes
+
+* **ci:** log path ([15de1ee](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/15de1ee29df086165e97a33c0a95b2d8bddfaef3))
+* **ci:** TRY - lean into username being case-sensitive? ([baafa0c](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/baafa0c031752011de1efe71f5040c2e3c4c4834))
+
 ## [1.0.11](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v1.0.10...v1.0.11) (2025-12-10)
 
 

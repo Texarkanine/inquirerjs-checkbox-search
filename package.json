@@ -1,6 +1,6 @@
 {
   "name": "inquirerjs-checkbox-search",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "A multi-select prompt with text filtering for inquirer.js",
   "keywords": [
     "answer",
