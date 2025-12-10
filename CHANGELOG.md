@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.11](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v1.0.10...v1.0.11) (2025-12-10)
+
+
+### Bug Fixes
+
+* **ci:** This needs to release, also, print npm version ([3e2ee7f](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/3e2ee7f781a3d43e32dee92723887e64baa72aa0))
+
 ## [1.0.10](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v1.0.9...v1.0.10) (2025-12-10)
 
 
