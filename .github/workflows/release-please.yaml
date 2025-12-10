@@ -85,3 +85,10 @@ jobs:
 
       - name: Publish to npm
         run: npm publish
+      - name: Upload npm debug log if present
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-debug-log
+          path: npm-debug.log
+          if-no-files-found: ignore
