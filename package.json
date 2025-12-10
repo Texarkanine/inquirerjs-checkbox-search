@@ -90,27 +90,27 @@
     "demo:generate:all": "node scripts/generate-demo.js all"
   },
   "dependencies": {
-    "@inquirer/core": "^10.1.13",
-    "@inquirer/figures": "^1.0.12",
-    "@inquirer/type": "^3.0.7",
+    "@inquirer/core": "^11.0.2",
+    "@inquirer/figures": "^2.0.2",
+    "@inquirer/type": "^4.0.2",
     "ansi-escapes": "^7.0.0",
     "yoctocolors-cjs": "^2.1.2"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.1",
-    "@inquirer/testing": "^2.1.47",
+    "@inquirer/testing": "^3.0.2",
     "@types/node": "^20.0.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
-    "@vitest/coverage-v8": "^3.2.3",
-    "@vitest/ui": "^3.2.3",
+    "@vitest/coverage-v8": "^4.0.0",
+    "@vitest/ui": "^4.0.0",
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.0.0",
     "rimraf": "^6.0.0",
     "tshy": "^3.0.2",
     "typescript": "^5.6.0",
-    "vitest": "^3.2.3"
+    "vitest": "^4.0.0"
   },
   "engines": {
     "node": ">=20"
