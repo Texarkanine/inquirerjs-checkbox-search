@@ -29,13 +29,13 @@
     "tty",
     "ui"
   ],
-  "homepage": "https://github.com/texarkanine/inquirerjs-checkbox-search#readme",
+  "homepage": "https://github.com/Texarkanine/inquirerjs-checkbox-search#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/texarkanine/inquirerjs-checkbox-search.git"
+    "url": "git+https://github.com/Texarkanine/inquirerjs-checkbox-search.git"
   },
   "bugs": {
-    "url": "https://github.com/texarkanine/inquirerjs-checkbox-search/issues"
+    "url": "https://github.com/Texarkanine/inquirerjs-checkbox-search/issues"
   },
   "license": "MIT",
   "author": "Texarkanine <texarkanine@protonmail.com>",
