@@ -91,5 +91,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: npm-debug-log
-          path: npm-debug.log
+          path: ~/.npm/_logs/
           if-no-files-found: ignore
