@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.9](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v1.0.8...v1.0.9) (2025-12-10)
+
+
+### Bug Fixes
+
+* **ci:** use NPM trusted publishing ([#98](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/98)) ([ae09190](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/ae09190f267c30eb7d7064a240a9a84358e6c088))
+* **deps-dev:** bump the dev-deps-minor-patch group with 3 updates ([#97](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/97)) ([bded624](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/bded6244c1df6c687a51db025784315694be1cf3))
+
 ## [1.0.8](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v1.0.7...v1.0.8) (2025-12-10)
 
 
