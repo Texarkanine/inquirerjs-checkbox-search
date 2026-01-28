@@ -1,0 +1,24 @@
+---
+description: Defines canonical paths for core Memory Bank files.
+globs: memory-bank-paths.mdc
+alwaysApply: true
+---
+
+# CORE MEMORY BANK FILE LOCATIONS
+
+**CRITICAL:** All core Memory Bank files reside within the `memory-bank/` directory at the project root. Do NOT create or modify these files outside this directory unless explicitly instructed for archiving purposes.
+
+* **Tasks File:** `memory-bank/tasks.md` - Active task tracking: current task details, checklists, component lists. Ephemeral; merged into archive on completion, cleared by `/archive`.
+* **Active Context File:** `memory-bank/activeContext.md` - Current session focus: what's being worked on now, recent decisions, immediate next steps. Ephemeral; cleared by `/archive`.
+* **Progress File:** `memory-bank/progress.md` - Implementation progress: completed steps, current status, blockers. Ephemeral; cleared by `/archive`.
+* **Project Brief File:** `memory-bank/projectbrief.md` - Repository foundation: project purpose, goals, scope, core requirements. Persistent across tasks.
+* **Product Context File:** `memory-bank/productContext.md` - Business context: target users, use cases, success criteria, constraints. Persistent across tasks.
+* **System Patterns File:** `memory-bank/systemPatterns.md` - Architectural patterns: code organization, naming conventions, design patterns in use. Persistent across tasks.
+* **Tech Context File:** `memory-bank/techContext.md` - Technical stack: languages, frameworks, build tools, file conventions, dependencies. Persistent. Do NOT include session-specific info (current branch, current task).
+* **Style Guide File:** `memory-bank/style-guide.md` - Code style: formatting, naming, documentation conventions specific to this repository. Persistent across tasks.
+* **Creative Phase Docs:** `memory-bank/creative/creative-[feature_name].md`
+* **Reflection Docs:** `memory-bank/reflection/reflection-<task-id>.md`
+* **Archive Directory:** `memory-bank/archive/<kind>/YYYYMMDD-<task-id>.md`
+* **QA Validation Status:** `memory-bank/.qa_validation_status` - Task-specific QA validation status file (created by `/qa`, cleared by `/archive`)
+
+**Verification Mandate:** Before any `create_file` or `edit_file` operation on these core files, verify the path starts with `memory-bank/`. If attempting to create a new core file (e.g., `tasks.md` at the start of a project), ensure it is created at `memory-bank/tasks.md`.
