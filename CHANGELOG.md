@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.14](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v1.0.13...v1.0.14) (2026-01-28)
+
+
+### Bug Fixes
+
+* Add REUSE-compliant licensing ([#108](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/108)) ([eb44783](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/eb44783bb6ea440cb4c08f4d47acd4e2104f65b5))
+
 ## [1.0.13](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v1.0.12...v1.0.13) (2026-01-01)
 
 
