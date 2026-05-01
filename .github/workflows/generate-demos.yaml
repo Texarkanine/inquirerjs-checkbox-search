@@ -64,7 +64,7 @@ jobs:
 
       - name: Set up Docker Buildx
         if: steps.check_demo_bot.outputs.is_demo_bot != 'true'
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Debug GitHub context and determine release-please context
         if: steps.check_demo_bot.outputs.is_demo_bot != 'true'
