@@ -108,7 +108,7 @@
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.0.0",
     "rimraf": "^6.0.0",
-    "tshy": "^3.0.2",
+    "tshy": "^4.1.1",
     "typescript": "^5.6.0",
     "vitest": "^4.0.0"
   },
