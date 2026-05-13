@@ -94,7 +94,7 @@ No new technology - validation not required.
 - [x] Test planning complete (TDD)
 - [x] Implementation plan complete
 - [x] Technology validation complete
-- [ ] Preflight
+- [x] Preflight
 - [ ] Build
 - [ ] QA
 
@@ -110,3 +110,9 @@ No new technology - validation not required.
 - [ ] Step 8 — vitest.config.ts
 - [ ] Step 9 — README, CONTRIBUTING, memory-bank
 - [ ] Step 10 — full verification
+
+## Preflight (2026-05-13)
+
+- **Result:** PASS
+- **TDD encoding:** Each numbered implementation step places failing policy tests before config edits; no implementation-only first step.
+- **Advisory:** Consider pinning `CONTRIBUTING.md` npm major to whatever the repo actually requires (optional; out of scope unless versions conflict).

@@ -19,3 +19,10 @@ Align Node.js support and CI with issue #129: minimum Node 22, test through Node
     - Authored full Level 2 plan in `tasks.md` (TDD-first policy test, concrete file touchpoints, challenges).
 * Decisions made
     - Encode support policy in `src/__tests__/node-support-policy.test.ts` to guard `engines`, workflows, `.nvmrc`, and Vitest target together.
+
+## 2026-05-13 - PREFLIGHT - COMPLETE
+
+* Work completed
+    - Validated plan against TDD ordering and conventions; wrote `memory-bank/active/.preflight-status` = PASS.
+* Decisions made
+    - No plan amendments required before build.
