@@ -69,13 +69,14 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      # Trusted publishing (OIDC) needs npm >= 11.5.1; Node 24 ships that. Publish-only —
+      # release + tests stay on .nvmrc. Avoids broken `npm install -g npm` on Node 22
+      # (https://github.com/npm/cli/issues/9151).
       - uses: actions/setup-node@v6
         with:
-          node-version-file: .nvmrc
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
-          cache: 'npm'
 
-      - run: npm install -g npm@latest
       - run: npm --version
 
       - name: Install dependencies
