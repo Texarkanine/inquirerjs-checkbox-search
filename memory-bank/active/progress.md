@@ -20,9 +20,10 @@ Align Node.js support and CI with issue #129: minimum Node 22, test through Node
 * Decisions made
     - Encode support policy in `src/__tests__/node-support-policy.test.ts` to guard `engines`, workflows, `.nvmrc`, and Vitest target together.
 
-## 2026-05-13 - PREFLIGHT - COMPLETE
+## 2026-05-13 - PLAN - REWORK
 
 * Work completed
-    - Validated plan against TDD ordering and conventions; wrote `memory-bank/active/.preflight-status` = PASS.
+    - Removed policy-test step; task has no production code changes so no unit tests are required.
+    - Plan revised to 10 steps: package.json, lockfile, 3 workflows, .nvmrc, Dockerfile, vitest config, docs, verify.
 * Decisions made
-    - No plan amendments required before build.
+    - TDD requirement does not apply when there are no code changes; existing suite is the regression guard.

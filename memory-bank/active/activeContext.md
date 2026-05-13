@@ -6,8 +6,9 @@
 
 ## What Was Done
 
-- Level 2 plan written to `memory-bank/active/tasks.md`: policy test + ordered updates for `package.json`, workflows, `.nvmrc`, Docker demo, Vitest target, and docs.
+- Removed erroneous policy-test step; task has no code changes, so no unit tests are needed.
+- Plan revised: 10 ordered steps (package.json → lockfile → 3 workflows → .nvmrc → Dockerfile → vitest.config.ts → docs → verify).
 
 ## Next Step
 
-- Preflight validation, then Build (TDD cycles per plan).
+- Preflight, then Build.
