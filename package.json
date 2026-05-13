@@ -99,7 +99,7 @@
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.1",
     "@inquirer/testing": "^3.0.2",
-    "@types/node": "^20.0.0",
+    "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "@vitest/coverage-v8": "^4.0.0",
@@ -113,7 +113,7 @@
     "vitest": "^4.0.0"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "publishConfig": {
     "access": "public"
@@ -129,7 +129,7 @@
     }
   },
   "peerDependencies": {
-    "@types/node": ">=20"
+    "@types/node": ">=22"
   },
   "peerDependenciesMeta": {
     "@types/node": {

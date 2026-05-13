@@ -155,7 +155,7 @@ This section covers the tools and workflows used in this project for contributor
 #### Package Management
 
 - **npm** - Package manager (npm 9+ required)
-- **Node.js 20+** - Runtime requirement
+- **Node.js 22+** - Runtime requirement (see `.nvmrc` for the recommended local version)
 - **package.json** - Standard npm configuration with dual exports
 
 #### Code Quality
