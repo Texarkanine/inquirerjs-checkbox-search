@@ -2,13 +2,15 @@
 
 ## Current Task: Update supported Node versions (issue #129)
 
-**Phase:** PLAN - COMPLETE
+**Phase:** REFLECT COMPLETE
 
 ## What Was Done
 
-- Removed erroneous policy-test step; task has no code changes, so no unit tests are needed.
-- Plan revised: 10 ordered steps (package.json → lockfile → 3 workflows → .nvmrc → Dockerfile → vitest.config.ts → docs → verify).
+- All implementation applied and committed.
+- QA passed clean.
+- Reflection written at `memory-bank/active/reflection/reflection-issue-129-node-versions.md`.
+- Persistent files (`productContext.md`, `techContext.md`) updated during build.
 
 ## Next Step
 
-- Preflight, then Build.
+- Run `/niko-archive` to finalize the task.

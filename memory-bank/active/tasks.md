@@ -81,19 +81,19 @@ No new technology — validation not required.
 - [x] Test planning complete (no tests needed — no code changes)
 - [x] Implementation plan complete
 - [x] Technology validation complete
-- [ ] Preflight
-- [ ] Build
-- [ ] QA
+- [x] Preflight
+- [x] Build
+- [x] QA
 
 ## Implementation checklist (Build)
 
-- [ ] Step 1 — package.json
-- [ ] Step 2 — lockfile
-- [ ] Step 3 — pr.yaml
-- [ ] Step 4 — release-please.yaml
-- [ ] Step 5 — generate-demos.yaml
-- [ ] Step 6 — .nvmrc
-- [ ] Step 7 — demos/Dockerfile
-- [ ] Step 8 — vitest.config.ts
-- [ ] Step 9 — README, CONTRIBUTING, memory-bank
-- [ ] Step 10 — full verification
+- [x] Step 1 — package.json
+- [x] Step 2 — lockfile
+- [x] Step 3 — pr.yaml
+- [x] Step 4 — release-please.yaml
+- [x] Step 5 — generate-demos.yaml
+- [x] Step 6 — .nvmrc
+- [x] Step 7 — demos/Dockerfile
+- [x] Step 8 — vitest.config.ts
+- [x] Step 9 — README, CONTRIBUTING, memory-bank
+- [x] Step 10 — full verification
