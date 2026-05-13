@@ -53,25 +53,28 @@ describe('Description display', () => {
     expect(bananaChoiceLine).not.toContain('(Yellow fruit)');
   });
 
-  it('should use cyan/blue styling for descriptions at bottom', async () => {
+  it('should render description text at the bottom by default', async () => {
     const { getScreen } = await render(checkboxSearch, {
       message: 'Select items',
-      choices: [{ value: 'apple', name: 'Apple', description: 'Red fruit' }],
+      choices: [
+        { value: 'apple', name: 'Apple', description: 'Red fruit' },
+        { value: 'banana', name: 'Banana', description: 'Yellow fruit' },
+      ],
     });
 
-    let screen = getScreen();
-
-    // Check that description uses cyan color (should contain ANSI escape codes for cyan)
-    // Note: This is a basic check - in a real test we might need to mock colors
-    expect(screen).toContain('Red fruit');
-
-    // The description should be styled with theme.style.description which defaults to cyan
-    // We can't easily test ANSI codes here, but we can verify the text is present
+    const screen = getScreen();
     const lines = screen.split('\n');
-    const descriptionLine = lines.find((line: string) =>
+
+    const descriptionLineIndex = lines.findIndex((line: string) =>
       line.includes('Red fruit'),
     );
-    expect(descriptionLine).toBeTruthy();
+    const lastChoiceLineIndex = lines.findLastIndex((line: string) =>
+      line.includes('Banana'),
+    );
+
+    expect(descriptionLineIndex).toBeGreaterThan(-1);
+    expect(lastChoiceLineIndex).toBeGreaterThan(-1);
+    expect(descriptionLineIndex).toBeGreaterThan(lastChoiceLineIndex);
   });
 
   it('should handle items without descriptions gracefully', async () => {

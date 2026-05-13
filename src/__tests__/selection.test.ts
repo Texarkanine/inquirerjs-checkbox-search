@@ -82,7 +82,7 @@ describe('Multi-selection', () => {
    * corrupt search input when tab is used for selection. This test ensures
    * proper isolation between tab selection and search text.
    */
-  it('should detect readline tab-to-spaces conversion bug', async () => {
+  it('should keep search term clean after tab selection (no tab-to-spaces corruption)', async () => {
     const { events, getScreen } = await render(checkboxSearch, {
       message: 'Select items',
       choices: [{ value: 'test', name: 'Test Item' }],
