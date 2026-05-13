@@ -57,17 +57,21 @@ describe('Navigation', () => {
       loop: true,
     });
 
-    // Go to last item
-    await events.keypress('up'); // Should wrap to last item
+    // Initially at First
     let screen = getScreen();
-    expect(screen).toContain('❯');
+    expect(screen).toContain('❯ ◯ First');
 
-    // Go past last item
-    await events.keypress('down');
-    await events.keypress('down');
+    // Press up from first item — should wrap to last (Third)
+    await events.keypress('up');
+    screen = getScreen();
+    expect(screen).toContain('❯ ◯ Third');
+    expect(screen).not.toContain('❯ ◯ First');
+
+    // Press down from last item — should wrap to first (First)
     await events.keypress('down');
     screen = getScreen();
-    expect(screen).toContain('❯'); // Should wrap to first item
+    expect(screen).toContain('❯ ◯ First');
+    expect(screen).not.toContain('❯ ◯ Third');
   });
 
   it('should not loop navigation when disabled', async () => {
@@ -404,6 +408,30 @@ describe('Navigation', () => {
     screen = getScreen();
     expect(screen).toContain('❯ ◯ First');
     expect(screen).not.toContain('❯ ◯ Last');
+  });
+
+  it('should skip default separator and submit correct values with plain string choices', async () => {
+    const { answer, events, getScreen } = await render(checkboxSearch, {
+      message: 'Select items',
+      choices: ['Item 1', new Separator(), 'Item 2', 'Item 3'],
+    });
+
+    // All items should be visible
+    const screen = getScreen();
+    expect(screen).toContain('Item 1');
+    expect(screen).toContain('Item 2');
+    expect(screen).toContain('Item 3');
+
+    // Select Item 1
+    await events.keypress('tab');
+    // Navigate down — should skip the default separator and land on Item 2
+    await events.keypress('down');
+    // Select Item 2
+    await events.keypress('tab');
+    // Submit
+    await events.keypress('enter');
+
+    await expect(answer).resolves.toEqual(['Item 1', 'Item 2']);
   });
 
   it('should preserve selections when navigating through separators', async () => {

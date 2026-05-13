@@ -280,7 +280,7 @@ describe('Search and filtering', () => {
    * instead of being added to the search term. This was caused by using
    * @inquirer/core's isUpKey() and isDownKey() functions which include vim keys.
    */
-  it('should handle "j" key input properly for search (vim navigation bug fix)', async () => {
+  it('should add "j" to search term instead of triggering down navigation', async () => {
     const { events, getScreen } = await render(checkboxSearch, {
       message: 'Select fruits',
       choices: [
@@ -305,7 +305,7 @@ describe('Search and filtering', () => {
    *
    * Companion test to the j key bug - "k" should add to search, not navigate up.
    */
-  it('should handle "k" key input properly for search (vim navigation bug fix)', async () => {
+  it('should add "k" to search term instead of triggering up navigation', async () => {
     const { events, getScreen } = await render(checkboxSearch, {
       message: 'Select fruits',
       choices: [
