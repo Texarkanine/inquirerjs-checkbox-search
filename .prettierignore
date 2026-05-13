@@ -14,9 +14,10 @@ CHANGELOG.md
 # Lock files
 package-lock.json
 
-# Vendored cursor rules
-.cursor/rules/shared/
-.cursor/rules/local/
-.cursor/commands/shared/
-.cursor/commands/local/
+# Vendored / synced Cursor assets (shared subtrees; not formatted in this repo)
+.cursor/**/shared/**
+.cursor/**/local/**
+
+# Memory bank ephemeral session files (not formatted here)
+memory-bank/active/**
 
