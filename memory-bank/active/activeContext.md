@@ -2,7 +2,7 @@
 
 **Current Task:** issue-110-perf-dep-bump — Bump `@inquirer/core` to `^11.1.2` for fast-wrap-ansi performance fix
 
-**Phase:** BUILD - COMPLETE
+**Phase:** QA - PASS
 
 **What Was Done:** 
 - Bumped `@inquirer/core` from `^11.0.2` to `^11.1.2` in `package.json`
