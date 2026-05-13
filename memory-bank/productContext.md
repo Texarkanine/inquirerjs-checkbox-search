@@ -16,7 +16,7 @@ Node.js CLI developers building interactive command-line tools with [Inquirer.js
 - Combines `@inquirer/checkbox` (multi-select) and `@inquirer/search` (filter-as-you-type) capabilities, which the upstream Inquirer.js suite does not offer together in a single prompt.
 - Selections are preserved across filter changes - typing to narrow results never silently drops items the user already checked.
 - Auto-sizing page height adapts to terminal height, with fine-grained `PageSizeConfig` control for advanced layouts.
-- Drop-in API shape that mirrors `@inquirer/checkbox` so existing call sites can adopt it with minimal changes.
+- Option shape overlaps with `@inquirer/checkbox` for the features the two prompts share (see `compatibility.test.ts`), reducing friction for projects already using the upstream prompt.
 
 ## Success Criteria
 

@@ -10,7 +10,7 @@ The mental model that matters most:
 - **Choices come from one of two mutually exclusive inputs**: `choices` (static) or `source` (async). The async path uses an `AbortSignal` so in-flight requests are cancelled when the user keeps typing. Treat them as two code paths sharing the same downstream state, not as a single unified pipeline.
 - **The prompt is built from `@inquirer/core` hooks** (`useState`, `useKeypress`, `useEffect`, `useMemo`, `usePagination`, `usePrefix`, `useRef`). It is not a class. State updates trigger re-render via the hook system; do not introduce module-level mutable state.
 - **Pagination has its own auto-sizing logic** layered on top of `@inquirer/core`'s `usePagination`. Page size can be a number, an object (`PageSizeConfig`), or auto-derived from terminal height. The auto-sizing is non-trivial and has dedicated tests (`page-sizing.test.ts`, `pagesize-config.test.ts`); changing it without reading those tests first will break things.
-- **Compatibility with `@inquirer/checkbox` is a contract, not a coincidence.** `compatibility.test.ts` exists to keep the option shape and behavior aligned with the upstream prompt for the overlapping API surface. Diverging from `@inquirer/checkbox`'s semantics on shared options is a breaking change.
+- **Compatibility with `@inquirer/checkbox` is enforced, not incidental.** `compatibility.test.ts` pins the option shape and behavior of the overlapping API surface to the upstream prompt; any intentional divergence on shared options requires updating that test and is a semver-relevant decision.
 
 ## Single-file prompt module
 
@@ -27,10 +27,6 @@ Selections are tracked by stable choice identity (value/object reference), not b
 ## Dual ESM/CJS publication via tshy
 
 `tshy` builds both `dist/esm` and `dist/commonjs` from the single TypeScript source. The `exports` map in `package.json` is generated/managed by `tshy` config. Test files are excluded from the build via `tshy.exclude`. Package correctness is validated by `@arethetypeswrong/cli` (`npm run attw`) in `prepublishOnly`. Avoid TypeScript or runtime constructs that don't round-trip cleanly through both outputs.
-
-## Demo GIFs generated, not hand-recorded
-
-README demos are produced by `scripts/generate-demo.js` driving a Dockerized [VHS](https://github.com/charmbracelet/vhs) setup (`demos/Dockerfile`, `*.tape` files, `ai-rizz.skbd`). CI regenerates affected GIFs on PRs. Do not hand-edit GIFs in `docs/img/`; change the corresponding `.tape` script and regenerate.
 
 ## Release automation via Conventional Commits
 
