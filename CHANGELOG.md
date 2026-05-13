@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v1.0.15...v2.0.0) (2026-05-13)
+
+
+### ⚠ BREAKING CHANGES
+
+* update baseline engine requirement to Node 22, add Node 26 to test matrix, align CI with .nvmrc ([#131](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/131))
+
+### Features
+
+* update baseline engine requirement to Node 22, add Node 26 to test matrix, align CI with .nvmrc ([#131](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/131)) ([982804a](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/982804a6fc36070c9d98c1cf734dcf3451ddc7fe))
+
 ## [1.0.15](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v1.0.14...v1.0.15) (2026-05-13)
 
 
