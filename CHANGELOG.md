@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.0.15](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v1.0.14...v1.0.15) (2026-05-13)
+
+
+### Bug Fixes
+
+* **deps-dev:** bump flatted from 3.3.3 to 3.4.2 ([#123](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/123)) ([554cdfc](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/554cdfce7816455b22452972b46505da36ee8fb6))
+* **deps-dev:** bump minimatch from 3.1.2 to 3.1.5 ([#122](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/122)) ([edcdd0b](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/edcdd0b06785b52f2bc03e83c38a24eb93689398))
+* **deps-dev:** bump picomatch from 4.0.3 to 4.0.4 ([#124](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/124)) ([132e684](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/132e68455eeced57806247f60e94da1add0aee54))
+* **deps-dev:** bump postcss from 8.5.6 to 8.5.13 ([#126](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/126)) ([dc54b50](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/dc54b50985683e6f6f16d2cca900596cfad851c8))
+* **deps-dev:** bump rollup from 4.54.0 to 4.60.2 ([#127](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/127)) ([1eb3b75](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/1eb3b75323082f5eb72b48dca0ff1beeb143a1c6))
+* **deps-dev:** bump the dev-deps-minor-patch group across 1 directory with 9 updates ([#117](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/117)) ([dba6626](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/dba66265eaf6f3264c151edf2793be0000d49c8e))
+* **deps-dev:** bump tshy from 3.1.0 to 4.1.1 ([#119](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/119)) ([639dda2](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/639dda27d936cc49a7b63bd84ebaebd5642f0357))
+* **deps-dev:** bump vite from 7.3.0 to 7.3.2 ([#125](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/125)) ([aeb30ba](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/aeb30baf3322ef48a302faa58f1da9a3546c2cb5))
+* **deps:** bump @inquirer/core to ^11.1.2 ([#110](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/110)) ([#130](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/130)) ([f956941](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/f956941eda5d1a866b6985f065b474239ffeaf67))
+* **deps:** bump the deps-minor-patch group across 1 directory with 4 updates ([#115](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/115)) ([7d9b5db](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/7d9b5dbff7062725f94a81b8e9a3c00a66b28ebb))
+
 ## [1.0.14](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v1.0.13...v1.0.14) (2026-01-28)
 
 
