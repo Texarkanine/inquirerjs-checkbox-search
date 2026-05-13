@@ -664,15 +664,6 @@ export default createPrompt(
         return;
       }
 
-      // Handle backspace - remove last character from search term.
-      // We cannot rely on rl.line here because Node.js readline's native
-      // _ttyWrite does not update rl.line for synthetically-emitted keypress
-      // events (only for real data written to the input stream).
-      if (key.name === 'backspace') {
-        updateSearchTerm(searchTerm.slice(0, -1));
-        return;
-      }
-
       // Handle navigation - ONLY actual arrow keys (not vim j/k keys)
       // This follows the official inquirer.js search approach
       if (key.name === 'up' || key.name === 'down') {
