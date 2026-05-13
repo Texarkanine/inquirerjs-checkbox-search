@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v2.0.0...v2.0.1) (2026-05-13)
+
+
+### Bug Fixes
+
+* **ci:** fix broken node22/npm issue w/ OIDC/trusted publishing-compatible npm ([9cd8a22](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/9cd8a229ebaffc9894ebd59c85d4f559d6bbe738))
+
 ## [2.0.0](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v1.0.15...v2.0.0) (2026-05-13)
 
 
