@@ -28,7 +28,7 @@ Node.js CLI developers building interactive command-line tools with [Inquirer.js
 ## Key Constraints
 
 - **Inquirer.js peer ecosystem**: built on `@inquirer/core` primitives; behavior must remain consistent with Inquirer.js conventions (key bindings, theme contract, prompt lifecycle).
-- **Node.js >= 20** (`engines` in `package.json`).
+- **Node.js >= 22** (`engines` in `package.json`; local pin in `.nvmrc`).
 - **Dual-module distribution**: source is TypeScript ESM; ships both ESM and CJS builds via `tshy`. Code must avoid constructs that break either output.
 - **Public API stability**: published to npm under semver; breaking changes require `feat!:` / `BREAKING CHANGE:` and a major bump. Releases are automated via release-please from Conventional Commits.
 - **Terminal-only UI**: no DOM, no images; all output must render correctly in a TTY across reasonable terminal widths/heights.
