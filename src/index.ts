@@ -895,7 +895,7 @@ export default createPrompt(
       errorLine = `\n${theme.style.error(`Error: ${searchError}`)}`;
     }
 
-    let content = '';
+    let content: string;
     if (status === 'loading') {
       content = '\nLoading choices...';
     } else if (filteredItems.length === 0) {
