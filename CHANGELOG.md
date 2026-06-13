@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.0.2](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v2.0.1...v2.0.2) (2026-06-13)
+
+
+### Bug Fixes
+
+* **deps-dev:** bump eslint 10 and typescript 6 with config fixes ([#140](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/140)) ([1d8531e](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/1d8531e180dc4c9cae19cf953b614904b8f526a6))
+* **deps-dev:** bump the dev-deps-minor-patch group with 7 updates ([#136](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/136)) ([303b5b8](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/303b5b8ee4ba2a4adf15541a3be7b8def30e1616))
+* **deps:** bump the deps-minor-patch group across 1 directory with 2 updates ([#139](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/139)) ([a03e2b3](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/a03e2b30818b393d7fa14c8432127651adf59b61))
+
 ## [2.0.1](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v2.0.0...v2.0.1) (2026-05-13)
 
 
