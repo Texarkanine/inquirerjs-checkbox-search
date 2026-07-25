@@ -1,12 +1,11 @@
 # Active Context
 
 ## Current Task: issue-145-stryker-poc
-**Phase:** QA - COMPLETE
+**Phase:** REFLECT COMPLETE
 
 ## What Was Done
-- Semantic QA PASS
-- Trivial fix: documented `test:mutate*` in `CONTRIBUTING.md`
-- Acceptance criteria satisfied; decision artifact complete; no over-engineering
+- Reflection written: `memory-bank/active/reflection/reflection-issue-145-stryker-poc.md`
+- Reconciled `systemPatterns.md` (search-term / backspace pattern) and `techContext.md` (mutate scripts; done in build)
 
 ## Next Step
-- Reflect phase
+- Run `/niko-archive` to archive and finalize

@@ -67,3 +67,13 @@ Prove out StrykerJS mutation testing on this repo per [issue #145](https://githu
     - No substantive rework required
 * Insights
     - Maintainer-facing test command docs must track new npm scripts even for advisory tooling
+
+## 2026-07-25 - REFLECT - COMPLETE
+
+* Work completed
+    - Wrote reflection for issue-145-stryker-poc
+    - Reconciled `systemPatterns.md` with search-term update pattern
+* Decisions made
+    - None beyond reflection conclusions (advisory-only stands)
+* Insights
+    - See reflection doc; primary technical lesson is `@inquirer/testing` backspace vs `rl.line`

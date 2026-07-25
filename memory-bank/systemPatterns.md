@@ -24,6 +24,10 @@ Tests in `src/__tests__/` are organized by _user-visible behavior_ (`navigation`
 
 Selections are tracked by stable choice identity (value/object reference), not by index in the currently-rendered list. This is the architectural reason filtering and selection compose correctly. Any refactor of the choices/filter pipeline must preserve this; see `search-filtering.test.ts` ("should maintain selections across filtering") and `object-references.test.ts`.
 
+## Search term updates via `updateSearchTerm`, not `rl.line` alone
+
+Escape and backspace clear/edit the filter through `updateSearchTerm` (React state + readline rewrite). Syncing only from `rl.line` on keypress is insufficient under `@inquirer/testing`, whose `keypress('backspace')` emits a key event without mutating the readline line. Prefer code-point-aware edits (`Array.from(searchTerm)`) so emoji filters clear in one backspace.
+
 ## Dual ESM/CJS publication via tshy
 
 `tshy` builds both `dist/esm` and `dist/commonjs` from the single TypeScript source. The `exports` map in `package.json` is generated/managed by `tshy` config. Test files are excluded from the build via `tshy.exclude`. Package correctness is validated by `@arethetypeswrong/cli` (`npm run attw`) in `prepublishOnly`. Avoid TypeScript or runtime constructs that don't round-trip cleanly through both outputs.
