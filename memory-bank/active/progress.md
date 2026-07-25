@@ -29,3 +29,15 @@ Prove out StrykerJS mutation testing on this repo per [issue #145](https://githu
 * Insights
     - Stryker + Vitest 4.1 runner compatibility is fine; suite readiness is the real gate
     - Mutant count (598) is below the issue’s rough 800–1500 estimate but still in a practical range
+
+## 2026-07-25 - PREFLIGHT - COMPLETE
+
+* Work completed
+    - Validated plan against codebase, conventions, deps, completeness
+    - Amended `tasks.md` with per-step red→green TDD encoding
+    - Added incremental mode to planned Stryker config
+    - Wrote `.preflight-status` = PASS
+* Decisions made
+    - PASS with advisory: build must unblock dry-run first; no rearchitect needed
+* Insights
+    - No public-API conflict; Stryker is pure quality tooling

@@ -32,30 +32,41 @@ This PoC is tooling/process evidence, not a product behavior change. Verificatio
 
 ## Implementation Plan
 
-1. **Unblock dry-run (prerequisite discovered in tech validation)**
-   - Files: `src/__tests__/edge-cases.test.ts`, `src/__tests__/search-filtering.test.ts`, `src/__tests__/selection.test.ts`, and/or new `vitest.stryker.config.ts` + `stryker.config.json` `vitest.configFile`
-   - Changes: Four tests currently fail locally (backspace/clear-filter / special-character search). Prefer minimal unblock for PoC: either fix incorrect test assumptions (emoji backspace count, etc.) if tests are wrong, or point Stryker at a vitest config that excludes only those known failures for the PoC run. Do **not** expand into a general prompt backspace bugfix unless a one-line fix is obvious and covered by existing tests.
-   - Verify: `npx stryker run --dryRunOnly` exits 0.
+Each step is one TDD-style cycle: **red (observable failure / missing artifact) → green (minimal change) → refactor**. For this tooling PoC, the “test” is usually an operational command (`stryker run --dryRunOnly` / `stryker run`) or an assertion on a written artifact — not a new Vitest product case.
 
-2. **Land Stryker tooling (partially done in tech validation)**
-   - Files: `package.json`, `package-lock.json`, `stryker.config.json`, `.gitignore`
-   - Changes: Keep `@stryker-mutator/core@9.6.1` + `@stryker-mutator/vitest-runner@9.6.1`; finalize `stryker.config.json` (issue starting point + `$schema` + `plugins` + mutate globs excluding `src/__tests__`); ignore `reports/mutation/`, `.stryker-tmp/`, `stryker-tmp/` in `.gitignore`; add npm scripts `test:mutate` / `test:mutate:dry` for discoverability.
-   - Verify: dry-run still green after script/gitignore polish.
+1. **Unblock dry-run**
+   - **Red:** `npx stryker run --dryRunOnly` fails (already observed); `npm run test:unit` shows 4 backspace/clear-filter failures.
+   - **Green:** Minimal unblock only — (a) correct test assumptions (e.g. emoji backspace count / clear-filter steps) if tests are wrong, **or** (b) add `vitest.stryker.config.ts` that excludes only those known failures and set `vitest.configFile` in `stryker.config.json`. Do **not** expand into a general prompt backspace bugfix unless a one-line fix is obvious and already covered by existing tests.
+   - **Files:** `src/__tests__/edge-cases.test.ts`, `search-filtering.test.ts`, `selection.test.ts`, and/or `vitest.stryker.config.ts` + `stryker.config.json`
+   - **Refactor / verify:** Re-run dry-run → exit 0; record mutant count.
+
+2. **Land Stryker tooling (deps already installed in tech validation)**
+   - **Red:** No `test:mutate*` scripts; `.stryker-tmp/` / mutation reports not gitignored; config missing `incremental` for cheap re-runs.
+   - **Green:** Finalize `stryker.config.json` (issue starting point + `$schema` + `plugins` + mutate globs excluding `src/__tests__` + `"incremental": true`); update `.gitignore` for `reports/mutation/`, `.stryker-tmp/`, `stryker-tmp/`, `reports/stryker-incremental.json`; add `test:mutate` / `test:mutate:dry` scripts; extend `clean` to remove Stryker temp dirs if cheap.
+   - **Files:** `package.json`, `stryker.config.json`, `.gitignore`
+   - **Verify:** `npm run test:mutate:dry` exits 0.
 
 3. **Full mutation run**
-   - Files: none committed from report output (gitignored)
-   - Changes: `npm run clean` if needed; `npx stryker run` (or `npm run test:mutate`); capture clear-text summary + HTML path.
-   - Verify: run completes; mutant kill/survive/timeout counts available.
+   - **Red:** No HTML report / no score yet (`reports/mutation/` absent or stale).
+   - **Green:** `npm run clean` if needed; `npm run test:mutate`; keep report gitignored.
+   - **Files:** none committed from report output
+   - **Verify:** Run completes; kill/survive/timeout counts available for `src/index.ts`.
 
 4. **Triage survivors & write decision**
-   - Files: `memory-bank/active/stryker-poc-decision.md`
-   - Changes: Record score for `src/index.ts`; categorize survivors (genuine gaps vs. noise); recommend go/no-go for `pr.yaml` (`thresholds.break` vs advisory vs drop). Stretch only if needed: `@stryker-mutator/typescript-checker`.
-   - Verify: acceptance criteria in project brief all satisfied. **Do not** wire `pr.yaml` unless the written decision is “go” *and* wiring is trivial; default PoC deliverable is the decision, not CI adoption.
+   - **Red:** `memory-bank/active/stryker-poc-decision.md` missing acceptance fields (score, triage list, go/no-go).
+   - **Green:** Write the artifact from the HTML/clear-text report; categorize genuine gaps vs. noise; recommend adopt-with-break / advisory-only / drop. Stretch only if needed: `@stryker-mutator/typescript-checker`.
+   - **Files:** `memory-bank/active/stryker-poc-decision.md`
+   - **Verify:** Project-brief acceptance criteria all present. **Do not** wire `pr.yaml` unless decision is “go” *and* wiring is trivial; default deliverable is the decision.
 
 5. **Quality gate**
-   - Files: any touched tracked files
-   - Changes: `npm run format` then `npm run quality:check`; `npm run test:unit` (document any intentional exclusions).
-   - Verify: quality clean; product suite status understood.
+   - **Red:** `npm run quality:check` or intentional unit-suite expectations failing after edits.
+   - **Green:** `npm run format` then `npm run quality:check`; re-run `npm run test:unit` (document any intentional exclusions).
+   - **Verify:** Quality clean; product suite status understood.
+
+### Preflight amendments (2026-07-25)
+
+- Explicit red→green→verify ordering added per step (TDD encoding).
+- Enabled `"incremental": true` in planned config so triage/re-runs after config tweaks are cheap (within PoC scope; incremental file gitignored).
 
 ## Technology Validation
 
@@ -95,6 +106,6 @@ Docs used: [Stryker Vitest runner](https://stryker-mutator.io/docs/stryker-js/vi
 - [x] Test planning complete (TDD)
 - [x] Implementation plan complete
 - [x] Technology validation complete
-- [ ] Preflight
+- [x] Preflight
 - [ ] Build
 - [ ] QA
