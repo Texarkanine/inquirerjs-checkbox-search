@@ -45,10 +45,10 @@ Merged as [#146](https://github.com/Texarkanine/inquirerjs-checkbox-search/pull/
 
 **Decision artifact (inlined from `stryker-poc-decision.md`)**
 
-| Metric | Value |
-| --- | --- |
+| Metric                                              | Value                    |
+| --------------------------------------------------- | ------------------------ |
 | Mutants / killed / survived / no coverage / timeout | 602 / 440 / 130 / 32 / 0 |
-| Mutation score (total / covered) | 73.09% / 77.19% |
+| Mutation score (total / covered)                    | 73.09% / 77.19%          |
 
 Survivors worth killing (follow-ups): empty-filter short-circuit, default `checked`/`loop`/`validate`, `default` values application, PageSizeConfig boundaries, some `renderItem` checked/disabled branches. Treat theme/ANSI/label string mutants as noise (excludes later). Stretch `@stryker-mutator/typescript-checker` deferred.
 
