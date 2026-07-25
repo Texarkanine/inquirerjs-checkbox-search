@@ -108,3 +108,18 @@ Rework triggered by review of the branch diff on [PR #146](https://github.com/Te
     - Task ID stays `issue-145-stryker-poc` so the rework archives with the original work
 * Insights
     - The rework is mostly deletion; the only additive change is a job timeout
+
+## 2026-07-25 - PREFLIGHT (rework) - COMPLETE
+
+* Work completed
+    - Validated the plan against codebase reality: conventions, dependency impact, conflicts, completeness
+    - Amended `tasks.md` with per-step RED → change → GREEN encoding (blocking TDD-encoding finding)
+    - Added step 1 (prove the crash-reds contract empirically before editing) and step 8 (reconcile PR #146 title)
+    - Folded the job rename into step 2 after finding the plan wrongly said to keep the name
+    - Wrote `.preflight-status` = PASS
+* Decisions made
+    - PASS with one advisory: the `test` job also lacks `timeout-minutes`, but that is outside this brief's scope
+    - Rename the check now rather than later — it is new in this PR, so no branch protection depends on the old name
+* Insights
+    - A no-change requirement ("do not add `thresholds.break`") still needs a verification step, or nothing proves the contract holds
+    - Reference sweep confirmed `prepublishOnly` touches coverage only through `test:ci`, so removing the advisory scripts cannot break publishing

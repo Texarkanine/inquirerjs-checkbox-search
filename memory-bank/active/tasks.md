@@ -27,6 +27,7 @@ suite is the regression guard.
 - [ ] [Mutation script intact]: `npm run test:mutate:dry` → exit 0, instruments `src/index.ts`
 - [ ] [Concurrency unpinned]: `stryker.config.json` has no `concurrency` key → run log shows Stryker's cores−1 default
 - [ ] [Workflow valid]: `.github/workflows/pr.yaml` parses as YAML; `metrics` job has `timeout-minutes`, one mutation run step, and no coverage step
+- [ ] [Job name accurate]: the job's `name:` no longer claims to run coverage
 - [ ] [Clean works]: `npm run clean` → removes `.stryker-tmp`, `reports/mutation`, and the incremental file; no reference to the nonexistent `stryker-tmp`
 - [ ] [Docs accurate]: no occurrence of `test:coverage:advisory` or `test:metrics` remains outside `progress.md` history
 - [ ] [Edge — incremental file still written]: removing the `json` reporter does not stop `reports/stryker-incremental.json` from being produced (the cache step's `path:` depends on it)
@@ -42,35 +43,57 @@ suite is the regression guard.
 
 ## Implementation Plan
 
-1. **Trim the `metrics` job to mutation-only and bound its runtime**
+Each step is encoded red → green: observe the current (wrong) state first so the check is proven to
+discriminate, then change, then re-observe. A step is not done until its GREEN observation is
+recorded. Do not batch the edits and verify at the end.
+
+1. **Establish the exit-code contract before touching anything** *(pure verification — no edits)*
+   - Files: none
+   - RED: temporarily break one assertion in `src/__tests__/basic-functionality.test.ts`, then run `npx stryker run --dryRunOnly` → expect **non-zero** exit. This proves a broken harness reds the job.
+   - GREEN: revert the break, re-run `npx stryker run --dryRunOnly` → expect **exit 0**.
+   - Rationale: constraint 5 of the brief is a *no-change* requirement, so it needs empirical proof rather than a code diff. Confirm `git diff` is empty afterward.
+
+2. **Trim the `metrics` job to mutation-only and bound its runtime**
    - Files: `.github/workflows/pr.yaml`
-   - Changes: delete the `Line/branch coverage (advisory)` step; add `timeout-minutes: 20` to the `metrics` job; tighten the job comment now that coverage is no longer part of it. Keep the `actions/cache` step, keep the job name, add **no** `continue-on-error`.
-   - Verify: YAML parses; job contains exactly one `run:` for mutation
+   - RED: `grep -c 'run: npm run' pr.yaml` within the metrics job → 2 steps today; `grep timeout-minutes` → absent; job `name:` reads `Coverage & mutation (advisory)`
+   - Changes: delete the `Line/branch coverage (advisory)` step; add `timeout-minutes: 20`; rename the job to `Mutation (advisory)`; rewrite the job comment to state the exit-code contract (crash/timeout reds, score never does) so a future contributor does not casually add `thresholds.break`. Keep the `actions/cache` step; add **no** `continue-on-error`.
+   - GREEN: YAML parses; metrics job has exactly one mutation `run:`, a `timeout-minutes`, no coverage step, and no `continue-on-error`
 
-2. **Remove the dead npm scripts**
+3. **Remove the dead npm scripts**
    - Files: `package.json`
+   - RED: `npm run test:coverage:advisory --dry-run` and `npm run test:metrics --dry-run` both resolve today
    - Changes: delete `test:coverage:advisory` (its `json-summary` reporter fed the summary script deleted in `ccdaf90`); delete `test:metrics` (a bare alias for `test:mutate` once coverage leaves); drop the nonexistent `stryker-tmp` path from `clean`
-   - Verify: `npm run test:coverage:advisory` and `npm run test:metrics` both report a missing script; `npm run clean` succeeds
+   - GREEN: both invocations report a missing script; `npm run clean` still exits 0; `prepublishOnly` is untouched and still resolves via `test:ci`
 
-3. **Unpin concurrency and drop the orphaned reporter**
+4. **Unpin concurrency and drop the orphaned reporter**
    - Files: `stryker.config.json`
-   - Changes: remove `"concurrency": 4` so Stryker uses its cores−1 default (this machine has 16 cores and was capped at 4; CI has 4 vCPU and was oversubscribed); remove `"json"` from `reporters` — its only consumer was `scripts/ci-metrics-summary.js`, confirmed by reading the deleted file, and it has never actually run
-   - Verify: `npm run test:mutate:dry` exits 0; a full run still writes `reports/stryker-incremental.json`
+   - RED: current config pins `"concurrency": 4` and lists `"json"` in `reporters`; `reports/mutation/` contains no `mutation.json`, confirming the reporter has never run
+   - Changes: remove `"concurrency": 4` so Stryker uses its cores−1 default (this machine has 16 cores and was capped at 4; CI has 4 vCPU and was oversubscribed); remove `"json"` from `reporters` — its only consumer was `scripts/ci-metrics-summary.js`, confirmed by reading the deleted file
+   - GREEN: `npm run test:mutate:dry` exits 0; the later full run in step 7 still writes `reports/stryker-incremental.json`
 
-4. **Remove the dead ignore entry**
+5. **Remove the dead ignore entry**
    - Files: `.gitignore`
+   - RED: `.gitignore` lists both `.stryker-tmp/` and `stryker-tmp/`; only `.stryker-tmp/` exists on disk after a run
    - Changes: delete `stryker-tmp/`; Stryker's `tempDirName` default is `.stryker-tmp`, which is already listed
-   - Verify: `git status` stays clean during a mutation run
+   - GREEN: `git status` stays clean during and after a mutation run
 
-5. **Reconcile documentation**
+6. **Reconcile documentation**
    - Files: `CONTRIBUTING.md`, `memory-bank/techContext.md`
-   - Changes: drop `test:coverage:advisory` / `test:metrics` references; describe the `metrics` job as mutation-only, advisory in score but red on crash or timeout
-   - Verify: repo-wide grep finds no live references to the removed scripts
+   - RED: both name `test:coverage:advisory` / `test:metrics` and the job title `Coverage & mutation (advisory)`
+   - Changes: drop the removed script references; describe the job as mutation-only, advisory in score but red on crash or timeout, under its new name
+   - GREEN: repo-wide grep finds no live references to the removed scripts or the old job name outside `progress.md` history
 
-6. **Full verification pass**
+7. **Full verification pass**
    - Files: none
    - Changes: none
-   - Verify: `npm test`; `npm run test:mutate` completes and exits 0 at a sub-100% score; a deliberate test break makes Stryker exit non-zero (then revert the break)
+   - GREEN: `npm test` green (quality gate + 113 cases); `npm run test:mutate` completes and exits 0 at a sub-100% score; `reports/stryker-incremental.json` present afterward
+
+8. **Reconcile PR #146 metadata**
+   - Files: none (GitHub PR)
+   - RED: PR title is `feat(ci): StrykerJS PoC and advisory coverage/mutation metrics [#145]`, which claims coverage metrics this rework removes
+   - Changes: update the PR title and body to describe mutation-only advisory metrics
+   - GREEN: title no longer promises coverage metrics
+   - Rationale: release-please reads the squashed PR title as the changelog entry, so an inaccurate title ships to consumers
 
 ## Technology Validation
 
@@ -91,12 +114,21 @@ requested "crash reds, low score greens" contract.
 - **Removing the `json` reporter exceeds the operator's explicit list**: justified as vestigial — its only consumer was deleted in `ccdaf90`. Mitigation: flag it explicitly at QA so it can be vetoed cheaply.
 - **No CI-config test harness exists**: verification is operational rather than automated, consistent with the original phase of this task. Mitigation: every behavior above names a concrete command and expected exit status.
 
+## Preflight Findings
+
+- **[Blocking, resolved]** Plan steps were ordered implementation-then-verify. Amended to explicit RED → change → GREEN per step, plus a new step 1 that proves the crash-reds contract empirically before any edit.
+- **[Medium, resolved]** Plan said "keep the job name," but `Coverage & mutation (advisory)` becomes false once coverage leaves. Renaming folded into step 2 and the docs step. Safe because the check is new in this PR, so no branch protection references it yet.
+- **[Medium, resolved]** PR #146's title advertises coverage metrics and feeds release-please's changelog on squash merge. Added step 8.
+- **[Advisory, not actioned]** The `test` job — the one that actually gates PRs — also has no `timeout-minutes`, and no workflow in `.github/workflows/` has one anywhere. Same six-hour exposure, one line to fix, but outside this brief's scope. Operator's call.
+- **[Info]** Reference sweep is complete: `prepublishOnly` reaches coverage only via `test:ci`, which is untouched. No consumer of the removed scripts exists outside the files already in the plan.
+- **[Radical innovation — considered, rejected]** The cheapest way to "prove mutation runs to completion" is `--dryRunOnly` at ~6s instead of a ~4min full run, but that produces no score and would defeat the operator's stated reason for keeping the job. The genuinely higher-value structural moves (score on the PR surface; gating at a floor) were both explicitly rejected this session. No amendment recommended.
+
 ## Status
 
 - [x] Initialization complete
 - [x] Test planning complete (TDD)
 - [x] Implementation plan complete
 - [x] Technology validation complete
-- [ ] Preflight
+- [x] Preflight
 - [ ] Build
 - [ ] QA
