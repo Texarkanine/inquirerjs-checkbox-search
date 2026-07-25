@@ -4,6 +4,12 @@ on:
   pull_request:
     branches: [main]
 
+# Both jobs execute PR-controlled code (`npm ci` lifecycle scripts, Stryker, Vitest)
+# and neither performs authenticated git, so the token is read-only and is not left
+# available to the job after checkout.
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.number }}
   cancel-in-progress: true
@@ -17,6 +23,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v6
@@ -43,3 +51,38 @@ jobs:
       - name: Check exports
         if: matrix.node-version == 22
         run: npm run attw
+
+  # Reports the mutation score and proves mutation testing still runs to completion.
+  # The score never fails the PR: Stryker's `thresholds.break` defaults to null, so only
+  # a crashed harness or the timeout below turns this job red. Do not set
+  # `thresholds.break` unless you intend to make the score a gate.
+  mutation:
+    name: Mutation (advisory)
+    runs-on: ubuntu-latest
+    # A full local run burns ~27 min of CPU; on a 4-vCPU runner that is ~8-15 min wall.
+    # Sized to catch a genuine hang without reddening an advisory job on a slow runner.
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Stryker incremental results
+        uses: actions/cache@v5
+        with:
+          path: reports/stryker-incremental.json
+          key: stryker-incremental-${{ github.sha }}
+          restore-keys: |
+            stryker-incremental-
+
+      - name: Mutation testing (advisory)
+        run: npm run test:mutate

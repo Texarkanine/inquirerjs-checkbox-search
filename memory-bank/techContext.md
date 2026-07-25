@@ -12,7 +12,7 @@ TypeScript library for Node.js (>=22, see `engines` in `package.json` and `.nvmr
 
 - **`tshy`** - dual ESM/CJS build. Configuration in the `tshy` block of `package.json`. Build with `npm run build`; watch with `npm run dev`; clean with `npm run clean`.
 - **TypeScript** - strict mode; configuration in `tsconfig.json` (build) and `tsconfig.test.json` (tests). Type-check only via `npm run typecheck`.
-- **ESLint** - configuration in `eslint.config.js`. Run via `npm run lint:check` (report) / `npm run lint` (autofix).
+- **ESLint** - configuration in `eslint.config.js`. Run via `npm run lint:check` (report) / `npm run lint` (autofix). Flat config does **not** read `.gitignore`, so every generated directory needs an explicit entry in the `ignores` block; Prettier 3 does read `.gitignore`, which is why a new build artifact can break lint while formatting stays green.
 - **Prettier** - configuration in `.prettierrc.json` / `.prettierignore`. Run via `npm run format:check` / `npm run format`.
 - **Combined quality gate**: `npm run quality:check` (report) / `npm run quality` (autofix where possible). See `.cursor/rules/dev-practices.mdc` for the project's required commands.
 
@@ -24,6 +24,7 @@ Tests run in **Vitest** (configured in `vitest.config.ts`) and drive the prompt 
 - Unit-only: `npm run test:unit`.
 - Single test or group by name: `npx vitest run -t "TEST_NAME"`.
 - Coverage: `npm run test:coverage` (V8 provider via `@vitest/coverage-v8`).
+- Mutation testing (optional/advisory): StrykerJS via `stryker.config.json`; `npm run test:mutate:dry` / `npm run test:mutate`. PR workflow job _Mutation (advisory)_ logs the score with no score threshold — `thresholds.break` is deliberately left at its `null` default so only a crashed run or the job timeout fails the check (see `.github/workflows/pr.yaml`).
 - See `.cursor/rules/dev-practices.mdc` and `.cursor/rules/shared/test-running-practices.mdc` for required test-running conventions.
 
 ## Package Correctness
