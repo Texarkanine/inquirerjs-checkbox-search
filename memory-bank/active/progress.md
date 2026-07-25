@@ -155,3 +155,14 @@ Rework triggered by review of the branch diff on [PR #146](https://github.com/Te
     - No substantive rework required
 * Insights
     - A contract restated for two audiences is fine; restated twice for the *same* audience is a drift bug waiting to happen
+
+## 2026-07-25 - REFLECT (rework) - COMPLETE
+
+* Work completed
+    - Appended the rework reflection to `reflection-issue-145-stryker-poc.md`, preserving the original
+    - Reconciled persistent files: `techContext.md` was already current; `productContext.md` and `systemPatterns.md` needed nothing
+    - Corrected a stale `concurrency 4` claim in `stryker-poc-decision.md`, which PR #146 links to
+* Decisions made
+    - Keep one reflection file per task-id and append the rework section rather than starting a second file
+* Insights
+    - See the reflection; the load-bearing lesson is that an advisory check's value is the *absence* of configuration — reporting machinery buys all of a gate's cost and none of its signal

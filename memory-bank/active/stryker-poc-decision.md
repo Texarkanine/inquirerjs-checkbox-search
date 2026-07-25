@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-25  
 **Tooling:** `@stryker-mutator/core@9.6.1` + `@stryker-mutator/vitest-runner@9.6.1`  
-**Config:** `stryker.config.json` (`perTest`, concurrency 4, `timeoutMS` 10000, `incremental: true`)
+**Config at time of run:** `stryker.config.json` (`perTest`, concurrency 4, `timeoutMS` 10000, `incremental: true`) — the `concurrency: 4` pin was removed during the PR #146 rework, so current runs use Stryker's cores−1 default; the wall times below were measured at 4 workers.
 
 ## Mutation score (`src/index.ts`)
 
