@@ -674,16 +674,12 @@ export default createPrompt(
       // keypress('backspace') does not mutate rl.line, and relying only on
       // rl.line leaves the filter stuck in tests (and any non-TTY harness).
       // Updating via searchTerm + updateSearchTerm keeps TTY and tests aligned.
-      // One press deletes one grapheme cluster, so ZWJ emoji, flags, skin-tone
-      // modifiers, and combining marks vanish whole rather than shedding a code
-      // point at a time. This diverges from readline, which is code-point based;
-      // the divergence is deliberate because the prompt renders the search term
-      // itself, making partial clusters visible debris. See #148.
+      // One press deletes one grapheme cluster, not one code point: readline is
+      // code-point based, but this prompt renders the search term itself, so a
+      // partial cluster would be visible debris. Deliberate divergence; see #148.
       if (isBackspaceKey(key)) {
         const lastGrapheme = [...graphemeSegmenter.segment(searchTerm)].at(-1);
-        updateSearchTerm(
-          lastGrapheme ? searchTerm.slice(0, lastGrapheme.index) : '',
-        );
+        updateSearchTerm(searchTerm.slice(0, lastGrapheme?.index ?? 0));
         return;
       }
 

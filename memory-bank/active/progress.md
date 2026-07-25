@@ -31,3 +31,15 @@ instead of one code point, per [#148](https://github.com/Texarkanine/inquirerjs-
 * Insights
     - The single-code-point control case (`😀`) passing while the other four failed was the signal that the new tests target the actual defect and not a harness artifact — worth keeping as a regression guard.
     - `@inquirer/testing`'s `keypress('backspace')` never mutates `rl.line`, so this prompt's React-state-first backspace handling is what makes the behavior testable at all; a `rl.line`-only implementation would have been untestable here.
+
+## 2026-07-25 - QA - COMPLETE
+
+* Work completed
+    - Reviewed the full source diff against KISS / DRY / YAGNI / Completeness / Regression / Integrity / Documentation
+    - Applied two trivial fixes: collapsed the empty-term ternary into `searchTerm.slice(0, lastGrapheme?.index ?? 0)`, and trimmed the explanatory comment from five lines to three
+    - Confirmed `README.md` and `examples/` never describe backspace behavior, so no user-facing documentation is owed
+    - Re-ran `npm test` after the fixes: 118/118 pass, format + lint + typecheck clean
+* Decisions made
+    - Kept the explicit `granularity: 'grapheme'` despite it being the `Intl.Segmenter` default — naming the intent at the call site beats requiring the reader to recall the default
+* Insights
+    - The whole fix reduces to two statements, which is the tell that the original code was correct in structure and only wrong about its unit of deletion; no restructuring was warranted
