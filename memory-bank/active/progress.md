@@ -77,3 +77,23 @@ Prove out StrykerJS mutation testing on this repo per [issue #145](https://githu
     - None beyond reflection conclusions (advisory-only stands)
 * Insights
     - See reflection doc; primary technical lesson is `@inquirer/testing` backspace vs `rl.line`
+
+## 2026-07-25 - REWORK INITIATED - PR #146 feedback
+
+Rework triggered by review of the branch diff on [PR #146](https://github.com/Texarkanine/inquirerjs-checkbox-search/pull/146). The `metrics` job as merged does more than the maintainer wants and less carefully than it should.
+
+* Operator feedback
+    - **Keep the mutation job as a PR check.** Its purpose is visibility plus proof that mutation testing runs to completion. Build logs are an acceptable place to read the score — no job-summary step, no PR comment, no reporting script.
+    - **A crashed Stryker must paint a red X.** "Your PR doesn't get to break the test harness." A low score must never fail the PR.
+    - **Cut coverage from the metrics job.** Coverage already runs, is threshold-gated in `test:ci`, and is reported by Codecov; the advisory re-run is duplicate work.
+    - **Keep the Stryker cache** — it uses GitHub Actions caching, so warm hits between runs are possible upside. Do not build main-branch seeding to chase more.
+    - **Keep `incremental: true` locally** — local dev genuinely accumulates a baseline.
+    - **Add a job timeout.**
+    - **Drop the `concurrency: 4` pin** so Stryker uses cores−1 per machine.
+* Decisions made
+    - No `thresholds.break` and no `continue-on-error`: StrykerJS defaults `thresholds.break` to `null`, so crash/timeout exits 1 and a low score exits 0 — the requested contract already holds by default. Verified against the recorded run's own config dump (`{"high":80,"low":60,"break":null}`).
+    - Declined for now: `paths:` filter, `StringLiteral` mutator exclusion, main-branch cache seeding.
+* Insights
+    - `--since` is a Stryker.NET feature, not StrykerJS; incremental mode is the JS equivalent and diffs per-mutant, not per-file.
+    - `ccdaf90` removed `ci-metrics-summary.js` on the rationale "tools already log scores" — that rationale is now the accepted answer to visibility, not a gap to fill.
+    - The `json` reporter added to `stryker.config.json` has never actually run: the recorded run's config shows `reporters: ["html","clear-text","progress"]`, and `reports/mutation/` contains only `mutation.html`.
