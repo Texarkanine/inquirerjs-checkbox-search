@@ -166,3 +166,12 @@ Rework triggered by review of the branch diff on [PR #146](https://github.com/Te
     - Keep one reflection file per task-id and append the rework section rather than starting a second file
 * Insights
     - See the reflection; the load-bearing lesson is that an advisory check's value is the *absence* of configuration — reporting machinery buys all of a gate's cost and none of its signal
+
+## 2026-07-25 - ARCHIVE - IN-PROGRESS
+
+* Work completed
+    - Leaving REFLECT; beginning archive of `issue-145-stryker-poc` (original PoC + PR #146 rework)
+* Decisions made
+    - Archive category: `enhancements/` (quality tooling / CI capability)
+* Insights
+    - None yet
