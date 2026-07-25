@@ -121,6 +121,16 @@ requested "crash reds, low score greens" contract.
 2. **`timeout-minutes` raised from the planned 20 to 30.** A forced full run took 2m6s wall at 15 workers but consumed ~27 min of CPU. On a 4-vCPU runner that projects to roughly 8-15 min wall, which puts 20 uncomfortably close to a false red on a job that is explicitly never supposed to red on anything but a broken harness. 30 still catches a genuine hang against the six-hour default.
 3. **Renamed the job key as well as its display name** (`metrics` → `mutation`). The plan only called for the display name; renaming both keeps them coherent, and nothing references the key.
 
+## QA Findings
+
+- **[DRY, fixed]** `CONTRIBUTING.md` ended up with two adjacent bullets that both introduced mutation testing and both stated the gating rule ("not a PR hard gate" / "never fails the PR") — two copies of one contract, drifting apart on the next edit. Consolidated into a single bullet.
+- **[Documentation, fixed]** The ESLint-vs-`.gitignore` trap that broke the build had no home in the memory bank. Added a line to the ESLint entry in `techContext.md`: flat config does not read `.gitignore`, Prettier 3 does, so a new build artifact can break lint while formatting stays green.
+- **[Integrity, clean]** `git diff ccdaf90..HEAD -- src/` is empty — the deliberate step-1 test break left no residue, and no `console.log` / `TODO` / placeholder was introduced.
+- **[KISS, accepted as-is]** Six lines of comment on a fifteen-line job is comment-heavy, but both blocks document things the YAML cannot show: an *inherited* default (`thresholds.break: null`) that is invisible in the config, and the measurement behind the timeout number. Preflight identified the first as the mitigation for a real risk. Kept.
+- **[YAGNI, clean]** Everything added is required: one `timeout-minutes` key, one ESLint ignore entry, and comments. The ESLint ignore is minimal — `reports/` needs no entry because it holds no `.ts`/`.js`.
+- **[Completeness, clean]** All 6 brief requirements, all 6 constraints, and all 5 acceptance criteria map to shipped changes. Nothing stubbed or deferred.
+- **[Regression, clean]** Job key `mutation` matches the lowercase style of the existing `test` job; the ESLint ignores entry sits with the other generated directories.
+
 ## Preflight Findings
 
 - **[Blocking, resolved]** Plan steps were ordered implementation-then-verify. Amended to explicit RED → change → GREEN per step, plus a new step 1 that proves the crash-reds contract empirically before any edit.
@@ -138,4 +148,4 @@ requested "crash reds, low score greens" contract.
 - [x] Technology validation complete
 - [x] Preflight
 - [x] Build
-- [ ] QA
+- [x] QA

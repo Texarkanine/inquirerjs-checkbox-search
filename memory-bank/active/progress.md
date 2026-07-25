@@ -141,3 +141,17 @@ Rework triggered by review of the branch diff on [PR #146](https://github.com/Te
     - Unpinning concurrency cut the local full run from 4m1s at 4 workers to 2m6s at 15
     - Adding a tool that generates a directory means teaching **every** ignore mechanism about it; git and Prettier were covered here but ESLint flat config was not, because it does not read `.gitignore`
     - Incremental reuse is dramatic: an unchanged-source rerun finished in 10s versus 2m6s forced
+
+## 2026-07-25 - QA (rework) - COMPLETE
+
+* Work completed
+    - Semantic review of the rework diff against plan and brief (KISS/DRY/YAGNI/completeness/regression/integrity/docs)
+    - Fixed a DRY defect in `CONTRIBUTING.md`: two adjacent bullets both introduced mutation testing and both stated the gating rule
+    - Recorded the ESLint-vs-`.gitignore` trap in `techContext.md` so the next tool that generates a directory does not repeat it
+    - Confirmed `src/` untouched by the rework and no debug residue from the step-1 deliberate break
+    - Wrote `.qa-validation-status` = PASS
+* Decisions made
+    - Kept the comment density in `pr.yaml`: both blocks document things YAML cannot show — an inherited default and the measurement behind the timeout
+    - No substantive rework required
+* Insights
+    - A contract restated for two audiences is fine; restated twice for the *same* audience is a drift bug waiting to happen
