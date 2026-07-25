@@ -17,6 +17,12 @@ src/package.json
 coverage/
 .nyc_output
 
+# Stryker mutation testing
+.stryker-tmp/
+stryker-tmp/
+reports/mutation/
+reports/stryker-incremental.json
+
 # Environment variables
 .env
 .env.local

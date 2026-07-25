@@ -41,3 +41,18 @@ Prove out StrykerJS mutation testing on this repo per [issue #145](https://githu
     - PASS with advisory: build must unblock dry-run first; no rearchitect needed
 * Insights
     - No public-API conflict; Stryker is pure quality tooling
+
+## 2026-07-25 - BUILD - COMPLETE
+
+* Work completed
+    - Fixed `isBackspaceKey` handling in `src/index.ts` (unblocked 4 tests + Stryker dry-run)
+    - Finalized Stryker config/scripts/gitignore/clean; `incremental: true`
+    - Full mutation run: 602 mutants, score **73.09%**, 0 timeouts, ~4m wall
+    - Wrote `stryker-poc-decision.md`: advisory-only for `pr.yaml`
+    - Quality + full unit suite green (113)
+* Decisions made
+    - Advisory-only adoption (keep tooling; no `thresholds.break` in CI yet)
+    - Product backspace fix rather than Stryker-scoped test exclusion
+* Insights
+    - `@inquirer/testing` `keypress('backspace')` does not mutate `rl.line`; prompts that only sync from `rl.line` fail under that harness
+    - Render-string / theme survivors dominate the long tail; high-value gaps are filter short-circuit, defaults, and pageSize bounds

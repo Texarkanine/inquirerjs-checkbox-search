@@ -8,6 +8,7 @@ import {
   useMemo,
   usePrefix,
   makeTheme,
+  isBackspaceKey,
   isEnterKey,
   Separator,
   type Theme,
@@ -661,6 +662,18 @@ export default createPrompt(
       // Handle Escape key - clear search term quickly
       if (key.name === 'escape') {
         updateSearchTerm(''); // Clear both readline and React state
+        return;
+      }
+
+      // Handle backspace from React search state. @inquirer/testing's
+      // keypress('backspace') does not mutate rl.line, and relying only on
+      // rl.line leaves the filter stuck in tests (and any non-TTY harness).
+      // Updating via searchTerm + updateSearchTerm keeps TTY and tests aligned;
+      // Array.from pops a full code point so emoji filters clear in one press.
+      if (isBackspaceKey(key)) {
+        const chars = Array.from(searchTerm);
+        chars.pop();
+        updateSearchTerm(chars.join(''));
         return;
       }
 
