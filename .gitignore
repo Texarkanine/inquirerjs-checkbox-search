@@ -19,7 +19,6 @@ coverage/
 
 # Stryker mutation testing
 .stryker-tmp/
-stryker-tmp/
 reports/mutation/
 reports/stryker-incremental.json
 

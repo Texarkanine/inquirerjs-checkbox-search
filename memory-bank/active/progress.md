@@ -123,3 +123,21 @@ Rework triggered by review of the branch diff on [PR #146](https://github.com/Te
 * Insights
     - A no-change requirement ("do not add `thresholds.break`") still needs a verification step, or nothing proves the contract holds
     - Reference sweep confirmed `prepublishOnly` touches coverage only through `test:ci`, so removing the advisory scripts cannot break publishing
+
+## 2026-07-25 - BUILD (rework) - COMPLETE
+
+* Work completed
+    - Proved the exit-code contract in both directions before editing: broken test → Stryker exit 1; reverted → exit 0
+    - Trimmed the CI job to mutation-only, renamed it `mutation` / _Mutation (advisory)_, added `timeout-minutes: 30`
+    - Removed `test:coverage:advisory`, `test:metrics`, the `stryker-tmp` path in `clean`, the `stryker-tmp/` gitignore entry, the `concurrency: 4` pin, and the orphaned `json` reporter
+    - **Unplanned fix**: added `.stryker-tmp/` to `eslint.config.js` ignores — a leftover Stryker sandbox was failing `npm test` with 15 parsing errors
+    - Reconciled `CONTRIBUTING.md`, `techContext.md`, and the PR #146 title/body
+    - Verified: `npm test` 113/113 green with a sandbox present; full forced mutation run 73.09%, exit 0, 0 timeouts
+* Decisions made
+    - Timeout 30 rather than the planned 20: a full run costs ~27 min of CPU, projecting to ~8-15 min on a 4-vCPU runner, and a false red would violate the "only a broken harness reds this job" rule
+    - Fix the ESLint breakage at its cause rather than papering over it with `npm run clean`
+    - Rename the job key as well as the display name, since nothing references it
+* Insights
+    - Unpinning concurrency cut the local full run from 4m1s at 4 workers to 2m6s at 15
+    - Adding a tool that generates a directory means teaching **every** ignore mechanism about it; git and Prettier were covered here but ESLint flat config was not, because it does not read `.gitignore`
+    - Incremental reuse is dramatic: an unchanged-source rerun finished in 10s versus 2m6s forced

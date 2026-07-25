@@ -100,6 +100,7 @@ export default [
       'src/node_modules/',
       'coverage/',
       'package-inspect/',
+      '.stryker-tmp/',
       '*.tgz',
     ],
   },

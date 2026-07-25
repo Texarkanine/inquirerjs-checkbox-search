@@ -56,7 +56,7 @@
 - **Unit Tests**: `npm test` - Run the full test suite
 - **Coverage**: `npm run test:coverage` - Generate coverage report
 - **Mutation testing (advisory)**: `npm run test:mutate:dry` / `npm run test:mutate` — StrykerJS; not a PR hard gate
-- **PR metrics (advisory)**: CI job _Coverage & mutation (advisory)_ runs `test:coverage:advisory` + `test:mutate` and logs scores in the job output — no score thresholds
+- **PR mutation check**: CI job _Mutation (advisory)_ runs `test:mutate` and logs the score in the job output. The score never fails the PR; a crashed Stryker run or a job timeout does.
 - **Watch Mode**: `npm run test -- --watch` - Run tests in watch mode
 - **UI**: `npm run test:ui` - Run tests with Vitest UI
 

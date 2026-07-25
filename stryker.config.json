@@ -3,10 +3,9 @@
   "packageManager": "npm",
   "testRunner": "vitest",
   "plugins": ["@stryker-mutator/vitest-runner"],
-  "reporters": ["html", "clear-text", "progress", "json"],
+  "reporters": ["html", "clear-text", "progress"],
   "mutate": ["src/**/*.ts", "!src/**/*.test.ts", "!src/__tests__/**"],
   "coverageAnalysis": "perTest",
-  "concurrency": 4,
   "timeoutMS": 10000,
   "incremental": true
 }

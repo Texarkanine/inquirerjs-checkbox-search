@@ -20,18 +20,19 @@ suite is the regression guard.
 
 ### Behaviors to Verify
 
-- [ ] [Low score passes]: `npm run test:mutate` at the current ~73% score → exit 0 (job green)
-- [ ] [Crash fails]: Stryker run with a deliberately broken test → non-zero exit (job red)
-- [ ] [Coverage script gone]: `npm run test:coverage:advisory` → npm reports missing script
-- [ ] [Metrics script gone]: `npm run test:metrics` → npm reports missing script
-- [ ] [Mutation script intact]: `npm run test:mutate:dry` → exit 0, instruments `src/index.ts`
-- [ ] [Concurrency unpinned]: `stryker.config.json` has no `concurrency` key → run log shows Stryker's cores−1 default
-- [ ] [Workflow valid]: `.github/workflows/pr.yaml` parses as YAML; `metrics` job has `timeout-minutes`, one mutation run step, and no coverage step
-- [ ] [Job name accurate]: the job's `name:` no longer claims to run coverage
-- [ ] [Clean works]: `npm run clean` → removes `.stryker-tmp`, `reports/mutation`, and the incremental file; no reference to the nonexistent `stryker-tmp`
-- [ ] [Docs accurate]: no occurrence of `test:coverage:advisory` or `test:metrics` remains outside `progress.md` history
-- [ ] [Edge — incremental file still written]: removing the `json` reporter does not stop `reports/stryker-incremental.json` from being produced (the cache step's `path:` depends on it)
-- [ ] [Regression]: `npm test` → full quality gate + 113 cases green
+- [x] [Low score passes]: `npm run test:mutate` at 73.09% → **exit 0** (job green)
+- [x] [Crash fails]: broken assertion in `basic-functionality.test.ts` → Stryker **exit 1** (`ConfigError: There were failed tests in the initial test run`)
+- [x] [Coverage script gone]: absent from `package.json`; `npm run` reports missing script
+- [x] [Metrics script gone]: absent from `package.json`; `npm run test:metrics` → `npm error Missing script`
+- [x] [Mutation script intact]: `npm run test:mutate:dry` → exit 0, 602 mutants instrumented
+- [x] [Concurrency unpinned]: no `concurrency` key; run log went from `Creating 4 test runner process(es)` to `Creating 15` (cores−1 on a 16-core box)
+- [x] [Workflow valid]: parses; job has `timeout-minutes: 30`, one `npm run test:mutate` step, no coverage step, no `continue-on-error`, cache step retained
+- [x] [Job name accurate]: renamed `metrics` → `mutation` / `Coverage & mutation (advisory)` → `Mutation (advisory)`; no "coverage" anywhere in the job
+- [x] [Clean works]: `npm run clean` → exit 0, `.stryker-tmp` and report artifacts removed
+- [x] [Docs accurate]: repo-wide grep finds the removed names only in memory-bank planning records
+- [x] [Edge — incremental file still written]: after a full run without the `json` reporter, `reports/stryker-incremental.json` present at 877 KB
+- [x] [Regression]: `npm test` → quality gate + **113/113** green
+- [x] [Unplanned — ESLint vs Stryker sandbox]: `npm test` with a `.stryker-tmp/sandbox-*` present → was 15 parsing errors, now green
 
 ### Test Infrastructure
 
@@ -114,6 +115,12 @@ requested "crash reds, low score greens" contract.
 - **Removing the `json` reporter exceeds the operator's explicit list**: justified as vestigial — its only consumer was deleted in `ccdaf90`. Mitigation: flag it explicitly at QA so it can be vetoed cheaply.
 - **No CI-config test harness exists**: verification is operational rather than automated, consistent with the original phase of this task. Mitigation: every behavior above names a concrete command and expected exit status.
 
+## Build Deviations
+
+1. **Added an unplanned fix: ESLint now ignores `.stryker-tmp/`** (`eslint.config.js`). Step 7's `npm test` failed with 15 parsing errors from a leftover `.stryker-tmp/sandbox-*`. Root cause is a defect this branch introduced: `eslint.config.js` keeps an `ignores` list of every generated directory, and Stryker's temp dir was never added. Prettier is unaffected because Prettier 3 reads `.gitignore`; ESLint flat config does not. Effect was that `npm test`, `npm run quality`, and `test:ci` all broke locally for anyone who had run Stryker. Fixed at the cause rather than by running `clean`, which would only defer it to the next run.
+2. **`timeout-minutes` raised from the planned 20 to 30.** A forced full run took 2m6s wall at 15 workers but consumed ~27 min of CPU. On a 4-vCPU runner that projects to roughly 8-15 min wall, which puts 20 uncomfortably close to a false red on a job that is explicitly never supposed to red on anything but a broken harness. 30 still catches a genuine hang against the six-hour default.
+3. **Renamed the job key as well as its display name** (`metrics` → `mutation`). The plan only called for the display name; renaming both keeps them coherent, and nothing references the key.
+
 ## Preflight Findings
 
 - **[Blocking, resolved]** Plan steps were ordered implementation-then-verify. Amended to explicit RED → change → GREEN per step, plus a new step 1 that proves the crash-reds contract empirically before any edit.
@@ -130,5 +137,5 @@ requested "crash reds, low score greens" contract.
 - [x] Implementation plan complete
 - [x] Technology validation complete
 - [x] Preflight
-- [ ] Build
+- [x] Build
 - [ ] QA
