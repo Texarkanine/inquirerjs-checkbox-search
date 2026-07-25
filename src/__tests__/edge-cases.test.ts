@@ -107,7 +107,6 @@ describe('Edge cases', () => {
 
     // Clear and search with unicode
     await events.keypress('backspace');
-    await events.keypress('backspace'); // Emoji might need multiple backspaces
     await events.type('Iñt');
     await waitForCondition(() => {
       const currentScreen = getScreen();
@@ -119,5 +118,38 @@ describe('Edge cases', () => {
     screen = getScreen();
     expect(screen).toContain('Iñtërnâtiônàlizætiøn');
     expect(screen).not.toContain('🚀 Rocket');
+  });
+
+  describe('backspace deletes one grapheme cluster', () => {
+    // Each search term below is a single grapheme built from more than one code
+    // point (except the control case). One backspace must clear the whole
+    // cluster: code-point deletion would leave debris that keeps filtering.
+    // Debris is detectable because 'Banana' has no 'e' — it only reappears when
+    // the search term is truly empty.
+    it.each([
+      ['ZWJ sequence', '👨‍👩‍👧'],
+      ['regional indicator flag', '🇺🇸'],
+      ['skin tone modifier', '👍🏽'],
+      ['combining mark', 'e\u0301'],
+      ['single code point emoji', '😀'],
+    ])('should clear a %s in one press', async (_name, term) => {
+      const { events, getScreen } = await render(checkboxSearch, {
+        message: 'Select fruits',
+        choices: ['Apple', 'Banana', 'Cherry'],
+      });
+
+      await events.type(term);
+      await waitForCondition(() =>
+        getScreen().includes('No choices available'),
+      );
+
+      await events.keypress('backspace');
+      await waitForCondition(() => getScreen().includes('Banana'));
+
+      const screen = getScreen();
+      expect(screen).toContain('Apple');
+      expect(screen).toContain('Banana');
+      expect(screen).toContain('Cherry');
+    });
   });
 });
