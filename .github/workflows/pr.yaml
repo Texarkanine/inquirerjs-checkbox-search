@@ -74,7 +74,3 @@ jobs:
 
       - name: Mutation testing (advisory)
         run: npm run test:mutate
-
-      - name: Write metrics summary
-        if: always()
-        run: node scripts/ci-metrics-summary.js

@@ -79,7 +79,7 @@
     "test:coverage:advisory": "vitest run --coverage --coverage.thresholds.lines=0 --coverage.thresholds.branches=0 --coverage.thresholds.functions=0 --coverage.thresholds.statements=0 --coverage.reporter=text --coverage.reporter=json-summary",
     "test:mutate": "stryker run",
     "test:mutate:dry": "stryker run --dryRunOnly",
-    "test:metrics": "npm run test:coverage:advisory && npm run test:mutate && node scripts/ci-metrics-summary.js",
+    "test:metrics": "npm run test:coverage:advisory && npm run test:mutate",
     "test:ui": "vitest --ui",
     "typecheck": "tsc --noEmit",
     "attw": "attw --pack",

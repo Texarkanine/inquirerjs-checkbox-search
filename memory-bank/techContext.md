@@ -24,7 +24,7 @@ Tests run in **Vitest** (configured in `vitest.config.ts`) and drive the prompt 
 - Unit-only: `npm run test:unit`.
 - Single test or group by name: `npx vitest run -t "TEST_NAME"`.
 - Coverage: `npm run test:coverage` (V8 provider via `@vitest/coverage-v8`).
-- Mutation testing (optional/advisory): StrykerJS via `stryker.config.json`; `npm run test:mutate:dry` / `npm run test:mutate` / `npm run test:metrics`. PR workflow job _Coverage & mutation (advisory)_ reports line/branch/mutation scores with no metric thresholds (see `.github/workflows/pr.yaml`).
+- Mutation testing (optional/advisory): StrykerJS via `stryker.config.json`; `npm run test:mutate:dry` / `npm run test:mutate` / `npm run test:metrics`. PR workflow job _Coverage & mutation (advisory)_ logs line/branch/mutation scores with no metric thresholds (see `.github/workflows/pr.yaml`).
 - See `.cursor/rules/dev-practices.mdc` and `.cursor/rules/shared/test-running-practices.mdc` for required test-running conventions.
 
 ## Package Correctness
