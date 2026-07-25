@@ -97,3 +97,14 @@ Rework triggered by review of the branch diff on [PR #146](https://github.com/Te
     - `--since` is a Stryker.NET feature, not StrykerJS; incremental mode is the JS equivalent and diffs per-mutant, not per-file.
     - `ccdaf90` removed `ci-metrics-summary.js` on the rationale "tools already log scores" — that rationale is now the accepted answer to visibility, not a gap to fill.
     - The `json` reporter added to `stryker.config.json` has never actually run: the recorded run's config shows `reporters: ["html","clear-text","progress"]`, and `reports/mutation/` contains only `mutation.html`.
+
+## 2026-07-25 - COMPLEXITY-ANALYSIS (rework) - COMPLETE
+
+* Work completed
+    - Classified the PR #146 rework as **Level 2**
+    - Recreated ephemeral `activeContext.md` and stubbed `tasks.md`; preserved `projectbrief.md`, `progress.md`, `reflection/`, and `stryker-poc-decision.md`
+* Decisions made
+    - Level 2: modification of existing quality tooling, contained to the CI/config subsystem; no product code and no architectural impact, but too broad across files for Level 1
+    - Task ID stays `issue-145-stryker-poc` so the rework archives with the original work
+* Insights
+    - The rework is mostly deletion; the only additive change is a job timeout
