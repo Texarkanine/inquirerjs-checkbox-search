@@ -43,3 +43,38 @@ jobs:
       - name: Check exports
         if: matrix.node-version == 22
         run: npm run attw
+
+  # Advisory metrics: report line/branch coverage and mutation score with no
+  # metric thresholds. Failures here are tool/test crashes only — not score gates.
+  metrics:
+    name: Coverage & mutation (advisory)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Stryker incremental results
+        uses: actions/cache@v5
+        with:
+          path: reports/stryker-incremental.json
+          key: stryker-incremental-${{ github.sha }}
+          restore-keys: |
+            stryker-incremental-
+
+      - name: Line/branch coverage (advisory)
+        run: npm run test:coverage:advisory
+
+      - name: Mutation testing (advisory)
+        run: npm run test:mutate
+
+      - name: Write metrics summary
+        if: always()
+        run: node scripts/ci-metrics-summary.js
