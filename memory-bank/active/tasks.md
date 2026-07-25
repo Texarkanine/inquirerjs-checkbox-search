@@ -48,4 +48,4 @@ See plan history: dry-run unblocked after backspace fix; 602 mutants.
 - [x] Technology validation complete
 - [x] Preflight
 - [x] Build
-- [ ] QA
+- [x] QA

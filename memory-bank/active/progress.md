@@ -56,3 +56,14 @@ Prove out StrykerJS mutation testing on this repo per [issue #145](https://githu
 * Insights
     - `@inquirer/testing` `keypress('backspace')` does not mutate `rl.line`; prompts that only sync from `rl.line` fail under that harness
     - Render-string / theme survivors dominate the long tail; high-value gaps are filter short-circuit, defaults, and pageSize bounds
+
+## 2026-07-25 - QA - COMPLETE
+
+* Work completed
+    - Semantic review against plan/brief (KISS/DRY/YAGNI/completeness/regression/integrity/docs)
+    - Added mutation-testing scripts to `CONTRIBUTING.md` Testing section
+    - Wrote `.qa-validation-status` = PASS
+* Decisions made
+    - No substantive rework required
+* Insights
+    - Maintainer-facing test command docs must track new npm scripts even for advisory tooling
