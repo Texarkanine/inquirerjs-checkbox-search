@@ -4,6 +4,12 @@ on:
   pull_request:
     branches: [main]
 
+# Both jobs execute PR-controlled code (`npm ci` lifecycle scripts, Stryker, Vitest)
+# and neither performs authenticated git, so the token is read-only and is not left
+# available to the job after checkout.
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.number }}
   cancel-in-progress: true
@@ -17,6 +23,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v6
@@ -56,6 +64,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Use Node.js 22
         uses: actions/setup-node@v6

@@ -49,7 +49,7 @@ As a maintainer, I want the PR mutation check to earn its runtime — proving mu
 
 ### Use-Case 1
 
-A contributor opens a PR. The `metrics` job runs mutation testing only, logs the score, and passes green regardless of the score. The contributor can read the number in the build log.
+A contributor opens a PR. The `mutation` job runs mutation testing only, logs the score, and passes green regardless of the score. The contributor can read the number in the build log.
 
 ### Use-Case 2
 
@@ -63,10 +63,11 @@ A PR breaks the test harness so Stryker crashes, or the run hangs past the timeo
 4. Remove the `"concurrency": 4` pin from `stryker.config.json` so Stryker uses its cores−1 default per machine.
 5. Remove the dead `stryker-tmp/` entry from `.gitignore` and `clean` (Stryker's temp dir is `.stryker-tmp`).
 6. Update `CONTRIBUTING.md` and `memory-bank/techContext.md` to match the surviving scripts and job behavior.
+7. Rename the job to `mutation` / _Mutation (advisory)_ — surfaced during preflight, once requirement 1 left it with nothing to report but the mutation score. Requirements 1 and 3 above name the pre-rename `metrics` job deliberately.
 
 ## Constraints
 
-1. **Keep the `metrics` job on PRs.** It is a visibility and completion check, not dead weight.
+1. **Keep the `mutation` job on PRs.** It is a visibility and completion check, not dead weight.
 2. **Keep the `actions/cache` step** for Stryker's incremental file. Do not add main-branch seeding.
 3. **Keep `incremental: true`** in `stryker.config.json` for local accumulation.
 4. **No reporting machinery**: no `$GITHUB_STEP_SUMMARY` step, no PR comment, no summary script. Build logs are the visibility surface.
@@ -75,7 +76,7 @@ A PR breaks the test harness so Stryker crashes, or the run hangs past the timeo
 
 ## Acceptance Criteria
 
-1. The `metrics` job runs mutation testing only and has a timeout.
+1. The `mutation` job runs mutation testing only and has a timeout.
 2. No npm script references coverage-with-thresholds-disabled; `npm run` surface has no dead entries.
 3. A low mutation score leaves the job green; a Stryker crash or timeout leaves it red.
 4. `CONTRIBUTING.md` and `techContext.md` describe only scripts and behavior that exist.

@@ -668,8 +668,10 @@ export default createPrompt(
       // Handle backspace from React search state. @inquirer/testing's
       // keypress('backspace') does not mutate rl.line, and relying only on
       // rl.line leaves the filter stuck in tests (and any non-TTY harness).
-      // Updating via searchTerm + updateSearchTerm keeps TTY and tests aligned;
-      // Array.from pops a full code point so emoji filters clear in one press.
+      // Updating via searchTerm + updateSearchTerm keeps TTY and tests aligned.
+      // Array.from pops a whole code point, never half a surrogate pair. Like
+      // readline, this is code-point rather than grapheme-cluster deletion, so
+      // ZWJ emoji, flags, and combining marks take more than one press.
       if (isBackspaceKey(key)) {
         const chars = Array.from(searchTerm);
         chars.pop();
