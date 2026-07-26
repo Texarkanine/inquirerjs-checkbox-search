@@ -19,6 +19,11 @@ import colors from 'yoctocolors-cjs';
 import figures from '@inquirer/figures';
 import ansiEscapes from 'ansi-escapes';
 
+/** Reused across keypresses; constructing a Segmenter is not cheap. */
+const graphemeSegmenter = new Intl.Segmenter(undefined, {
+  granularity: 'grapheme',
+});
+
 /**
  * Theme configuration for the checkbox-search prompt
  */
@@ -669,13 +674,16 @@ export default createPrompt(
       // keypress('backspace') does not mutate rl.line, and relying only on
       // rl.line leaves the filter stuck in tests (and any non-TTY harness).
       // Updating via searchTerm + updateSearchTerm keeps TTY and tests aligned.
-      // Array.from pops a whole code point, never half a surrogate pair. Like
-      // readline, this is code-point rather than grapheme-cluster deletion, so
-      // ZWJ emoji, flags, and combining marks take more than one press.
+      // One press deletes one grapheme cluster, not one code point: readline is
+      // code-point based, but this prompt renders the search term itself, so a
+      // partial cluster would be visible debris. Deliberate divergence; see #148.
       if (isBackspaceKey(key)) {
-        const chars = Array.from(searchTerm);
-        chars.pop();
-        updateSearchTerm(chars.join(''));
+        updateSearchTerm(
+          [...graphemeSegmenter.segment(searchTerm)]
+            .slice(0, -1)
+            .map((s) => s.segment)
+            .join(''),
+        );
         return;
       }
 
