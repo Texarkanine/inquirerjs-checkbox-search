@@ -1,11 +1,12 @@
 # Active Context
 
 ## Current Task: issue-147-max-test-qa / M2-slobac-audit
-**Phase:** COMPLEXITY-ANALYSIS - COMPLETE
+**Phase:** PLAN - COMPLETE
 
 ## What Was Done
-- Advanced L4 past M1 (PR #157 merged); first unchecked milestone is M2 SLOBAC audit
-- Classified M2 as Level 2: self-contained test-suite enhancement (audit + High-smell remediation)
+- Classified M2 as Level 2; wrote TDD/remediation plan for SLOBAC audit + High (and issue/invariant) smell fixes
+- Scoped remediation to High slugs + `naming-lies` + `presentation-coupled`; deferred other Medium/Low with explicit notes
+- Sequenced: baseline audit → triage → kill-power remediations → redundancy/naming → re-audit loop → quality/PR
 
 ## Next Step
-- Load Level 2 workflow and execute the plan phase
+- Preflight validation of the Level 2 plan
