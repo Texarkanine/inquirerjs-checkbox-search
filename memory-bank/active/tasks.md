@@ -1,5 +1,5 @@
-# Current Task: issue-147-max-test-qa
+# Current Task: issue-147-max-test-qa / M1-coverage-closure
 
-**Complexity:** Level 4
+**Complexity:** Level 2
 
-Task list is populated per-milestone by each sub-run's own level-specific planning phase. See `memory-bank/active/milestones.md` for the milestone breakdown.
+Task list will be populated by the Level 2 planning phase.
