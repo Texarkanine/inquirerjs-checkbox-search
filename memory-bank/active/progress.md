@@ -39,3 +39,18 @@ Close the coverage gap in `src/__tests__/` to 100% branch and line on the suppor
     - Amended B1 to use Enter-only submit as the semantic oracle (avoid new `◉`/`◯` asserts)
 * Insights
     - `selection.test.ts` already couples to default checked glyphs; M1 should not add more of that debt even though the suite has precedent
+
+## 2026-07-26 - BUILD - COMPLETE
+
+* Work completed
+    - Closed all 15 previously uncovered lines; suite now 131 tests, lines/funcs 100%, branches 96.28%
+    - Kill-verified B1–B9 ranges; strengthened non-TTY completion to kill `cursorShow` `if (true)` mutant
+    - Triage added nameless choice, non-Error source throw, `columns` fallback, empty-filter arrow no-op
+    - Documented remaining branch arms (185, 238, 722, 734, 805, 850 `??`, 905 OR arms) as out-of-surface / defensive
+* Decisions made
+    - No product-code changes
+    - Targeted Stryker must use a fresh nonexistent `--incrementalFile` (not `--incremental=false`, not `--force` against the shared report)
+    - Deferred validate `setStatus('done')`→`""` survivor and empty-filter `if (false) return` near-equivalent to M3
+* Insights
+    - `defaultFilter`'s empty-term return is dead under the prompt because `filteredItems` short-circuits first — a classic "covered helper API vs prompt path" trap
+    - `makeTheme` deep-merge makes `nocursor ?? ' '` independently untestable without exporting or breaking theme defaults

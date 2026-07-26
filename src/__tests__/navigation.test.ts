@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render } from '@inquirer/testing';
 import checkboxSearch, { Separator } from '../index.js';
 
@@ -466,5 +466,45 @@ describe('Navigation', () => {
     screen = getScreen();
     expect(screen).toContain('❯ ◉ Item 1');
     expect(screen).toContain('◉ Item 2'); // Should still be selected
+  });
+
+  /**
+   * B4: while status !== 'idle' (async source loading), navigation/action keys
+   * must be ignored so the prompt neither moves nor submits.
+   */
+  it('should ignore navigation keys while async source is loading', async () => {
+    let resolveSource!: (
+      value: ReadonlyArray<{ value: string; name: string }>,
+    ) => void;
+    const pendingSource = () =>
+      new Promise<ReadonlyArray<{ value: string; name: string }>>((resolve) => {
+        resolveSource = resolve;
+      });
+
+    const { answer, events, getScreen } = await render(checkboxSearch, {
+      message: 'Search items',
+      source: pendingSource,
+    });
+
+    expect(getScreen()).toMatch(/loading|wait/i);
+
+    await events.keypress('down');
+    await events.keypress('up');
+    await events.keypress('tab');
+    await events.keypress('enter');
+    await events.keypress('escape');
+
+    expect(getScreen()).toMatch(/loading|wait/i);
+    await expect(
+      Promise.race([
+        answer.then(() => 'resolved' as const),
+        Promise.resolve('pending' as const),
+      ]),
+    ).resolves.toBe('pending');
+
+    resolveSource([{ value: 'result1', name: 'Result 1' }]);
+    await vi.waitFor(() => {
+      expect(getScreen()).toContain('Result 1');
+    });
   });
 });

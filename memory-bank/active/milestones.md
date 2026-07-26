@@ -27,7 +27,8 @@ Strictly sequential — no parallelization opportunities. M2 audits the suite M1
 Established empirically during preflight, so no sub-run has to rediscover them:
 
 - **Stryker supports line-range targeting**, and it is fast enough for a per-test inner loop: `npx stryker run --mutate "src/index.ts:775-796" --reporters clear-text` mutated 31 mutants in 16 seconds versus ~2 minutes for a full run. This is what makes invariant 8 practical rather than aspirational.
-- **`--incremental false` does not work** — Stryker's CLI parses the bare `false` as a positional config-file argument and dies with `Invalid config file "false"`. Omit the flag or use `--incremental=false`.
+- **`--incremental false` does not work** — Stryker's CLI rejects unknown option `--incremental=false` / mis-parses bare `false`. Config has `"incremental": true`.
+- **Targeted kill-verify needs a fresh `--incrementalFile` path** (nonexistent file). Reusing the shared incremental report (or `--force`) retests/pollutes scores outside the mutate range; an empty JSON file crashes with `Unexpected end of JSON input`.
 - **21 of the repo's 32 `NoCoverage` mutants live in `src/index.ts:775-796`** alone, plus 3 survivors in the same block. Milestone 1 is therefore concentrated far more than its scattered line list suggests: the async `validate()` path is most of the work.
 
 ## Scope Rationale

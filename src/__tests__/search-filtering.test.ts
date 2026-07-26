@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@inquirer/testing';
-import checkboxSearch from '../index.js';
+import checkboxSearch, { Separator } from '../index.js';
 
 // Utility function to wait for a condition to be true with polling
 async function waitForCondition(
@@ -377,5 +377,56 @@ describe('Search and filtering', () => {
     expect(screen).not.toContain('Item One');
     expect(screen).not.toContain('Item Two');
     expect(screen).toContain('Another Item');
+  });
+
+  /**
+   * B2: filter rebuild must keep separators while dropping non-matching
+   * selectables (hits Separator.isSeparator in the filteredItems rebuild).
+   */
+  it('should preserve separators while filtering choices', async () => {
+    const { events, getScreen } = await render(checkboxSearch, {
+      message: 'Select items',
+      choices: [
+        new Separator('--- Fruits ---'),
+        'Apple',
+        'Banana',
+        new Separator('--- Other ---'),
+        'Cherry',
+      ],
+    });
+
+    await events.type('app');
+    await waitForCondition(() => {
+      const screen = getScreen();
+      return screen.includes('Apple') && !screen.includes('Banana');
+    });
+
+    const screen = getScreen();
+    expect(screen).toContain('--- Fruits ---');
+    expect(screen).toContain('--- Other ---');
+    expect(screen).toContain('Apple');
+    expect(screen).not.toContain('Banana');
+    expect(screen).not.toContain('Cherry');
+  });
+
+  /**
+   * When the filter matches nothing, up/down must no-op rather than throw
+   * (covers the empty selectableIndexes early return).
+   */
+  it('should ignore arrow navigation when filter matches no choices', async () => {
+    const { events, getScreen } = await render(checkboxSearch, {
+      message: 'Select items',
+      choices: ['Apple', 'Banana'],
+    });
+
+    await events.type('zzz');
+    await waitForCondition(() => !getScreen().includes('Apple'));
+
+    await events.keypress('down');
+    await events.keypress('up');
+
+    const screen = getScreen();
+    expect(screen).not.toContain('Apple');
+    expect(screen).not.toContain('Banana');
   });
 });

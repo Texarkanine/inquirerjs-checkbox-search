@@ -60,6 +60,27 @@ describe('Async behavior', () => {
     expect(screen).toMatch(/error|failed|network error/i);
   });
 
+  /**
+   * Non-Error throws from source must still surface the generic load-failure
+   * message (covers the non-Error arm of the catch ternary).
+   */
+  it('should show generic load failure when source throws a non-Error', async () => {
+    const errorSource = async () => {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      throw 'not-an-error';
+    };
+
+    const { getScreen } = await render(checkboxSearch, {
+      message: 'Search items',
+      source: errorSource,
+    });
+
+    vi.advanceTimersByTime(50);
+    await vi.runAllTimersAsync();
+
+    expect(getScreen()).toContain('Failed to load choices');
+  });
+
   it('should cancel previous requests when search changes', async () => {
     let callCount = 0;
     const mockSource = async (term?: string, opt?: { signal: AbortSignal }) => {

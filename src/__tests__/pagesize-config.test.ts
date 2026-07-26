@@ -160,6 +160,26 @@ describe('PageSize Configuration', () => {
         expect(calculateDescriptionLines(items, true)).toBeGreaterThan(1);
       });
 
+      it('should fall back to width 80 when stdout.columns is unavailable', () => {
+        const originalColumns = process.stdout.columns;
+        Object.defineProperty(process.stdout, 'columns', {
+          configurable: true,
+          value: undefined,
+        });
+
+        try {
+          const longDescription = 'x'.repeat(160);
+          const items = [createChoice(longDescription)];
+          // 160 chars / 80 width => 2 lines
+          expect(calculateDescriptionLines(items, true)).toBe(2);
+        } finally {
+          Object.defineProperty(process.stdout, 'columns', {
+            configurable: true,
+            value: originalColumns,
+          });
+        }
+      });
+
       it('should not wrap when autoBufferCountsLineWidth=false', () => {
         const longDescription =
           'This is a very long description that should wrap across multiple lines when considering terminal width';
