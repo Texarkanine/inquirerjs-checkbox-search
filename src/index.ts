@@ -130,9 +130,8 @@ type CheckboxSearchConfig<
     opt: { signal: AbortSignal },
   ) => ChoicesObject extends ReadonlyArray<string | Separator>
     ? ChoicesObject | Promise<ChoicesObject>
-    :
-        | ReadonlyArray<Choice<Value> | Separator>
-        | Promise<ReadonlyArray<Choice<Value> | Separator>>;
+    : | ReadonlyArray<Choice<Value> | Separator>
+      | Promise<ReadonlyArray<Choice<Value> | Separator>>;
 
   // Search and filtering options
   filter?: (
