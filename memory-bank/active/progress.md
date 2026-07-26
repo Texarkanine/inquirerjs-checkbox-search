@@ -29,3 +29,15 @@ Audit the test suite with SLOBAC and remediate all High-severity smells for issu
     - Build on existing branch `slobac-me-up`
 * Insights
     - M2 TDD is finding-driven (strengthen/rename/migrate existing cases), with invariant-8 kill-verify only when assertion bodies change — same "already-correct production code" amendment as M1
+
+## 2026-07-26 - PREFLIGHT - COMPLETE
+
+* Work completed
+    - Validated M2 Level 2 plan against suite reality; result **PASS** with plan amendments applied
+    - Confirmed behavior-sliced suite layout and `expectAnswerPending` helper pattern; no creative docs required
+    - Confirmed pre-existing `◉`/`◯` pins in `search-filtering` / `navigation` / `selection` — presentation-coupled remediation must replace oracles, not delete invariant tests
+* Decisions made
+    - Amended TDD steps to mirror M1 stub→implement→green→kill-verify for remediations
+    - Amended presentation-coupled step: answer-array first, theme injection second, shared helper only if repeated
+* Insights
+    - `basic-functionality.test.ts` already documents the preferred semantic oracle pattern M2 should extend when clearing glyph pins

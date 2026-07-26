@@ -1,12 +1,11 @@
 # Active Context
 
 ## Current Task: issue-147-max-test-qa / M2-slobac-audit
-**Phase:** PLAN - COMPLETE
+**Phase:** PREFLIGHT - COMPLETE
 
 ## What Was Done
-- Classified M2 as Level 2; wrote TDD/remediation plan for SLOBAC audit + High (and issue/invariant) smell fixes
-- Scoped remediation to High slugs + `naming-lies` + `presentation-coupled`; deferred other Medium/Low with explicit notes
-- Sequenced: baseline audit → triage → kill-power remediations → redundancy/naming → re-audit loop → quality/PR
+- Preflight PASS with amendments: M1-style TDD for remediations; presentation-coupled fixes must preserve selection-across-filter via answer-array/theme oracles
+- Plan ready for build on `slobac-me-up`
 
 ## Next Step
-- Preflight validation of the Level 2 plan
+- Build: run baseline SLOBAC audit, triage, remediate, re-audit, quality gate

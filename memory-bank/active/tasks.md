@@ -50,15 +50,15 @@ This milestone remediates existing tests; it does not add product behaviors. TDD
 
 3. **Remediate kill-power smells first** (`vacuous-assertion`, `pseudo-tested`, then High others)
    - Files: whichever `src/__tests__/*.test.ts` the audit names (historically: `descriptions`, `navigation`, `selection`, `search-filtering`; M1 also touched `validation`, `compatibility`, `basic-functionality`)
-   - Changes: Per finding — strengthen or rewrite the oracle to a semantic assertion; use theme-injection if styling must be proven. TDD cycle: edit test → `npx vitest run -t "…"` → kill-verify claimed lines when the assertion body changed.
+   - Changes: Per finding — strengthen or rewrite the oracle to a semantic assertion; use theme-injection if styling must be proven. TDD cycle (M1 amendment for already-correct production code): if adding a new replacement case, stub the empty `it(...)` first; then implement the oracle → `npx vitest run -t "…"` (green) → kill-verify claimed lines when the assertion body changed. Renames with unchanged bodies skip kill-verify.
 
 4. **Remediate redundancy / fossils / naming**
    - Files: suites named by audit; possible delete/migrate of a suite file
    - Changes: Rename liey titles; migrate unique coverage into the matching behavior-sliced suite before deleting duplicates; re-run affected tests after each migration.
 
 5. **Clear presentation-coupled findings (if any)**
-   - Files: audit-named suites
-   - Changes: Replace glyph/ANSI/copy pins with semantic or theme-override oracles. Do not "fix" by deleting the only assertion of a load-bearing path.
+   - Files: audit-named suites — known pre-existing glyph pins include `search-filtering.test.ts` (`should maintain selections across filtering` and neighbors) and much of `navigation.test.ts` / `selection.test.ts`
+   - Changes: Replace glyph/ANSI/copy pins; **do not delete** the selection-across-filter cases. Preference order for replacements: (1) answer-array / behavioral oracles as in `basic-functionality.test.ts` ("Oracle is the answer array — not default-theme checked glyphs"), (2) theme-injected markers when mid-prompt visibility must be asserted, (3) extract a tiny helper under `src/__tests__/helpers/` only if the same injection is repeated across suites. Never "fix" by deleting the only assertion of a load-bearing path.
 
 6. **Re-audit loop**
    - Files: `.slobac/<new-run-id>/`
@@ -102,6 +102,11 @@ No new technology - validation not required. Audit uses the existing local `slob
 - [x] Implementation plan complete
 - [x] Technology validation complete
 - [x] Pre-Mortem complete
-- [ ] Preflight
+- [x] Preflight
 - [ ] Build
 - [ ] QA
+
+## Preflight Amendments (2026-07-26)
+
+1. TDD cycle for remediations explicitly mirrors M1: stub new replacement cases first; strengthen → green → kill-verify; renames skip kill-verify.
+2. Presentation-coupled remediation must preserve selection-across-filter coverage; prefer answer-array oracles, then theme injection, then a shared helper if repetition appears.
