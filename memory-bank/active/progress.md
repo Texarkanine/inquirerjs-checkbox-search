@@ -27,3 +27,15 @@ Close the coverage gap in `src/__tests__/` to 100% branch and line on the suppor
     - cursorShow asserted after successful prompt completion under forced TTY; out-of-surface fallback if harness never runs effect cleanup
 * Insights
     - Suite has zero existing `default:` option coverage, so line 478 is a clean greenfield case rather than an extension of a half-written path
+
+## 2026-07-26 - PREFLIGHT - COMPLETE
+
+* Work completed
+    - Validated M1 Level 2 plan against suite reality; result **PASS** with plan amendments applied
+    - Confirmed no existing async-validate / `default:` / `Invalid selection` coverage to conflict with
+    - Confirmed `search-filtering.test.ts` needs a new `Separator` import for B2
+* Decisions made
+    - Amended TDD steps to stub → implement → run → kill-verify (invariant 8), dropping incorrect "confirm red" language for already-correct production code
+    - Amended B1 to use Enter-only submit as the semantic oracle (avoid new `◉`/`◯` asserts)
+* Insights
+    - `selection.test.ts` already couples to default checked glyphs; M1 should not add more of that debt even though the suite has precedent

@@ -12,7 +12,7 @@ Close all remaining uncovered lines (and as many uncovered branches as are hones
 
 Uncovered lines from current `coverage/lcov.info` (15): `478`, `531`, `592`, `660`, `776-777`, `781`, `783-786`, `788-789`, `793`, `795`.
 
-- **B1 default pre-check**: render with `default: ['Apple']` and static choices → Apple appears checked without a tab; submit includes Apple.
+- **B1 default pre-check**: render with `default: ['Apple']` and static choices → submit with Enter only (no tab) resolves to `['Apple']`. Do not assert default theme checked glyphs (`◉`/`◯`); the answer is the semantic oracle.
 - **B2 separator survives filter rebuild**: choices include `Separator` + selectables; type a filter that keeps ≥1 selectable → separators remain in the filtered list / screen (hits `Separator.isSeparator` at line 531).
 - **B3 TTY cursor show on unmount**: force `process.stdout.isTTY = true`, spy `write`, render, complete the prompt (select + enter) → `write` was called with `cursorShow` (`\u001b[?25h` / equivalent) after cleanup (line 592).
 - **B4 nav blocked while not idle**: async `source` that stays pending; while loading, press `up`/`down`/`tab`/`enter` → no selection change, prompt does not complete, still loading (line 660).
@@ -73,35 +73,44 @@ Pass criterion: mutants in the claimed range move from `NoCoverage`/`Survived` t
 
 ## Implementation Plan
 
+TDD ordering for every behavior below (existing-correct production code — invariant 8 substitutes for "watch it fail first"):
+
+1. Stub an empty `it(...)` with a self-descriptive name (and a multi-line comment if the name is not enough).
+2. Implement the test body (assertions + harness setup).
+3. Run the new test with `npx vitest run -t "…"` — expect PASS against current `src/index.ts`.
+4. Kill-verify the claimed line range with targeted Stryker; only then mark the behavior done.
+
+Do **not** edit `src/index.ts` in any step unless a test exposes a real defect; if that happens, stop, TDD a `fix:` separately, and record it in progress.
+
 1. **Baseline snapshot** — re-run `npm run test:coverage`; confirm the 15-line / 24-branch gap still matches plan assumptions; note counts in progress.
    - Files: none (read-only)
    - Changes: none
 
-2. **B5 sync `validate === false`** — add failing test in `validation.test.ts`; confirm red; implement (test-only); kill-verify `775-778`.
+2. **B5 sync `validate === false`** — stub → implement → run → kill-verify `775-778`.
    - Files: `src/__tests__/validation.test.ts`
-   - Changes: one `it(...)` asserting `Invalid selection` and unresolved `answer`
+   - Changes: one `it(...)` asserting `Invalid selection` on screen and that `answer` is still pending
 
-3. **B6–B9 async validate paths** — add four cases (string / false / true / reject); use `nextRender` or equivalent settle wait; kill-verify `775-796`.
+3. **B6–B9 async validate paths** — stub all four → implement → run → kill-verify `775-796` once as a batch.
    - Files: `src/__tests__/validation.test.ts`
-   - Changes: four `it(...)` blocks; may share a small local helper for select-one-and-enter
+   - Changes: four `it(...)` blocks; may share a small local helper for select-one-and-enter; use `nextRender` after enter
 
-4. **B1 default pre-check** — add case; kill-verify around `477-481`.
+4. **B1 default pre-check** — stub → implement → run → kill-verify `477-481`.
    - Files: `src/__tests__/basic-functionality.test.ts`
-   - Changes: one `it(...)` with `default: [...]`
+   - Changes: one `it(...)` with `default: [...]`; oracle is Enter-only submit → `['Apple']` (no glyph asserts)
 
-5. **B2 separator + filter** — add case; kill-verify `530-535`.
+5. **B2 separator + filter** — stub → implement → run → kill-verify `530-535`.
    - Files: `src/__tests__/search-filtering.test.ts`
-   - Changes: one `it(...)` with `Separator` + typed filter
+   - Changes: one `it(...)`; add `Separator` to the existing import from `../index.js` (suite has no Separator import today)
 
-6. **B4 status-gated navigation** — add case with pending `source`; press nav keys during loading; kill-verify `659-661`.
+6. **B4 status-gated navigation** — stub → implement → run → kill-verify `659-661`.
    - Files: `src/__tests__/navigation.test.ts`
-   - Changes: one `it(...)`; import `vi` / fake timers as needed
+   - Changes: one `it(...)`; import `vi` / fake timers as needed (pattern from `async-behavior.test.ts`)
 
-7. **B3 TTY cursorShow** — extend compatibility TTY suite: force TTY, spy write, complete prompt, assert show sequence; kill-verify `590-594`.
+7. **B3 TTY cursorShow** — stub → implement → run → kill-verify `590-594`.
    - Files: `src/__tests__/compatibility.test.ts`
-   - Changes: one `it(...)` (or extend existing TTY case carefully without weakening hide assertion)
+   - Changes: one new `it(...)` under TTY Detection (leave existing hide-only case intact)
 
-8. **Coverage triage loop** — `npm run test:coverage`; for each remaining uncovered line/branch: either add a semantic test (same suites as above / closest behavior slice) or record out-of-surface justification in `progress.md` per invariant 9.
+8. **Coverage triage loop** — `npm run test:coverage`; for each remaining uncovered line/branch: either add a semantic test via the same stub→implement→run→kill-verify cycle, or record out-of-surface justification in `progress.md` per invariant 9.
    - Files: whichever suites own the remaining arms; `memory-bank/active/progress.md`
    - Changes: zero or more additional `it(...)`; documentation of gaps
 
@@ -134,6 +143,12 @@ No new technology - validation not required. Stryker line-range targeting alread
 - **Wrong suite placement creates a parallel "coverage" dump file**: Plan response — mapping table forbids new files; if a case does not fit the three named suites / basic / search-filtering, stop and ask rather than inventing `coverage-gaps.test.ts`.
 - **Silent product bug fix folded into test PR**: Already covered by invariant 1 — any `src/index.ts` edit must be a separate TDD'd `fix:` called out in progress.
 
+## Preflight Amendments
+
+- Replaced per-step "confirm red / implement" wording with the invariant-8 cycle (stub → implement test → run PASS → kill-verify). Tests target already-correct production code; a red-first signal is unavailable.
+- Tightened B1 oracle to Enter-only submit → selected values (no `◉`/`◯` theme-glyph asserts).
+- Noted `search-filtering.test.ts` must add a `Separator` import for B2.
+
 ## Status
 
 - [x] Initialization complete
@@ -141,6 +156,6 @@ No new technology - validation not required. Stryker line-range targeting alread
 - [x] Implementation plan complete
 - [x] Technology validation complete
 - [x] Pre-Mortem complete
-- [ ] Preflight
+- [x] Preflight
 - [ ] Build
 - [ ] QA
