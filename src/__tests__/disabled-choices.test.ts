@@ -26,7 +26,7 @@ describe('Disabled choices', () => {
     await expect(answer).resolves.toEqual(['cherry']);
   });
 
-  it('should display disabled choices with different styling', async () => {
+  it('should show default and custom disabled reason text', async () => {
     const { getScreen } = await render(checkboxSearch, {
       message: 'Select items',
       choices: [
@@ -40,14 +40,15 @@ describe('Disabled choices', () => {
       ],
     });
 
-    const screen = getScreen();
-    expect(screen).toContain('Enabled Item');
-    expect(screen).toContain('Disabled Item 1');
-    expect(screen).toContain('Disabled Item 2');
+    const lines = getScreen().split('\n');
+    const enabled = lines.find((l) => l.includes('Enabled Item'));
+    const disabledDefault = lines.find((l) => l.includes('Disabled Item 1'));
+    const disabledCustom = lines.find((l) => l.includes('Disabled Item 2'));
 
-    // Should show disabled indicator
-    expect(screen).toContain('disabled');
-    expect(screen).toContain('Custom reason');
+    expect(enabled).toBeDefined();
+    expect(disabledDefault).toContain('(disabled)');
+    expect(disabledCustom).toContain('(Custom reason)');
+    expect(enabled).not.toMatch(/\([^)]+\)/);
   });
 
   it('should show disabled status for disabled choices', async () => {
@@ -63,9 +64,11 @@ describe('Disabled choices', () => {
       ],
     });
 
-    const screen = getScreen();
-    expect(screen).toContain('Available Item');
-    expect(screen).toContain('Disabled Item');
-    expect(screen).toContain('This item is disabled');
+    const lines = getScreen().split('\n');
+    const available = lines.find((l) => l.includes('Available Item'));
+    const disabled = lines.find((l) => l.includes('Disabled Item'));
+
+    expect(disabled).toContain('(This item is disabled)');
+    expect(available).not.toMatch(/\([^)]+\)/);
   });
 });

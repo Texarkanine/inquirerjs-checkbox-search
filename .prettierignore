@@ -21,3 +21,6 @@ package-lock.json
 # Memory bank ephemeral session files (not formatted here)
 memory-bank/active/**
 
+# SLOBAC audit workdirs
+.slobac/
+

@@ -1,7 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render } from '@inquirer/testing';
 import checkboxSearch, { Separator } from '../index.js';
-import { expectAnswerPending } from './helpers/expect-answer-pending.js';
 
 describe('Navigation', () => {
   it('should navigate through choices with arrow keys', async () => {
@@ -26,29 +25,6 @@ describe('Navigation', () => {
     // Should move cursor back to first item
     expect(screen).toContain('❯ ◯ Apple');
     expect(screen).not.toContain('❯ ◯ Banana');
-  });
-
-  it('should handle navigation with filtered results', async () => {
-    const { events, getScreen } = await render(checkboxSearch, {
-      message: 'Select items',
-      choices: [
-        { value: 'apple', name: 'Apple' },
-        { value: 'apricot', name: 'Apricot' },
-        { value: 'banana', name: 'Banana' },
-      ],
-    });
-
-    // Filter to show only items with 'ap'
-    await events.type('ap');
-    const screen = getScreen();
-    expect(screen).toContain('Apple');
-    expect(screen).toContain('Apricot');
-    expect(screen).not.toContain('Banana');
-
-    // Navigate through filtered results
-    await events.keypress('down');
-    await events.keypress('tab'); // Select second item (Apricot)
-    await events.keypress('enter');
   });
 
   it('should loop navigation when enabled', async () => {
@@ -84,6 +60,7 @@ describe('Navigation', () => {
 
     let screen = getScreen();
     const initialScreen = screen;
+    expect(initialScreen).toContain('❯ ◯ First');
 
     // Try to go up from first item
     await events.keypress('up');
@@ -95,6 +72,7 @@ describe('Navigation', () => {
     await events.keypress('down');
     await events.keypress('down');
     const lastScreen = getScreen();
+    expect(lastScreen).toContain('❯ ◯ Third');
 
     // Try to go down from last item
     await events.keypress('down');
@@ -144,18 +122,14 @@ describe('Navigation', () => {
     expect(screen).toContain('Angular');
     expect(screen).toContain('Svelte');
 
-    // Vue.js should still be selected
-    expect(screen).toContain('◉');
-
     // CRITICAL: The cursor should still be focused on Vue.js, not jumped to React
-    // We can verify this by checking that Vue.js has the cursor indicator
     const lines = screen.split('\n');
     const vueLine = lines.find((line: string) => line.includes('Vue.js'));
-    expect(vueLine).toContain('❯'); // Cursor should be on Vue.js line
-
-    // React should NOT have the cursor
     const reactLine = lines.find((line: string) => line.includes('React'));
+    expect(vueLine).toContain('❯');
+    expect(vueLine).toContain('◉');
     expect(reactLine).not.toContain('❯');
+    expect(reactLine).not.toContain('◉');
   });
 
   it('should maintain cursor position on focused item when clearing search filter', async () => {
@@ -256,9 +230,9 @@ describe('Navigation', () => {
     expect(svelteLine).not.toContain('❯'); // But cursor should NOT be on Svelte anymore
   });
 
-  // SEPARATOR NAVIGATION TESTS (formerly "CRITICAL BUG TESTS")
+  // Separator navigation
 
-  it('should navigate correctly with separators - up/down navigation', async () => {
+  it('should skip separators when navigating down', async () => {
     const { events, getScreen } = await render(checkboxSearch, {
       message: 'Select items',
       choices: [
@@ -467,40 +441,5 @@ describe('Navigation', () => {
     screen = getScreen();
     expect(screen).toContain('❯ ◉ Item 1');
     expect(screen).toContain('◉ Item 2'); // Should still be selected
-  });
-
-  /**
-   * B4: while status !== 'idle' (async source loading), navigation/action keys
-   * must be ignored so the prompt neither moves nor submits.
-   */
-  it('should ignore navigation keys while async source is loading', async () => {
-    let resolveSource!: (
-      value: ReadonlyArray<{ value: string; name: string }>,
-    ) => void;
-    const pendingSource = () =>
-      new Promise<ReadonlyArray<{ value: string; name: string }>>((resolve) => {
-        resolveSource = resolve;
-      });
-
-    const { answer, events, getScreen } = await render(checkboxSearch, {
-      message: 'Search items',
-      source: pendingSource,
-    });
-
-    expect(getScreen()).toMatch(/loading|wait/i);
-
-    await events.keypress('down');
-    await events.keypress('up');
-    await events.keypress('tab');
-    await events.keypress('enter');
-    await events.keypress('escape');
-
-    expect(getScreen()).toMatch(/loading|wait/i);
-    await expectAnswerPending(answer);
-
-    resolveSource([{ value: 'result1', name: 'Result 1' }]);
-    await vi.waitFor(() => {
-      expect(getScreen()).toContain('Result 1');
-    });
   });
 });

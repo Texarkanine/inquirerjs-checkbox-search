@@ -49,10 +49,7 @@ describe('Basic functionality', () => {
       choices: ['Option 1', 'Option 2'],
     });
 
-    const screen = getScreen();
-    expect(screen).toContain('Tab');
-    expect(screen).toContain('Enter'); // Capitalized as it appears in help text
-    expect(screen).toMatch(/Tab.*to select/i);
+    expect(getScreen()).toContain('(Tab to select, Enter to submit)');
   });
 
   it('should display custom help instructions', async () => {
@@ -86,7 +83,7 @@ describe('Basic functionality', () => {
   });
 
   /**
-   * B1: `default` pre-selects values so Enter alone (no tab) submits them.
+   * `default` pre-selects values so Enter alone (no tab) submits them.
    * Oracle is the answer array — not default-theme checked glyphs.
    */
   it('should submit default selections without toggling', async () => {

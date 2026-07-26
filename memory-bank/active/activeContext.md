@@ -1,11 +1,12 @@
 # Active Context
 
 ## Current Task: issue-147-max-test-qa / M2-slobac-audit
-**Phase:** PREFLIGHT - COMPLETE
+**Phase:** BUILD - COMPLETE (frozen)
 
 ## What Was Done
-- Preflight PASS with amendments: M1-style TDD for remediations; presentation-coupled fixes must preserve selection-across-filter via answer-array/theme oracles
-- Plan ready for build on `slobac-me-up`
+- SLOBAC audit/remediation on `src/__tests__/`; independent Opus + Sol re-audit caught leftovers same-model pass missed
+- Frozen re-audit loop (High kill-power bar, not infinite confirm); deferred edge-cases Phase B regroup
+- 128 tests green; no product-code changes
 
 ## Next Step
-- Build: run baseline SLOBAC audit, triage, remediate, re-audit, quality gate
+- QA semantic review of M2 remediations against plan

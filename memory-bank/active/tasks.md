@@ -103,10 +103,25 @@ No new technology - validation not required. Audit uses the existing local `slob
 - [x] Technology validation complete
 - [x] Pre-Mortem complete
 - [x] Preflight
-- [ ] Build
+- [x] Build (frozen — see Build Freeze)
 - [ ] QA
 
 ## Preflight Amendments (2026-07-26)
 
 1. TDD cycle for remediations explicitly mirrors M1: stub new replacement cases first; strengthen → green → kill-verify; renames skip kill-verify.
 2. Presentation-coupled remediation must preserve selection-across-filter coverage; prefer answer-array oracles, then theme injection, then a shared helper if repetition appears.
+
+## Build Freeze (2026-07-26)
+
+Stopped the re-audit loop after an independent Opus/Sol pass and remediation of clear High / issue-named smells. Acceptance is kill-power, not an empty findings list on every subsequent confirm.
+
+### Done
+
+1. Baseline audit + first remediation wave
+2. Independent Opus batch + Sol cross-suite re-audit; remediations through two Opus confirmation rounds
+3. Full suite green (128); quality gate green; `.slobac/` ignored
+
+### Explicit deferrals
+
+- Sol Phase B: dissolve `edge-cases.test.ts` into behavior-sliced suites — organizational; conflicts with documented grapheme placement in `systemPatterns.md`
+- Further confirmation-audit nits that do not clearly increase kill-power

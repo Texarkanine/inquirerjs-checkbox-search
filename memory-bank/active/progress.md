@@ -41,3 +41,20 @@ Audit the test suite with SLOBAC and remediate all High-severity smells for issu
     - Amended presentation-coupled step: answer-array first, theme injection second, shared helper only if repeated
 * Insights
     - `basic-functionality.test.ts` already documents the preferred semantic oracle pattern M2 should extend when clearing glyph pins
+
+## 2026-07-26 - BUILD - COMPLETE
+
+* Work completed
+    - Baseline SLOBAC audit (Grok-orchestrated) on `src/__tests__/`; remediated first-wave High / naming / loose-text / fossil findings
+    - Independent re-audit: Claude Opus 5 batch assessors + GPT-5.6 Sol cross-suite — Opus surfaced ~16 High leftovers Grok missed; remediations applied through two Opus confirmation rounds
+    - Strengthened oracles: abort-signal cancel proof, Loading choices… / required / empty / Network error pins, per-line disabled reasons, auto page-size exact count, selection-across-filter answer-array, Escape search-term clear, empty-filter nav frame-equality + recoverable cursor
+    - Migrations/deletes: async key-ignore → `async-behavior.test.ts`; page-size auto test absorbed into `page-sizing.test.ts`; removed filter-only navigation subset + duplicate Escape-clear + vacuous PageSize typeof tests
+    - Kill-verified key ranges (required 100%, desc-lines 100%, Network error kills, empty-choices kills); suite green at 128 tests; `.slobac/` gitignored
+* Decisions made
+    - **Freeze re-audit loop** after Opus/Sol independent pass + clear remediations — do not chase zero-finding confirmation forever; High kill-power bar, not infinite polish
+    - Deferred: Sol Phase B regroup of `edge-cases.test.ts` (organizational; grapheme/backspace placement is intentional per `systemPatterns.md`)
+    - Deferred: further Opus-pass naming/vacuous nits that would oscillate without adding kill-power
+    - No product-code changes
+* Insights
+    - Same-model audit of own remediations is weak; Opus found real High leftovers the remediating model missed
+    - Confirmation passes #2+ slide into diminishing returns (rename pedantry / slightly tighter pins) — freeze is correct

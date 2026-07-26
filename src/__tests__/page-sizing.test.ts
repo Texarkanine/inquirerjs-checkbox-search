@@ -23,23 +23,57 @@ describe('Page sizing', () => {
   });
 
   it('should use auto-sizing when no pageSize is specified', async () => {
-    const manyChoices = Array.from({ length: 15 }, (_, i) => ({
-      value: `item${i}`,
-      name: `Item ${i}`,
-    }));
+    const originalRows = (process.stdout as { rows?: number }).rows;
+    const hasOriginalRows = 'rows' in process.stdout;
 
-    // Test with default auto-sizing behavior
-    const { getScreen } = await render(checkboxSearch, {
-      message: 'Select items',
-      choices: manyChoices,
-      // No pageSize specified - should auto-size
-    });
+    if (!hasOriginalRows) {
+      Object.defineProperty(process.stdout, 'rows', {
+        configurable: true,
+        enumerable: true,
+        get: () => 24,
+      });
+    }
 
-    const screen = getScreen();
-    // Should show items (exact count depends on calculateDynamicPageSize)
-    expect(screen).toContain('Item 0');
-    // Should show multiple items (more than just first few)
-    expect(screen).toMatch(/Item [2-9]|Item 1[0-4]/);
+    const rowsSpy = vi.spyOn(process.stdout, 'rows', 'get').mockReturnValue(30);
+
+    try {
+      const manyChoices = Array.from({ length: 50 }, (_, i) => ({
+        value: `item${i}`,
+        name: `Item ${i}`,
+      }));
+
+      const { getScreen } = await render(checkboxSearch, {
+        message: 'Select items',
+        choices: manyChoices,
+        // No pageSize specified - should auto-size from terminal height
+      });
+
+      const expectedPageSize = calculateDynamicPageSize(7);
+      expect(expectedPageSize).toBe(24);
+
+      const screen = getScreen();
+      const visibleItems = screen
+        .split('\n')
+        .filter((line) => /Item \d+/.test(line)).length;
+      expect(visibleItems).toBe(expectedPageSize);
+      expect(screen).toContain('Item 0');
+      expect(screen).toContain(`Item ${expectedPageSize - 1}`);
+      expect(screen).not.toContain(`Item ${expectedPageSize}`);
+    } finally {
+      rowsSpy.mockRestore();
+      if (hasOriginalRows) {
+        Object.defineProperty(process.stdout, 'rows', {
+          configurable: true,
+          enumerable: true,
+          get: () => originalRows,
+        });
+      } else {
+        Object.defineProperty(process.stdout, 'rows', {
+          value: undefined,
+          configurable: true,
+        });
+      }
+    }
   });
 
   describe('calculateDynamicPageSize', () => {

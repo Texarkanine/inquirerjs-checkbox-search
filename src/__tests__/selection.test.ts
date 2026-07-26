@@ -17,17 +17,14 @@ describe('Multi-selection', () => {
     // Press tab to select first item
     await events.keypress('tab');
     screen = getScreen();
-
-    // Should show selection
-    expect(screen).toContain('◉'); // Should show at least one checked item
-    expect(screen).toContain('◯'); // Should still show unchecked items
+    expect(screen).toMatch(/◉.*Apple/);
+    expect(screen).toMatch(/◯.*Banana/);
+    expect(screen).toMatch(/◯.*Cherry/);
 
     // Press tab again to deselect
     await events.keypress('tab');
     screen = getScreen();
-
-    // Should be back to no selections
-    expect(screen).toContain('◯');
+    expect(screen).toMatch(/◯.*Apple/);
     expect(screen).not.toContain('◉');
   });
 
@@ -51,28 +48,18 @@ describe('Multi-selection', () => {
     // Type some search text
     await events.type('app');
     let screen = getScreen();
-    expect(screen).toContain('Search:');
-    expect(screen).toContain('app'); // Should show search term
+    expect(screen).toContain('Search: app');
 
-    // Press tab to select/toggle item - should NOT add tab character to search
+    // Press tab to select/toggle item - should NOT corrupt the search term
     await events.keypress('tab');
     screen = getScreen();
+    expect(screen).toContain('◉');
+    expect(screen).toContain('Search: app');
 
-    // Verify selection happened
-    expect(screen).toContain('◉'); // Should show Apple is selected
-
-    // Critical: Search term should still be 'app', NOT 'app\t' or 'app    ' (spaces from tab)
-    expect(screen).toContain('app'); // Should still show original search term
-    expect(screen).not.toMatch(/app\s+\t/); // Should not contain tab character after 'app'
-    expect(screen).not.toMatch(/Search:.*\t/); // Should not contain tab character in search line
-    expect(screen).not.toMatch(/app\s{2,}/); // Should not contain multiple spaces after 'app' (from tab conversion)
-
-    // Type more text - should work normally
+    // Type more text - should append cleanly
     await events.type('le');
     screen = getScreen();
-    expect(screen).toContain('apple'); // Should show 'apple' now
-    expect(screen).not.toMatch(/\t/); // Should not contain any tab characters anywhere
-    expect(screen).not.toMatch(/app\s+le/); // Should not have extra spaces between 'app' and 'le'
+    expect(screen).toContain('Search: apple');
   });
 
   /**
@@ -95,13 +82,8 @@ describe('Multi-selection', () => {
 
     let screen = getScreen();
 
-    // Should show selection happened (Test Item matches "test" search)
-    expect(screen).toContain('◉'); // Test Item should be selected
-
-    // Search should be 'test', not 'te    st' or similar with spaces
-    expect(screen).toContain('test'); // Should show clean concatenated search
-    expect(screen).not.toMatch(/te\s+st/); // Should NOT have spaces between te and st
-    expect(screen).not.toMatch(/Search:.*te\s{2,}/); // Should NOT have multiple spaces after te
+    expect(screen).toContain('◉');
+    expect(screen).toContain('Search: test');
   });
 
   /**
@@ -299,7 +281,7 @@ describe('Multi-selection', () => {
     expect(screen).toMatch(/◯.*Date/); // Date should not be selected
   });
 
-  it('should maintain selections when toggling same item', async () => {
+  it('clears the selection when the same item is toggled twice', async () => {
     const { events, getScreen } = await render(checkboxSearch, {
       message: 'Select items',
       choices: [
@@ -311,13 +293,14 @@ describe('Multi-selection', () => {
     // Select Apple
     await events.keypress('tab');
     let screen = getScreen();
-    expect(screen).toContain('◉'); // Apple selected
+    expect(screen).toMatch(/◉.*Apple/);
+    expect(screen).toMatch(/◯.*Banana/);
 
     // Deselect Apple
     await events.keypress('tab');
     screen = getScreen();
-    expect(screen).not.toContain('◉'); // Apple deselected
-    expect(screen).toContain('◯'); // All items unselected
+    expect(screen).toMatch(/◯.*Apple/);
+    expect(screen).not.toContain('◉');
   });
 
   it('should handle selection with multiple items having same starting letters', async () => {
@@ -330,16 +313,20 @@ describe('Multi-selection', () => {
       ],
     });
 
-    // Search for 'java' - should show both Java and JavaScript
+    // Search for 'java' - should show both Java and JavaScript as distinct rows
     await events.type('java');
     let screen = getScreen();
-    expect(screen).toContain('Java');
-    expect(screen).toContain('JavaScript');
+    const lines = screen.split('\n');
+    expect(
+      lines.some((l) => /\bJava\b/.test(l) && !l.includes('JavaScript')),
+    ).toBe(true);
+    expect(lines.some((l) => l.includes('JavaScript'))).toBe(true);
     expect(screen).not.toContain('Python');
 
     // Select the first item (Java)
     await events.keypress('tab');
     screen = getScreen();
-    expect(screen).toContain('◉'); // Java should be selected
+    expect(screen).toMatch(/◉.*\bJava\b/);
+    expect(screen).toMatch(/◯.*JavaScript/);
   });
 });
