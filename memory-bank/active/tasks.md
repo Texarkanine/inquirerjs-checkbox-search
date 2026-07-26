@@ -56,4 +56,4 @@ Recorded after triage; not chased with harness contortions:
 - [x] Pre-Mortem complete
 - [x] Preflight
 - [x] Build
-- [ ] QA
+- [x] QA

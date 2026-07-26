@@ -54,3 +54,14 @@ Close the coverage gap in `src/__tests__/` to 100% branch and line on the suppor
 * Insights
     - `defaultFilter`'s empty-term return is dead under the prompt because `filteredItems` short-circuits first — a classic "covered helper API vs prompt path" trap
     - `makeTheme` deep-merge makes `nocursor ?? ' '` independently untestable without exporting or breaking theme defaults
+
+## 2026-07-26 - QA - COMPLETE
+
+* Work completed
+    - Semantic review of M1 test additions against plan: KISS/DRY/YAGNI/completeness/regression/integrity
+    - Consolidated duplicated pending-answer races in `validation.test.ts` into `expectAnswerPending`
+    - Confirmed line/func 100%, branch leftovers documented, no product-code edits, no presentation-glyph oracles in new cases
+* Decisions made
+    - QA **PASS**; PR open remains the operator-facing delivery step after reflect (L4 sequential merge)
+* Insights
+    - Pending-answer polling via `Promise.race` + short timeout is the suite's practical substitute for an `@inquirer/testing` "still open" API

@@ -2,6 +2,17 @@ import { describe, it, expect } from 'vitest';
 import { render } from '@inquirer/testing';
 import checkboxSearch from '../index.js';
 
+async function expectAnswerPending(answer: Promise<unknown>): Promise<void> {
+  await expect(
+    Promise.race([
+      answer.then(() => 'resolved' as const),
+      new Promise<'pending'>((resolve) =>
+        setTimeout(() => resolve('pending'), 50),
+      ),
+    ]),
+  ).resolves.toBe('pending');
+}
+
 describe('Validation', () => {
   it('should enforce required selection', async () => {
     const { answer, events, getScreen } = await render(checkboxSearch, {
@@ -86,12 +97,7 @@ describe('Validation', () => {
     await nextRender();
 
     expect(getScreen()).toContain('Invalid selection');
-    await expect(
-      Promise.race([
-        answer.then(() => 'resolved'),
-        new Promise((resolve) => setTimeout(() => resolve('pending'), 50)),
-      ]),
-    ).resolves.toBe('pending');
+    await expectAnswerPending(answer);
   });
 
   /**
@@ -113,12 +119,7 @@ describe('Validation', () => {
     await nextRender();
 
     expect(getScreen()).toContain('Need a better selection');
-    await expect(
-      Promise.race([
-        answer.then(() => 'resolved'),
-        new Promise((resolve) => setTimeout(() => resolve('pending'), 50)),
-      ]),
-    ).resolves.toBe('pending');
+    await expectAnswerPending(answer);
   });
 
   /**
@@ -140,12 +141,7 @@ describe('Validation', () => {
     await nextRender();
 
     expect(getScreen()).toContain('Invalid selection');
-    await expect(
-      Promise.race([
-        answer.then(() => 'resolved'),
-        new Promise((resolve) => setTimeout(() => resolve('pending'), 50)),
-      ]),
-    ).resolves.toBe('pending');
+    await expectAnswerPending(answer);
   });
 
   /**
@@ -184,11 +180,6 @@ describe('Validation', () => {
     await nextRender();
 
     expect(getScreen()).toContain('Validation failed');
-    await expect(
-      Promise.race([
-        answer.then(() => 'resolved'),
-        new Promise((resolve) => setTimeout(() => resolve('pending'), 50)),
-      ]),
-    ).resolves.toBe('pending');
+    await expectAnswerPending(answer);
   });
 });
