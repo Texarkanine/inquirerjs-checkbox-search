@@ -1,11 +1,11 @@
 # Active Context
 
-## Current Task: issue-147-max-test-qa / M1-coverage-closure
-**Phase:** REFLECT COMPLETE
+## Current Task: issue-147-max-test-qa / M2-slobac-audit
+**Phase:** COMPLEXITY-ANALYSIS - COMPLETE
 
 ## What Was Done
-- M1 coverage closure complete: 131 tests, lines/funcs 100%, branches 96.28% with OOS documentation
-- Reflection written; `systemPatterns.md` separators list fixed; `techContext.md` targeted Stryker note added
+- Advanced L4 past M1 (PR #157 merged); first unchecked milestone is M2 SLOBAC audit
+- Classified M2 as Level 2: self-contained test-suite enhancement (audit + High-smell remediation)
 
 ## Next Step
-- Run `/niko` to advance L4 to the next milestone (after opening/merging the M1 PR referencing `[#147]`)
+- Load Level 2 workflow and execute the plan phase
