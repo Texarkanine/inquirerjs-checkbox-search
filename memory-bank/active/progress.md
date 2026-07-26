@@ -58,3 +58,24 @@ Audit the test suite with SLOBAC and remediate all High-severity smells for issu
 * Insights
     - Same-model audit of own remediations is weak; Opus found real High leftovers the remediating model missed
     - Confirmation passes #2+ slide into diminishing returns (rename pedantry / slightly tighter pins) — freeze is correct
+
+## 2026-07-26 - QA - COMPLETE
+
+* Work completed
+    - Semantic review of M2 test remediations against plan: KISS/DRY/YAGNI/completeness/regression/integrity
+    - Confirmed test-only diff vs `main` (11 files under `src/__tests__/`); selection-across-filter still guarded with answer-array oracle; B*/Feature/CRITICAL BUG fossils gone
+    - Confirmed freeze deferrals are documented (edge-cases Phase B; infinite confirm loop)
+* Decisions made
+    - QA **PASS**; no substantive fixes required
+* Insights
+    - Net −121 lines in tests — remediations mostly deleted weakness rather than adding scaffolding
+
+## 2026-07-26 - REFLECT - COMPLETE
+
+* Work completed
+    - Wrote `reflection/reflection-issue-147-m2-slobac-audit.md`
+    - Persistent-file reconcile: no surgical updates (edge-cases placement still matches `systemPatterns.md`; `.slobac/` ignore is tooling hygiene already in git)
+* Decisions made
+    - L4 sub-run reflect complete; next operator step is `/niko` after M2 PR merge discipline
+* Insights
+    - Independent-model SLOBAC pass + freeze rule should be planned up front for remediation milestones
