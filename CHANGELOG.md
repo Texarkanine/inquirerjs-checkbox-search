@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.1.1](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v2.1.0...v2.1.1) (2026-07-26)
+
+
+### Bug Fixes
+
+* **deps-dev:** bump brace-expansion from 5.0.6 to 5.0.8 ([#150](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/150)) ([e64e3cd](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/e64e3cd4d4192118604640930d7b2b3dc26aab9a))
+* **deps-dev:** bump the dev-deps-minor-patch group across 1 directory with 10 updates ([#155](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/155)) ([32fa78f](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/32fa78fffc5961bb5f4ae27fc2227056fedad2cf))
+
 ## [2.1.0](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v2.0.2...v2.1.0) (2026-07-26)
 
 
