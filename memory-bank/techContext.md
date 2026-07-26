@@ -24,7 +24,7 @@ Tests run in **Vitest** (configured in `vitest.config.ts`) and drive the prompt 
 - Unit-only: `npm run test:unit`.
 - Single test or group by name: `npx vitest run -t "TEST_NAME"`.
 - Coverage: `npm run test:coverage` (V8 provider via `@vitest/coverage-v8`).
-- Mutation testing (optional/advisory): StrykerJS via `stryker.config.json`; `npm run test:mutate:dry` / `npm run test:mutate`. PR workflow job _Mutation (advisory)_ logs the score with no score threshold — `thresholds.break` is deliberately left at its `null` default so only a crashed run or the job timeout fails the check (see `.github/workflows/pr.yaml`).
+- Mutation testing (optional/advisory): StrykerJS via `stryker.config.json`; `npm run test:mutate:dry` / `npm run test:mutate`. PR workflow job _Mutation (advisory)_ logs the score with no score threshold — `thresholds.break` is deliberately left at its `null` default so only a crashed run or the job timeout fails the check (see `.github/workflows/pr.yaml`). Targeted range runs: `npx stryker run --mutate "src/index.ts:<start>-<end>" --reporters clear-text --incrementalFile /tmp/stryker-range.json` (use a fresh nonexistent `--incrementalFile`; config enables incremental by default, and `--force` against the shared report pollutes range scores).
 - See `.cursor/rules/dev-practices.mdc` and `.cursor/rules/shared/test-running-practices.mdc` for required test-running conventions.
 
 ## Package Correctness

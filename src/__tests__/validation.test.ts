@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@inquirer/testing';
 import checkboxSearch from '../index.js';
+import { expectAnswerPending } from './helpers/expect-answer-pending.js';
 
 describe('Validation', () => {
   it('should enforce required selection', async () => {
@@ -65,5 +66,110 @@ describe('Validation', () => {
     await events.keypress('tab');
     await events.keypress('enter');
     await expect(answer).resolves.toEqual(['Apple']);
+  });
+
+  /**
+   * B5: sync validate returning false must surface the default invalid message
+   * and leave the prompt open.
+   */
+  it('should show Invalid selection when validate returns false', async () => {
+    const { answer, events, getScreen, nextRender } = await render(
+      checkboxSearch,
+      {
+        message: 'Select items',
+        choices: ['Apple', 'Banana'],
+        validate: () => false,
+      },
+    );
+
+    await events.keypress('tab');
+    await events.keypress('enter');
+    await nextRender();
+
+    expect(getScreen()).toContain('Invalid selection');
+    await expectAnswerPending(answer);
+  });
+
+  /**
+   * B6: async validate resolving to a string must show that string and keep the
+   * prompt open.
+   */
+  it('should show async validate error string', async () => {
+    const { answer, events, getScreen, nextRender } = await render(
+      checkboxSearch,
+      {
+        message: 'Select items',
+        choices: ['Apple', 'Banana'],
+        validate: async () => 'Need a better selection',
+      },
+    );
+
+    await events.keypress('tab');
+    await events.keypress('enter');
+    await nextRender();
+
+    expect(getScreen()).toContain('Need a better selection');
+    await expectAnswerPending(answer);
+  });
+
+  /**
+   * B7: async validate resolving to false must show Invalid selection and keep
+   * the prompt open.
+   */
+  it('should show Invalid selection when async validate returns false', async () => {
+    const { answer, events, getScreen, nextRender } = await render(
+      checkboxSearch,
+      {
+        message: 'Select items',
+        choices: ['Apple', 'Banana'],
+        validate: async () => false,
+      },
+    );
+
+    await events.keypress('tab');
+    await events.keypress('enter');
+    await nextRender();
+
+    expect(getScreen()).toContain('Invalid selection');
+    await expectAnswerPending(answer);
+  });
+
+  /**
+   * B8: async validate resolving to true must complete with the selected values.
+   */
+  it('should complete when async validate returns true', async () => {
+    const { answer, events } = await render(checkboxSearch, {
+      message: 'Select items',
+      choices: ['Apple', 'Banana'],
+      validate: async () => true,
+    });
+
+    await events.keypress('tab');
+    await events.keypress('enter');
+    await expect(answer).resolves.toEqual(['Apple']);
+  });
+
+  /**
+   * B9: async validate rejecting must show Validation failed and keep the prompt
+   * open.
+   */
+  it('should show Validation failed when async validate rejects', async () => {
+    const { answer, events, getScreen, nextRender } = await render(
+      checkboxSearch,
+      {
+        message: 'Select items',
+        choices: ['Apple', 'Banana'],
+        validate: async () => {
+          throw new Error('boom');
+        },
+      },
+    );
+
+    await events.keypress('tab');
+    await events.keypress('enter');
+    await nextRender();
+
+    expect(getScreen()).toContain('Validation failed');
+    await expectAnswerPending(answer);
   });
 });

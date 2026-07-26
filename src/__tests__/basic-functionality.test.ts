@@ -84,4 +84,35 @@ describe('Basic functionality', () => {
     expect(screen).not.toContain('Enter to submit');
     expect(screen).not.toContain('(Tab to select, Enter to submit)');
   });
+
+  /**
+   * B1: `default` pre-selects values so Enter alone (no tab) submits them.
+   * Oracle is the answer array — not default-theme checked glyphs.
+   */
+  it('should submit default selections without toggling', async () => {
+    const { answer, events } = await render(checkboxSearch, {
+      message: 'Select options',
+      choices: ['Apple', 'Banana', 'Cherry'],
+      default: ['Apple', 'Cherry'],
+    });
+
+    await events.keypress('enter');
+    await expect(answer).resolves.toEqual(['Apple', 'Cherry']);
+  });
+
+  /**
+   * Choice objects without `name` must fall back to String(value) for display
+   * and still submit the underlying value.
+   */
+  it('should derive display name from value when choice name is omitted', async () => {
+    const { answer, events, getScreen } = await render(checkboxSearch, {
+      message: 'Select options',
+      choices: [{ value: 'only-value' }, { value: 'other', name: 'Other' }],
+    });
+
+    expect(getScreen()).toContain('only-value');
+    await events.keypress('tab');
+    await events.keypress('enter');
+    await expect(answer).resolves.toEqual(['only-value']);
+  });
 });

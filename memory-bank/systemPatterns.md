@@ -18,7 +18,7 @@ The entire prompt implementation lives in `src/index.ts`. Helpers, types, key-ha
 
 ## Behavior-sliced test suites
 
-Tests in `src/__tests__/` are organized by _user-visible behavior_ (`navigation`, `selection`, `search-filtering`, `validation`, `disabled-choices`, `separators`, `theme-customization`, `page-sizing`, `async-behavior`, `descriptions`, `object-references`, `edge-cases`, `compatibility`, `basic-functionality`, `pagesize-config`), not by code unit. When adding a feature, find the suite whose theme matches and add to it; create a new suite only if the behavior genuinely doesn't fit. Tests use `@inquirer/testing` to drive the prompt as a user would.
+Tests in `src/__tests__/` are organized by _user-visible behavior_ (`navigation`, `selection`, `search-filtering`, `validation`, `disabled-choices`, `theme-customization`, `page-sizing`, `async-behavior`, `descriptions`, `object-references`, `edge-cases`, `compatibility`, `basic-functionality`, `pagesize-config`), not by code unit. Separator behavior lives in `navigation` / `search-filtering` rather than a dedicated suite. When adding a feature, find the suite whose theme matches and add to it; create a new suite only if the behavior genuinely doesn't fit. Tests use `@inquirer/testing` to drive the prompt as a user would.
 
 ## Selection identity preserved across filtering
 
