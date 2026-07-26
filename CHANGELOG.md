@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.1.0](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v2.0.2...v2.1.0) (2026-07-26)
+
+
+### Features
+
+* **ci:** StrykerJS mutation testing with advisory PR check [[#145](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/145)] ([#146](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/146)) ([5dd752c](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/5dd752ca23ddec308e6950828056c0a747ef0c82))
+
+
+### Bug Fixes
+
+* backspace deleted a single codepoint instead of the whole grapheme cluster [[#148](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/148)] ([#151](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/151)) ([e772317](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/e772317b66be94d549b44e3110920d80d149ccc9))
+
 ## [2.0.2](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v2.0.1...v2.0.2) (2026-06-13)
 
 
