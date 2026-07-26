@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render } from '@inquirer/testing';
 import checkboxSearch, { Separator } from '../index.js';
+import { expectAnswerPending } from './helpers/expect-answer-pending.js';
 
 describe('Navigation', () => {
   it('should navigate through choices with arrow keys', async () => {
@@ -495,12 +496,7 @@ describe('Navigation', () => {
     await events.keypress('escape');
 
     expect(getScreen()).toMatch(/loading|wait/i);
-    await expect(
-      Promise.race([
-        answer.then(() => 'resolved' as const),
-        Promise.resolve('pending' as const),
-      ]),
-    ).resolves.toBe('pending');
+    await expectAnswerPending(answer);
 
     resolveSource([{ value: 'result1', name: 'Result 1' }]);
     await vi.waitFor(() => {

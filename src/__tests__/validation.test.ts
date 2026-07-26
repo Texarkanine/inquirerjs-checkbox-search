@@ -1,17 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@inquirer/testing';
 import checkboxSearch from '../index.js';
-
-async function expectAnswerPending(answer: Promise<unknown>): Promise<void> {
-  await expect(
-    Promise.race([
-      answer.then(() => 'resolved' as const),
-      new Promise<'pending'>((resolve) =>
-        setTimeout(() => resolve('pending'), 50),
-      ),
-    ]),
-  ).resolves.toBe('pending');
-}
+import { expectAnswerPending } from './helpers/expect-answer-pending.js';
 
 describe('Validation', () => {
   it('should enforce required selection', async () => {
