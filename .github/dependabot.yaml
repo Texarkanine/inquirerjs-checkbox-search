@@ -19,6 +19,13 @@ updates:
           - 'minor'
           - 'patch'
     open-pull-requests-limit: 10
+    # Keep @types/node on the engines floor (currently ^22). Majors widen
+    # typings beyond the supported runtime baseline; bump package.json first,
+    # then remove this ignore when intentionally adopting a new types major.
+    ignore:
+      - dependency-name: '@types/node'
+        update-types:
+          - 'version-update:semver-major'
     assignees:
       - 'Texarkanine'
     commit-message:
