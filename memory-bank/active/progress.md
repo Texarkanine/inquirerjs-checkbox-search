@@ -65,3 +65,13 @@ Close the coverage gap in `src/__tests__/` to 100% branch and line on the suppor
     - QA **PASS**; PR open remains the operator-facing delivery step after reflect (L4 sequential merge)
 * Insights
     - Pending-answer polling via `Promise.race` + short timeout is the suite's practical substitute for an `@inquirer/testing` "still open" API
+
+## 2026-07-26 - REFLECT - COMPLETE
+
+* Work completed
+    - Wrote `reflection/reflection-issue-147-m1-coverage-closure.md`
+    - Reconciled persistent files: removed stale `separators` suite from `systemPatterns.md`; documented fresh `--incrementalFile` targeting in `techContext.md`
+* Decisions made
+    - L4 sub-run reflect complete; next operator step is `/niko` after M1 PR merge discipline
+* Insights
+    - Kill-verify exposed a false-positive nocursor coverage claim that coverage % alone would have accepted
