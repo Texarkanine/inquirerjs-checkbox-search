@@ -678,8 +678,12 @@ export default createPrompt(
       // code-point based, but this prompt renders the search term itself, so a
       // partial cluster would be visible debris. Deliberate divergence; see #148.
       if (isBackspaceKey(key)) {
-        const lastGrapheme = [...graphemeSegmenter.segment(searchTerm)].at(-1);
-        updateSearchTerm(searchTerm.slice(0, lastGrapheme?.index ?? 0));
+        updateSearchTerm(
+          [...graphemeSegmenter.segment(searchTerm)]
+            .slice(0, -1)
+            .map((s) => s.segment)
+            .join(''),
+        );
         return;
       }
 
