@@ -19,7 +19,7 @@ These hold at every milestone boundary. No sub-run may violate one, regardless o
 Strictly sequential — no parallelization opportunities. M2 audits the suite M1 leaves behind; M3's survivor list is only meaningful against a suite that is both fully covering and honest.
 
 - [x] Close the coverage gap in `src/__tests__/` to 100% branch and line on the supported surface — estimated L2
-- [ ] Audit the test suite with SLOBAC and remediate all High-severity smells — estimated L2
+- [x] Audit the test suite with SLOBAC and remediate all High-severity smells — estimated L2
 - [ ] Kill load-bearing Stryker survivors, justify and exclude junk mutants, and decide mutation gating in CI — estimated L3
 
 ## Verified Tooling Facts
