@@ -126,8 +126,9 @@ describe('Async behavior', () => {
     await vi.runAllTimersAsync();
 
     // AbortSignal must have fired for every superseded call; only the last completes.
-    expect(aborted.length).toBeGreaterThanOrEqual(2);
+    expect(aborted.length).toBe(callCount - 1);
     expect(completed).toEqual([callCount]);
+
     expect(getScreen()).toContain(`Result ${callCount}`);
     for (const id of aborted) {
       expect(getScreen()).not.toContain(`Result ${id}`);

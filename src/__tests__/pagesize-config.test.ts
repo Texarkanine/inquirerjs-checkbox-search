@@ -131,13 +131,25 @@ describe('PageSize Configuration', () => {
 
     describe('with line width counting', () => {
       it('should account for terminal width wrapping when autoBufferCountsLineWidth=true', () => {
-        const longDescription =
-          'This is a very long description that should wrap across multiple lines when considering terminal width of 80 characters total length';
-        const items = [createChoice(longDescription)];
-        const terminalWidth = process.stdout.columns || 80;
-        const expectedLines = Math.ceil(longDescription.length / terminalWidth);
+        const originalColumns = process.stdout.columns;
+        Object.defineProperty(process.stdout, 'columns', {
+          configurable: true,
+          value: 80,
+        });
 
-        expect(calculateDescriptionLines(items, true)).toBe(expectedLines);
+        try {
+          const longDescription =
+            'This is a very long description that should wrap across multiple lines when considering terminal width of 80 characters total length';
+          const items = [createChoice(longDescription)];
+          // Pin columns=80 so wide developer TTYs still exercise wrapping.
+          // longDescription.length / 80 => 2 lines
+          expect(calculateDescriptionLines(items, true)).toBe(2);
+        } finally {
+          Object.defineProperty(process.stdout, 'columns', {
+            configurable: true,
+            value: originalColumns,
+          });
+        }
       });
 
       it('should fall back to width 80 when stdout.columns is unavailable', () => {

@@ -23,16 +23,17 @@ describe('Page sizing', () => {
   });
 
   it('should use auto-sizing when no pageSize is specified', async () => {
-    const originalRows = (process.stdout as { rows?: number }).rows;
-    const hasOriginalRows = 'rows' in process.stdout;
-
-    if (!hasOriginalRows) {
-      Object.defineProperty(process.stdout, 'rows', {
-        configurable: true,
-        enumerable: true,
-        get: () => 24,
-      });
-    }
+    // TTY `rows` is often a numeric data property; install a getter so
+    // `vi.spyOn(..., 'get')` works, then restore the original descriptor.
+    const originalRowsDescriptor = Object.getOwnPropertyDescriptor(
+      process.stdout,
+      'rows',
+    );
+    Object.defineProperty(process.stdout, 'rows', {
+      configurable: true,
+      enumerable: true,
+      get: () => 24,
+    });
 
     const rowsSpy = vi.spyOn(process.stdout, 'rows', 'get').mockReturnValue(30);
 
@@ -61,17 +62,10 @@ describe('Page sizing', () => {
       expect(screen).not.toContain(`Item ${expectedPageSize}`);
     } finally {
       rowsSpy.mockRestore();
-      if (hasOriginalRows) {
-        Object.defineProperty(process.stdout, 'rows', {
-          configurable: true,
-          enumerable: true,
-          get: () => originalRows,
-        });
+      if (originalRowsDescriptor) {
+        Object.defineProperty(process.stdout, 'rows', originalRowsDescriptor);
       } else {
-        Object.defineProperty(process.stdout, 'rows', {
-          value: undefined,
-          configurable: true,
-        });
+        Reflect.deleteProperty(process.stdout, 'rows');
       }
     }
   });
