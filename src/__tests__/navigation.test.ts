@@ -27,6 +27,25 @@ describe('Navigation', () => {
     expect(screen).not.toContain('❯ ◯ Banana');
   });
 
+  /**
+   * Default `loop` is true when omitted — up from the first item wraps to the
+   * last. Kills the `loop = true` → `false` BooleanLiteral mutant.
+   */
+  it('should loop navigation by default when loop is omitted', async () => {
+    const { events, getScreen } = await render(checkboxSearch, {
+      message: 'Select items',
+      choices: ['First', 'Second', 'Third'],
+    });
+
+    let screen = getScreen();
+    expect(screen).toContain('❯ ◯ First');
+
+    await events.keypress('up');
+    screen = getScreen();
+    expect(screen).toContain('❯ ◯ Third');
+    expect(screen).not.toContain('❯ ◯ First');
+  });
+
   it('should loop navigation when enabled', async () => {
     const { events, getScreen } = await render(checkboxSearch, {
       message: 'Select items',

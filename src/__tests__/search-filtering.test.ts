@@ -152,6 +152,30 @@ describe('Search and filtering', () => {
     expect(screen).toContain('xyz'); // Should show the search term
   });
 
+  /**
+   * Empty and whitespace-only search must short-circuit before the custom
+   * filter runs. A filter that returns [] for every call would hide all rows
+   * if the short-circuit (or its `.trim()`) were removed.
+   */
+  it('should short-circuit filtering for empty and whitespace search terms', async () => {
+    const { events, getScreen } = await render(checkboxSearch, {
+      message: 'Select items',
+      choices: ['Apple', 'Banana', 'Cherry'],
+      filter: () => [],
+    });
+
+    let screen = getScreen();
+    expect(screen).toContain('Apple');
+    expect(screen).toContain('Banana');
+    expect(screen).toContain('Cherry');
+
+    await events.type('   ');
+    screen = getScreen();
+    expect(screen).toContain('Apple');
+    expect(screen).toContain('Banana');
+    expect(screen).toContain('Cherry');
+  });
+
   it('keeps an item selected after a search filter hides the other choices', async () => {
     const { events, getScreen } = await render(checkboxSearch, {
       message: 'Select items',

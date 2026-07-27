@@ -123,6 +123,40 @@ describe('Theme customization', () => {
     expect(screen).toContain('**Yellow fruit**');
   });
 
+  /**
+   * Checked (inactive) and disabled labels must go through theme.style hooks.
+   * Theme-injection oracles — not default glyphs — kill renderItem branch mutants.
+   */
+  it('should apply custom checked and disabled style functions', async () => {
+    const { events, getScreen } = await render(checkboxSearch, {
+      message: 'Select items',
+      choices: [
+        { value: 'apple', name: 'Apple', checked: true },
+        { value: 'banana', name: 'Banana', disabled: true },
+        { value: 'cherry', name: 'Cherry' },
+        { value: 'date', name: 'Date' },
+      ],
+      theme: {
+        style: {
+          checked: (text: string) => `[[${text}]]`,
+          disabled: (text: string) => `xx${text}xx`,
+        },
+      },
+    });
+
+    // Disabled Banana is skipped — one down lands on Cherry; Apple is inactive+checked
+    await events.keypress('down');
+    const screen = getScreen();
+
+    expect(screen).toContain('[[Apple]]');
+    expect(screen).toContain('xxBananaxx');
+    expect(screen).toContain('xx(disabled)xx');
+    // Inactive unchecked Date must not get checked style (kills isChecked → true)
+    expect(screen).not.toContain('[[Date]]');
+    expect(screen).not.toContain('[[Cherry]]');
+    expect(screen).not.toContain('xxCherryxx');
+  });
+
   it('should support function-based icon theming', async () => {
     const customChecked = (text: string) => `✅ ${text}`;
     const customUnchecked = (text: string) => `⬜ ${text}`;

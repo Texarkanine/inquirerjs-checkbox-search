@@ -3,6 +3,24 @@ import { render } from '@inquirer/testing';
 import checkboxSearch from '../index.js';
 
 describe('Multi-selection', () => {
+  /**
+   * Choice-level `checked: true` pre-selects without `default` or Tab.
+   * Oracle is the answer array — kills `checked ?? false` → `checked && false`.
+   */
+  it('should submit choices marked checked without toggling', async () => {
+    const { answer, events } = await render(checkboxSearch, {
+      message: 'Select items',
+      choices: [
+        { value: 'apple', name: 'Apple', checked: true },
+        { value: 'banana', name: 'Banana' },
+        { value: 'cherry', name: 'Cherry', checked: true },
+      ],
+    });
+
+    await events.keypress('enter');
+    await expect(answer).resolves.toEqual(['apple', 'cherry']);
+  });
+
   it('should toggle selection with tab key', async () => {
     const { events, getScreen } = await render(checkboxSearch, {
       message: 'Select items',
