@@ -92,3 +92,13 @@ Kill load-bearing Stryker survivors, justify and exclude junk mutants, and decid
     - Default-loop glyph cursor pins match sibling navigation tests — not a new presentation smell
 * Insights
     - Exclusion ledger and `stryker.config.json` stay aligned; accepted equivalent survivors correctly left visible
+
+## 2026-07-26 - REFLECT - COMPLETE
+
+* Work completed
+    - Wrote `memory-bank/active/reflection/reflection-issue-147-m3-mutation-hardening.md`
+    - Reconciled persistent files: techContext already correct; no productContext/systemPatterns edits
+* Decisions made
+    - Next operator step: draft PR then `/niko` (last L4 milestone)
+* Insights
+    - See reflection doc — Stryker disable scoping and empty-filter custom-filter oracle
