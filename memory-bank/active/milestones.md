@@ -20,7 +20,7 @@ Strictly sequential — no parallelization opportunities. M2 audits the suite M1
 
 - [x] Close the coverage gap in `src/__tests__/` to 100% branch and line on the supported surface — estimated L2
 - [x] Audit the test suite with SLOBAC and remediate all High-severity smells — estimated L2
-- [ ] Kill load-bearing Stryker survivors, justify and exclude junk mutants, and decide mutation gating in CI — estimated L3
+- [x] Kill load-bearing Stryker survivors, justify and exclude junk mutants, and decide mutation gating in CI — estimated L3
 
 ## Verified Tooling Facts
 
