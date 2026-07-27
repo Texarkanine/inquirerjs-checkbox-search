@@ -240,9 +240,7 @@ function defaultFilter<Value>(
   const searchTerm = term.toLowerCase().normalize('NFD');
   return items.filter((item) => {
     const name = item.name.toLowerCase().normalize('NFD');
-    // Stryker disable next-line MethodExpression: equivalent — toUpperCase is the same case-fold for includes()
     const description = (item.description ?? '').toLowerCase().normalize('NFD');
-    // Stryker disable next-line MethodExpression: equivalent — toUpperCase is the same case-fold for includes()
     const value = String(item.value).toLowerCase().normalize('NFD');
     return (
       name.includes(searchTerm) ||

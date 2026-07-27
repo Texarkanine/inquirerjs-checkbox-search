@@ -64,9 +64,9 @@ Kill load-bearing Stryker survivors, justify and exclude junk mutants, and decid
 | PageSize equality boundaries | 259+ | **Killed** | Boundary equals + single-bound |
 | `renderItem` checked/disabled | 859–861 | **Killed** | Theme-injection styles |
 | `validate = () => true` | 452 | **Ignored** | Site disable (equivalent) |
-| Case-fold MethodExpression | 243–244 | **Ignored** | Site disable |
+| Case-fold MethodExpression | 243–244 | **Killed** | Description/value-only search oracle |
 | StringLiteral / ArrayDeclaration | many | **Ignored** | Config excludedMutations |
-| PageSize `!== undefined` / `&&`→`||` | 259–278 | **Accepted** | JS-equivalent; left visible |
+| PageSize `!== undefined` / `&&` → logical OR | 259–278 | **Accepted** | JS-equivalent; left visible |
 | Nav/render ConditionalExpression long-tail | rest | **Accepted** | Below gate floor |
 
 ## 2026-07-26 - BUILD - COMPLETE

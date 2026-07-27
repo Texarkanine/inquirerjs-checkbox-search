@@ -63,12 +63,11 @@
 
 Every mutant removed from the denominator must be justified here (or via an adjacent `// Stryker disable` reason). High scores from unjustified excludes are not acceptable.
 
-| Mechanism                   | Target                                                               | Kind         | Reason                                                                                                         |
-| --------------------------- | -------------------------------------------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------- |
-| `mutator.excludedMutations` | `StringLiteral`                                                      | presentation | UX copy, empty-string inits, and label literals are outside the semantic contract; the suite must not pin them |
-| `mutator.excludedMutations` | `ArrayDeclaration`                                                   | equivalent   | Empty array literals and React hook dependency-array mutants are non-observable under `@inquirer/testing`      |
-| `// Stryker disable`        | `validate = () => true` (`ArrowFunction`)                            | equivalent   | `() => undefined` also submits (only `false` / string fail validation)                                         |
-| `// Stryker disable`        | `defaultFilter` description/value `toLowerCase` (`MethodExpression`) | equivalent   | `toUpperCase` is the same case-fold for `includes()`                                                           |
+| Mechanism                   | Target                                    | Kind         | Reason                                                                                                         |
+| --------------------------- | ----------------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------- |
+| `mutator.excludedMutations` | `StringLiteral`                           | presentation | UX copy, empty-string inits, and label literals are outside the semantic contract; the suite must not pin them |
+| `mutator.excludedMutations` | `ArrayDeclaration`                        | equivalent   | Empty array literals and React hook dependency-array mutants are non-observable under `@inquirer/testing`      |
+| `// Stryker disable`        | `validate = () => true` (`ArrowFunction`) | equivalent   | `() => undefined` also submits (only `false` / string fail validation)                                         |
 
 Accepted remaining survivors (not ignored — disabling the mutator on these lines would also drop load-bearing mutants):
 

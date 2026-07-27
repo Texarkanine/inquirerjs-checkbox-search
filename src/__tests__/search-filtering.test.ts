@@ -57,6 +57,39 @@ describe('Search and filtering', () => {
     expect(screen).not.toContain('Cherry');
   });
 
+  /**
+   * Match via description or value alone (name must not contain the term).
+   * Kills description/value `toLowerCase` → `toUpperCase` MethodExpression
+   * mutants that the name OR-branch otherwise masks.
+   */
+  it('should match search terms found only in description or value', async () => {
+    const { events, getScreen } = await render(checkboxSearch, {
+      message: 'Select items',
+      choices: [
+        {
+          value: 'x1',
+          name: 'Fruit',
+          description: 'Red Apple cultivar',
+        },
+        {
+          value: 'apple-code',
+          name: 'Produce',
+        },
+        {
+          value: 'other',
+          name: 'Banana',
+          description: 'Yellow fruit',
+        },
+      ],
+    });
+
+    await events.type('apple');
+    const screen = getScreen();
+    expect(screen).toContain('Fruit');
+    expect(screen).toContain('Produce');
+    expect(screen).not.toContain('Banana');
+  });
+
   it('should clear filter with backspace', async () => {
     const { events, getScreen } = await render(checkboxSearch, {
       message: 'Select fruits',
