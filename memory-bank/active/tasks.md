@@ -164,6 +164,18 @@ No new technology — validation not required. M3 uses existing StrykerJS + Vite
 - Exclusion justifications live in a durable `CONTRIBUTING.md` ledger (JSON cannot hold comments)
 - Kill-wave TDD confirmed: stub → implement oracle → green → kill-verify; any `src/index.ts` defect fix is a separate TDD `fix:` cycle
 
+## Build Progress
+
+- [x] 1. Branch `mutate-me-up` from L4 tip
+- [x] 2. Baseline mutation run (82.07% / 105 survived / 4 no-cov)
+- [x] 3. Triage table recorded in progress.md
+- [ ] 4. Kill wave (TDD + kill-verify per target)
+- [ ] 5. Exclude wave + CONTRIBUTING ledger
+- [ ] 6. Cleaned full re-run
+- [ ] 7. CI gating go/no-go
+- [ ] 8. Docs sync
+- [ ] 9. Boundary verification + PR prep
+
 ## Status
 
 - [x] Component analysis complete

@@ -1,12 +1,11 @@
 # Active Context
 
 ## Current Task: issue-147-max-test-qa / M3-mutation-hardening
-**Phase:** PREFLIGHT - COMPLETE
+**Phase:** BUILD - IN-PROGRESS
 
 ## What Was Done
-- Preflight PASS with plan amendments (branch base, exclusion ledger in CONTRIBUTING)
-- TDD encoding OK for kill wave; config/docs steps are non-product
-- Conventions align with behavior-sliced suites; no creative docs required
+- Baseline: 608 mutants, 82.07% total / 82.62% covered, 105 survived, 4 no-cov
+- Triage recorded; kill wave next (filter short-circuit, checked/loop defaults, PageSize boundaries, renderItem theme styles)
 
 ## Next Step
-- Operator: run `/niko-build` to start implementation
+- Implement kill-wave tests (stub→implement→green→kill-verify), then excludes
