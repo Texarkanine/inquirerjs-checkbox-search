@@ -100,7 +100,7 @@ Pre-identified hit-list from milestones / #145 (exact line ranges come from the 
 ## Implementation Plan
 
 1. **Branch + workspace**
-    - Files: git branch from current `main` tip (suggested: `mutate-me-up`)
+    - Files: git branch `mutate-me-up` from the current L4 working tip (the commits that carry this plan ahead of `origin/main`), not a clean `main` checkout that drops memory-bank
     - Changes: feature branch for M3-only commits; memory-bank updates travel with the work
 
 2. **Baseline mutation run (post-M1/M2)**
@@ -117,8 +117,8 @@ Pre-identified hit-list from milestones / #145 (exact line ranges come from the 
     - TDD amendment (same as M1/M2): production code already correct → stub→implement→green→kill-verify substitutes for red-first
 
 5. **Exclude wave**
-    - Files: `stryker.config.json`; optionally narrow `// Stryker disable` in `src/index.ts`
-    - Changes: add `mutator.excludedMutations` and/or site disables **only** with adjacent/in-repo justification (equivalent mutant or pure presentation). Prefer config-level excludes for operator categories; disable comments for site-specific cases
+    - Files: `stryker.config.json`; optionally narrow `// Stryker disable` in `src/index.ts`; durable ledger in `CONTRIBUTING.md` (or a short subsection under Testing) listing each exclude/disable with equivalent-vs-presentation reason
+    - Changes: add `mutator.excludedMutations` and/or site disables **only** with that ledger entry (JSON has no comments — the ledger is the in-repo justification). Prefer config-level excludes for operator categories; disable comments for site-specific cases
 
 6. **Cleaned full re-run**
     - Files: progress notes
@@ -131,8 +131,8 @@ Pre-identified hit-list from milestones / #145 (exact line ranges come from the 
     - Files if advisory: progress + brief comment/doc note that M3 reaffirmed advisory and why
 
 8. **Docs sync**
-    - Files: `memory-bank/techContext.md`, `CONTRIBUTING.md` (only if step 7 changed the CI contract)
-    - Changes: surgical truth updates — advisory vs gated
+    - Files: `memory-bank/techContext.md`, `CONTRIBUTING.md` (gate contract if step 7 changed it; exclusion ledger from step 5 always if any excludes landed)
+    - Changes: surgical truth updates — advisory vs gated; keep exclusion ledger aligned with `stryker.config.json`
 
 9. **Boundary verification + PR**
     - Run `npm run format` then `npm run quality:check` and full `npm test`
@@ -158,6 +158,12 @@ No new technology — validation not required. M3 uses existing StrykerJS + Vite
 - **Skipping baseline and hunting #145 line numbers**: step 2 is mandatory; preflight should fail the plan if build starts from stale coordinates
 - **Weakening selection-across-filter while consolidating kills**: B8 + cross-milestone invariant 5 — QA explicitly re-checks that guard
 
+## Preflight Amendments
+
+- Branch from L4 working tip (plan commits), not bare `main`
+- Exclusion justifications live in a durable `CONTRIBUTING.md` ledger (JSON cannot hold comments)
+- Kill-wave TDD confirmed: stub → implement oracle → green → kill-verify; any `src/index.ts` defect fix is a separate TDD `fix:` cycle
+
 ## Status
 
 - [x] Component analysis complete
@@ -166,6 +172,6 @@ No new technology — validation not required. M3 uses existing StrykerJS + Vite
 - [x] Implementation plan complete
 - [x] Technology validation complete
 - [x] Pre-Mortem complete
-- [ ] Preflight
+- [x] Preflight
 - [ ] Build
 - [ ] QA

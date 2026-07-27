@@ -1,13 +1,12 @@
 # Active Context
 
 ## Current Task: issue-147-max-test-qa / M3-mutation-hardening
-**Phase:** PLAN - COMPLETE
+**Phase:** PREFLIGHT - COMPLETE
 
 ## What Was Done
-- Wrote Level 3 plan: baseline → triage → kill wave → exclude wave → cleaned re-run → CI gate go/no-go → docs/PR
-- Mapped components: test suites, `stryker.config.json`, PR mutation job, techContext/CONTRIBUTING; `src/index.ts` only for defect fixes or justified disables
-- No open questions — gating deferred to post-clean-score criteria (step 7), not a creative fork
-- Behaviors B1–B9; TDD amendment stub→implement→green→kill-verify (same as M1/M2)
+- Preflight PASS with plan amendments (branch base, exclusion ledger in CONTRIBUTING)
+- TDD encoding OK for kill wave; config/docs steps are non-product
+- Conventions align with behavior-sliced suites; no creative docs required
 
 ## Next Step
-- Preflight phase to validate the plan
+- Operator: run `/niko-build` to start implementation

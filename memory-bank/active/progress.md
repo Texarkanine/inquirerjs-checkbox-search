@@ -29,3 +29,15 @@ Kill load-bearing Stryker survivors, justify and exclude junk mutants, and decid
     - Suggested feature branch `mutate-me-up`; no new test files expected
 * Insights
     - #145 survivor coordinates are seeds only; post-M1/M2 baseline is mandatory before kill work
+
+## 2026-07-26 - PREFLIGHT - COMPLETE
+
+* Work completed
+    - Validated M3 Level 3 plan against suite/CI/Stryker reality; result **PASS** with plan amendments applied
+    - Confirmed TDD encoding on kill wave (stub→implement→green→kill-verify); excludes/gating are config/docs
+    - Confirmed behavior-sliced suite targets exist; selection-across-filter guard present; no prior `excludedMutations`
+* Decisions made
+    - Amended branch step: `mutate-me-up` from L4 working tip, not bare `main`
+    - Amended exclude step: durable justification ledger in `CONTRIBUTING.md` (JSON has no comments)
+* Insights
+    - `pr.yaml` already documents that setting `thresholds.break` is an intentional gate — plan step 7 criteria match that contract
