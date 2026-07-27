@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.2](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v2.1.1...v2.1.2) (2026-07-27)
+
+
+### Bug Fixes
+
+* kill mutation survivors and gate score [[#147](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/147)] ([#159](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/159)) ([7e9eb36](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/7e9eb364b3c496fd6afc7323d28b2a9eeb2b81e9))
+
 ## [2.1.1](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v2.1.0...v2.1.1) (2026-07-26)
 
 
