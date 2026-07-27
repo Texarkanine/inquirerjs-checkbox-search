@@ -16,3 +16,16 @@ Kill load-bearing Stryker survivors, justify and exclude junk mutants, and decid
     - Parent L4 `projectbrief.md` retained; this sub-run scopes to M3 mutation hardening / gating only
 * Insights
     - M3 is the only multi-component milestone in #147; baseline from #145 (602 mutants, ~73% total / ~77% covered) plus M1/M2 suite changes means survivor list must be re-baselined before kill work
+
+## 2026-07-26 - PLAN - COMPLETE
+
+* Work completed
+    - Wrote Level 3 plan: baseline → triage → kill → exclude → cleaned re-run → CI gate go/no-go → docs/PR
+    - Mapped components (suites, stryker.config, PR mutation job, docs); pinned triage flowchart
+    - Behaviors B1–B9; no open questions; technology validation N/A
+* Decisions made
+    - CI `thresholds.break` is a late go/no-go with fixed criteria after cleaned score — not a creative-phase fork
+    - Prefer config-level `excludedMutations` for operator categories; site `// Stryker disable` only when needed
+    - Suggested feature branch `mutate-me-up`; no new test files expected
+* Insights
+    - #145 survivor coordinates are seeds only; post-M1/M2 baseline is mandatory before kill work
