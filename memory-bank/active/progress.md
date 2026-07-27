@@ -81,3 +81,14 @@ Kill load-bearing Stryker survivors, justify and exclude junk mutants, and decid
 * Insights
     - Custom filter that returns `[]` is the honest oracle for empty-search short-circuit (defaultFilter mirrors L512)
     - `// Stryker disable Mutator` without a working restore ignores the rest of the file — prefer `next-line` or leave accepted
+
+## 2026-07-26 - QA - COMPLETE
+
+* Work completed
+    - Semantic review vs M3 plan: completeness, ledger/config sync, SLOBAC on new oracles, docs/CI gate contract, no product churn
+    - Trivial fix: corrected misleading comment on PageSize single-bound assertions
+    - Result **PASS**; wrote `.qa-validation-status`
+* Decisions made
+    - Default-loop glyph cursor pins match sibling navigation tests — not a new presentation smell
+* Insights
+    - Exclusion ledger and `stryker.config.json` stay aligned; accepted equivalent survivors correctly left visible

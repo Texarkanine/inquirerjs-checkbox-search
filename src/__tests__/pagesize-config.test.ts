@@ -84,7 +84,7 @@ describe('PageSize Configuration', () => {
       expect(() => validatePageSizeConfig({ buffer: 0 })).not.toThrow();
       expect(() => validatePageSizeConfig({ minBuffer: 0 })).not.toThrow();
       expect(() => validatePageSizeConfig({ min: 5, max: 5 })).not.toThrow();
-      // Either bound alone is valid — kills && → || on the min/max guard
+      // Either bound alone is valid (min/max compare only applies when both are set)
       expect(() => validatePageSizeConfig({ min: 5 })).not.toThrow();
       expect(() => validatePageSizeConfig({ max: 5 })).not.toThrow();
     });

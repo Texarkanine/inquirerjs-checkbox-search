@@ -186,4 +186,4 @@ No new technology — validation not required. M3 uses existing StrykerJS + Vite
 - [x] Pre-Mortem complete
 - [x] Preflight
 - [x] Build
-- [ ] QA
+- [x] QA
