@@ -2,75 +2,6 @@ import { describe, it, expect, vi } from 'vitest';
 import { render } from '@inquirer/testing';
 import checkboxSearch from '../index.js';
 
-// Node.js Compatibility Tests - Ensure tests work across Node versions
-describe('Node.js Compatibility', () => {
-  describe('Process.stdout.rows mocking', () => {
-    it('should mock terminal rows safely across Node versions', async () => {
-      const originalRows = (process.stdout as any).rows;
-      const hasOriginalRows = 'rows' in process.stdout;
-
-      try {
-        // Mock process.stdout.rows if it doesn't exist (CI/non-TTY environments)
-        if (!hasOriginalRows) {
-          Object.defineProperty(process.stdout, 'rows', {
-            configurable: true,
-            enumerable: true,
-            get: () => 24, // Default for CI
-          });
-        }
-
-        const manyChoices = Array.from({ length: 50 }, (_, i) => ({
-          value: `item${i}`,
-          name: `Item ${i}`,
-        }));
-
-        // Use vi.spyOn instead of Object.defineProperty for Node 20+ compatibility
-        const rowsSpy = vi
-          .spyOn(process.stdout, 'rows', 'get')
-          .mockReturnValue(30);
-
-        try {
-          const { getScreen } = await render(checkboxSearch, {
-            message: 'Select items',
-            choices: manyChoices,
-            // No pageSize specified - should auto-size based on mocked terminal height
-          });
-
-          const screen = getScreen();
-          // Should show more than default 7 items since mocked terminal height is 30
-          expect(screen).toContain('Item 0');
-          // Expect at least 10 choices to be visible (more flexible than hard-coding Item 20)
-          const itemCount = screen
-            .split('\n')
-            .filter((l) => /Item \d+/.test(l)).length;
-          expect(itemCount).toBeGreaterThan(10);
-
-          // Verify the spy was used
-          expect(rowsSpy).toHaveBeenCalled();
-        } finally {
-          // Restore spy
-          rowsSpy.mockRestore();
-        }
-      } finally {
-        // Restore original state
-        if (hasOriginalRows) {
-          Object.defineProperty(process.stdout, 'rows', {
-            configurable: true,
-            enumerable: true,
-            get: () => originalRows,
-          });
-        } else {
-          // Property didn't exist originally – remove it cleanly
-          Object.defineProperty(process.stdout, 'rows', {
-            value: undefined,
-            configurable: true,
-          });
-        }
-      }
-    });
-  });
-});
-
 // TTY Detection Tests - Prevent crashes in non-TTY environments
 describe('TTY Detection', () => {
   describe('Cursor operations', () => {
@@ -159,7 +90,7 @@ describe('TTY Detection', () => {
     });
 
     /**
-     * B3: completing the prompt under a forced TTY must run the effect cleanup
+     * Completing the prompt under a forced TTY must run the effect cleanup
      * that writes cursorShow (the hide half is covered by the case above).
      */
     it('should show cursor when prompt completes in a TTY', async () => {

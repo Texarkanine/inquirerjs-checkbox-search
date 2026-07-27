@@ -4,7 +4,6 @@ import {
   resolvePageSize,
   validatePageSizeConfig,
   type PageSizeConfig,
-  type PageSize,
 } from '../index.js';
 import type { NormalizedChoice } from '../index.js';
 import { Separator } from '@inquirer/core';
@@ -25,26 +24,6 @@ describe('PageSize Configuration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockStdout(24); // Default terminal height
-  });
-
-  describe('Type validation', () => {
-    it('should accept number as PageSize', () => {
-      const pageSize: PageSize = 10;
-      expect(typeof pageSize).toBe('number');
-    });
-
-    it('should accept PageSizeConfig object as PageSize', () => {
-      const pageSize: PageSize = {
-        base: 10,
-        max: 20,
-        min: 5,
-        autoBufferDescriptions: true,
-        buffer: 2,
-        minBuffer: 1,
-        autoBufferCountsLineWidth: false,
-      };
-      expect(typeof pageSize).toBe('object');
-    });
   });
 
   describe('validatePageSizeConfig', () => {
@@ -140,7 +119,7 @@ describe('PageSize Configuration', () => {
       expect(calculateDescriptionLines(items, false)).toBe(1);
     });
 
-    it('should ignore separators', () => {
+    it('returns the largest description line count in a list that also contains separators', () => {
       const items = [
         createChoice('Description'),
         new Separator(),
@@ -152,12 +131,25 @@ describe('PageSize Configuration', () => {
 
     describe('with line width counting', () => {
       it('should account for terminal width wrapping when autoBufferCountsLineWidth=true', () => {
-        const longDescription =
-          'This is a very long description that should wrap across multiple lines when considering terminal width of 80 characters total length';
-        const items = [createChoice(longDescription)];
+        const originalColumns = process.stdout.columns;
+        Object.defineProperty(process.stdout, 'columns', {
+          configurable: true,
+          value: 80,
+        });
 
-        // Should be more than 1 line due to wrapping
-        expect(calculateDescriptionLines(items, true)).toBeGreaterThan(1);
+        try {
+          const longDescription =
+            'This is a very long description that should wrap across multiple lines when considering terminal width of 80 characters total length';
+          const items = [createChoice(longDescription)];
+          // Pin columns=80 so wide developer TTYs still exercise wrapping.
+          // longDescription.length / 80 => 2 lines
+          expect(calculateDescriptionLines(items, true)).toBe(2);
+        } finally {
+          Object.defineProperty(process.stdout, 'columns', {
+            configurable: true,
+            value: originalColumns,
+          });
+        }
       });
 
       it('should fall back to width 80 when stdout.columns is unavailable', () => {
@@ -216,15 +208,13 @@ describe('PageSize Configuration', () => {
     });
 
     describe('with number pageSize (backward compatibility)', () => {
-      it('should return the number directly', () => {
-        const items = [createChoice()];
-        expect(resolvePageSize(10, items)).toBe(10);
-      });
-
-      it('should work with any number value', () => {
-        const items = [createChoice()];
-        expect(resolvePageSize(25, items)).toBe(25);
-      });
+      it.each([1, 10, 25, 100])(
+        'returns a numeric pageSize unchanged (%s)',
+        (pageSize) => {
+          const items = [createChoice()];
+          expect(resolvePageSize(pageSize, items)).toBe(pageSize);
+        },
+      );
     });
 
     describe('with PageSizeConfig object', () => {

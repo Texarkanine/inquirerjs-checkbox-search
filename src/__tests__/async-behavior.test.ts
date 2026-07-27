@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render } from '@inquirer/testing';
 import checkboxSearch from '../index.js';
+import { expectAnswerPending } from './helpers/expect-answer-pending.js';
 
 describe('Async behavior', () => {
   beforeEach(() => {
@@ -29,14 +30,13 @@ describe('Async behavior', () => {
     });
 
     // Should show loading state initially
-    let screen = getScreen();
-    expect(screen).toMatch(/loading|wait/i);
+    expect(getScreen()).toContain('Loading choices...');
 
     // Fast-forward time to complete async operations
     vi.advanceTimersByTime(150);
     await vi.runAllTimersAsync();
 
-    screen = getScreen();
+    const screen = getScreen();
     expect(screen).toContain('Result 1');
     expect(screen).toContain('Result 2');
   });
@@ -56,8 +56,7 @@ describe('Async behavior', () => {
     vi.advanceTimersByTime(50);
     await vi.runAllTimersAsync();
 
-    const screen = getScreen();
-    expect(screen).toMatch(/error|failed|network error/i);
+    expect(getScreen()).toContain('Network error');
   });
 
   /**
@@ -83,6 +82,8 @@ describe('Async behavior', () => {
 
   it('should cancel previous requests when search changes', async () => {
     let callCount = 0;
+    const aborted: number[] = [];
+    const completed: number[] = [];
     const mockSource = async (term?: string, opt?: { signal: AbortSignal }) => {
       const currentCall = ++callCount;
 
@@ -91,10 +92,12 @@ describe('Async behavior', () => {
           const timeout = setTimeout(resolve, 50);
           opt?.signal?.addEventListener('abort', () => {
             clearTimeout(timeout);
+            aborted.push(currentCall);
             reject(new Error('Aborted'));
           });
         });
 
+        completed.push(currentCall);
         return [
           { value: `result-${currentCall}`, name: `Result ${currentCall}` },
         ];
@@ -111,7 +114,7 @@ describe('Async behavior', () => {
       source: mockSource,
     });
 
-    // Type quickly to trigger multiple requests
+    // Type quickly to trigger multiple requests (plus the initial mount call).
     await events.type('a');
     vi.advanceTimersByTime(10); // Allow first request to start
     await events.type('b');
@@ -122,11 +125,53 @@ describe('Async behavior', () => {
     vi.advanceTimersByTime(100);
     await vi.runAllTimersAsync();
 
-    const screen = getScreen();
-    // Should only show results from the latest request
-    expect(screen).not.toContain('Result 1');
-    expect(screen).not.toContain('Result 2');
-    // Should show results from final request
-    expect(screen).toContain('Result');
+    // AbortSignal must have fired for every superseded call; only the last completes.
+    expect(aborted.length).toBe(callCount - 1);
+    expect(completed).toEqual([callCount]);
+
+    expect(getScreen()).toContain(`Result ${callCount}`);
+    for (const id of aborted) {
+      expect(getScreen()).not.toContain(`Result ${id}`);
+    }
+  });
+
+  /**
+   * While status !== 'idle' (async source loading), navigation/action keys
+   * must be ignored so the prompt neither moves nor submits.
+   * Uses real timers: the source stays pending until we resolve it (no delay),
+   * and expectAnswerPending / waitFor need wall-clock time.
+   */
+  it('should ignore navigation keys while async source is loading', async () => {
+    vi.useRealTimers();
+
+    let resolveSource!: (
+      value: ReadonlyArray<{ value: string; name: string }>,
+    ) => void;
+    const pendingSource = () =>
+      new Promise<ReadonlyArray<{ value: string; name: string }>>((resolve) => {
+        resolveSource = resolve;
+      });
+
+    const { answer, events, getScreen } = await render(checkboxSearch, {
+      message: 'Search items',
+      source: pendingSource,
+    });
+
+    expect(getScreen()).toContain('Loading choices...');
+    const beforeKeys = getScreen();
+
+    await events.keypress('down');
+    await events.keypress('up');
+    await events.keypress('tab');
+    await events.keypress('enter');
+    await events.keypress('escape');
+
+    expect(getScreen()).toEqual(beforeKeys);
+    await expectAnswerPending(answer);
+
+    resolveSource([{ value: 'result1', name: 'Result 1' }]);
+    await vi.waitFor(() => {
+      expect(getScreen()).toContain('Result 1');
+    });
   });
 });

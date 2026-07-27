@@ -91,17 +91,19 @@ describe('Search and filtering', () => {
     expect(screen).toContain('Apple');
     expect(screen).not.toContain('Banana');
     expect(screen).not.toContain('Cherry');
+    expect(screen).toContain('Search: ap');
 
-    // Clear with escape
+    // Clear with escape — restores the full list and clears the search term
     await events.keypress('escape');
     screen = getScreen();
     expect(screen).toContain('Apple');
     expect(screen).toContain('Banana');
     expect(screen).toContain('Cherry');
+    expect(screen).not.toContain('Search: ap');
   });
 
   it('should maintain selections across filtering', async () => {
-    const { events, getScreen } = await render(checkboxSearch, {
+    const { answer, events, getScreen } = await render(checkboxSearch, {
       message: 'Select fruits',
       choices: [
         { value: 'apple', name: 'Apple' },
@@ -122,18 +124,15 @@ describe('Search and filtering', () => {
     await events.keypress('down');
     await events.keypress('tab'); // Select Apricot
 
-    screen = getScreen();
-    expect(screen).toContain('◉'); // Should show selections
-
-    // Clear filter to show all items
+    // Clear filter to show all items, then submit — oracle is the answer set
     await events.keypress('escape');
     screen = getScreen();
-
-    // Should show all items and maintain selections
     expect(screen).toContain('Apple');
     expect(screen).toContain('Apricot');
     expect(screen).toContain('Banana');
-    expect(screen).toContain('◉'); // Selections should be maintained
+
+    await events.keypress('enter');
+    await expect(answer).resolves.toEqual(['apple', 'apricot']);
   });
 
   it('should handle empty search results', async () => {
@@ -153,7 +152,7 @@ describe('Search and filtering', () => {
     expect(screen).toContain('xyz'); // Should show the search term
   });
 
-  it('should handle tab selection after filtering', async () => {
+  it('keeps an item selected after a search filter hides the other choices', async () => {
     const { events, getScreen } = await render(checkboxSearch, {
       message: 'Select items',
       choices: [
@@ -162,60 +161,21 @@ describe('Search and filtering', () => {
       ],
     });
 
-    // Search and select
+    // Select first, then filter — selection must survive the rebuild
     await events.keypress('tab');
     let screen = getScreen();
-    expect(screen).toContain('◉'); // Apple should be selected
+    expect(screen).toMatch(/◉.*Apple/);
 
-    // Search for 'ap' and verify selection persists
     await events.type('ap');
     screen = getScreen();
-    expect(screen).toContain('Apple');
-    expect(screen).not.toContain('Banana'); // Should be filtered out
-    expect(screen).toContain('◉'); // Selection should persist
-  });
-
-  /**
-   * Feature test: Escape key to clear search filter
-   *
-   * This feature allows users to quickly clear search filters without
-   * manually backspacing through the entire search term.
-   */
-  it('should clear search filter with Escape key', async () => {
-    const { events, getScreen } = await render(checkboxSearch, {
-      message: 'Select items',
-      choices: [
-        { value: 'apple', name: 'Apple' },
-        { value: 'banana', name: 'Banana' },
-        { value: 'cherry', name: 'Cherry' },
-      ],
-    });
-
-    // Type a search term to filter results
-    await events.type('ap');
-    let screen = getScreen();
     expect(screen).toContain('Apple');
     expect(screen).not.toContain('Banana');
-    expect(screen).not.toContain('Cherry');
-
-    // Press Escape to clear the search filter
-    await events.keypress('escape');
-    screen = getScreen();
-
-    // All items should be visible again
-    expect(screen).toContain('Apple');
-    expect(screen).toContain('Banana');
-    expect(screen).toContain('Cherry');
-
-    // Search term should be cleared (no visible search text)
-    expect(screen).not.toContain('Search: ap');
+    expect(screen).toMatch(/◉.*Apple/);
   });
 
   /**
-   * Feature test: Escape key preserving selections
-   *
-   * When clearing search filters with escape, any selections made while
-   * filtering should be preserved when returning to the full list.
+   * Pressing Escape clears the filter and must keep selections made while
+   * the list was narrowed.
    */
   it('should maintain selections when clearing search filter with Escape', async () => {
     const { events, getScreen } = await render(checkboxSearch, {
@@ -380,7 +340,7 @@ describe('Search and filtering', () => {
   });
 
   /**
-   * B2: filter rebuild must keep separators while dropping non-matching
+   * Filter rebuild must keep separators while dropping non-matching
    * selectables (hits Separator.isSeparator in the filteredItems rebuild).
    */
   it('should preserve separators while filtering choices', async () => {
@@ -414,7 +374,7 @@ describe('Search and filtering', () => {
    * (covers the empty selectableIndexes early return).
    */
   it('should ignore arrow navigation when filter matches no choices', async () => {
-    const { events, getScreen } = await render(checkboxSearch, {
+    const { answer, events, getScreen } = await render(checkboxSearch, {
       message: 'Select items',
       choices: ['Apple', 'Banana'],
     });
@@ -422,11 +382,17 @@ describe('Search and filtering', () => {
     await events.type('zzz');
     await waitForCondition(() => !getScreen().includes('Apple'));
 
+    const beforeNav = getScreen();
     await events.keypress('down');
     await events.keypress('up');
+    expect(getScreen()).toEqual(beforeNav);
 
-    const screen = getScreen();
-    expect(screen).not.toContain('Apple');
-    expect(screen).not.toContain('Banana');
+    // Clearing the empty filter must leave the cursor recoverable on Apple
+    await events.keypress('escape');
+    const restored = getScreen();
+    expect(restored).toMatch(/❯.*Apple/);
+    await events.keypress('tab');
+    await events.keypress('enter');
+    await expect(answer).resolves.toEqual(['Apple']);
   });
 });

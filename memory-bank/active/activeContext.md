@@ -1,11 +1,11 @@
 # Active Context
 
-## Current Task: issue-147-max-test-qa / M1-coverage-closure
+## Current Task: issue-147-max-test-qa / M2-slobac-audit
 **Phase:** REFLECT COMPLETE
 
 ## What Was Done
-- M1 coverage closure complete: 131 tests, lines/funcs 100%, branches 96.28% with OOS documentation
-- Reflection written; `systemPatterns.md` separators list fixed; `techContext.md` targeted Stryker note added
+- M2 SLOBAC remediation complete and frozen; reflection written; 128 tests, test-only diff
+- Deferred edge-cases Phase B and infinite confirm loops documented
 
 ## Next Step
-- Run `/niko` to advance L4 to the next milestone (after opening/merging the M1 PR referencing `[#147]`)
+- Open/merge M2 PR referencing `[#147]`, then run `/niko` to advance L4 to M3

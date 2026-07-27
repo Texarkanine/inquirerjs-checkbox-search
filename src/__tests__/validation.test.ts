@@ -16,7 +16,7 @@ describe('Validation', () => {
     // Wait for next tick so validation message has time to render
     await new Promise((resolve) => setTimeout(resolve, 0));
     let screen = getScreen();
-    expect(screen).toMatch(/at least one|required|must select/i);
+    expect(screen).toContain('At least one choice must be selected');
 
     // Select an item and submit
     await events.keypress('tab');
@@ -48,7 +48,7 @@ describe('Validation', () => {
     await events.keypress('down');
     await events.keypress('tab');
     await events.keypress('enter');
-    await expect(answer).resolves.toHaveLength(2);
+    await expect(answer).resolves.toEqual(['Apple', 'Banana']);
   });
 
   it('should allow submission when validation passes', async () => {
@@ -69,7 +69,7 @@ describe('Validation', () => {
   });
 
   /**
-   * B5: sync validate returning false must surface the default invalid message
+   * Sync validate returning false must surface the default invalid message
    * and leave the prompt open.
    */
   it('should show Invalid selection when validate returns false', async () => {
@@ -91,7 +91,7 @@ describe('Validation', () => {
   });
 
   /**
-   * B6: async validate resolving to a string must show that string and keep the
+   * Async validate resolving to a string must show that string and keep the
    * prompt open.
    */
   it('should show async validate error string', async () => {
@@ -113,7 +113,7 @@ describe('Validation', () => {
   });
 
   /**
-   * B7: async validate resolving to false must show Invalid selection and keep
+   * Async validate resolving to false must show Invalid selection and keep
    * the prompt open.
    */
   it('should show Invalid selection when async validate returns false', async () => {
@@ -135,7 +135,7 @@ describe('Validation', () => {
   });
 
   /**
-   * B8: async validate resolving to true must complete with the selected values.
+   * Async validate resolving to true must complete with the selected values.
    */
   it('should complete when async validate returns true', async () => {
     const { answer, events } = await render(checkboxSearch, {
@@ -150,7 +150,7 @@ describe('Validation', () => {
   });
 
   /**
-   * B9: async validate rejecting must show Validation failed and keep the prompt
+   * Async validate rejecting must show Validation failed and keep the prompt
    * open.
    */
   it('should show Validation failed when async validate rejects', async () => {

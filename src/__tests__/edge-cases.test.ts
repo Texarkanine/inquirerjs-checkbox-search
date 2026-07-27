@@ -27,7 +27,7 @@ describe('Edge cases', () => {
 
     const screen = getScreen();
     expect(screen).toContain('Select items');
-    expect(screen).toMatch(/no.*choices|empty|nothing.*select/i);
+    expect(screen).toContain('No choices available');
   });
 
   it('should handle large numbers of choices', async () => {
