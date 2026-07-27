@@ -52,15 +52,14 @@ jobs:
         if: matrix.node-version == 22
         run: npm run attw
 
-  # Reports the mutation score and proves mutation testing still runs to completion.
-  # The score never fails the PR: Stryker's `thresholds.break` defaults to null, so only
-  # a crashed harness or the timeout below turns this job red. Do not set
-  # `thresholds.break` unless you intend to make the score a gate.
+  # Mutation score is gated: stryker.config.json sets thresholds.break to 80 (modest
+  # floor under the post-#147 cleaned score). The job also fails on harness crash or
+  # the timeout below.
   mutation:
-    name: Mutation (advisory)
+    name: Mutation
     runs-on: ubuntu-latest
     # A full local run burns ~27 min of CPU; on a 4-vCPU runner that is ~8-15 min wall.
-    # Sized to catch a genuine hang without reddening an advisory job on a slow runner.
+    # Sized to catch a genuine hang without reddening the job on a slow runner.
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
@@ -84,5 +83,5 @@ jobs:
           restore-keys: |
             stryker-incremental-
 
-      - name: Mutation testing (advisory)
+      - name: Mutation testing
         run: npm run test:mutate

@@ -169,12 +169,12 @@ No new technology — validation not required. M3 uses existing StrykerJS + Vite
 - [x] 1. Branch `mutate-me-up` from L4 tip
 - [x] 2. Baseline mutation run (82.07% / 105 survived / 4 no-cov)
 - [x] 3. Triage table recorded in progress.md
-- [ ] 4. Kill wave (TDD + kill-verify per target)
-- [ ] 5. Exclude wave + CONTRIBUTING ledger
-- [ ] 6. Cleaned full re-run
-- [ ] 7. CI gating go/no-go
-- [ ] 8. Docs sync
-- [ ] 9. Boundary verification + PR prep
+- [x] 4. Kill wave (TDD + kill-verify per target)
+- [x] 5. Exclude wave + CONTRIBUTING ledger
+- [x] 6. Cleaned full re-run (88.14% / 58 survived / 102 ignored)
+- [x] 7. CI gating go/no-go → set `thresholds.break: 80`
+- [x] 8. Docs sync (CONTRIBUTING ledger, techContext, pr.yaml)
+- [x] 9. Boundary verification (`format` + `quality:check` + 133 tests)
 
 ## Status
 
@@ -185,5 +185,5 @@ No new technology — validation not required. M3 uses existing StrykerJS + Vite
 - [x] Technology validation complete
 - [x] Pre-Mortem complete
 - [x] Preflight
-- [ ] Build
+- [x] Build
 - [ ] QA

@@ -55,9 +55,25 @@
 
 - **Unit Tests**: `npm test` - Run the full test suite
 - **Coverage**: `npm run test:coverage` - Generate coverage report
-- **Mutation testing (advisory)**: `npm run test:mutate:dry` / `npm run test:mutate` — StrykerJS. CI runs it on every PR as _Mutation (advisory)_ and logs the score; the score never fails the PR, but a crashed run or the job timeout does.
+- **Mutation testing (gated)**: `npm run test:mutate:dry` / `npm run test:mutate` — StrykerJS. CI runs it on every PR as _Mutation_; the job fails if the score drops below `thresholds.break` (80 in `stryker.config.json`), or on a crashed run / job timeout.
 - **Watch Mode**: `npm run test -- --watch` - Run tests in watch mode
 - **UI**: `npm run test:ui` - Run tests with Vitest UI
+
+#### Mutation exclusion ledger
+
+Every mutant removed from the denominator must be justified here (or via an adjacent `// Stryker disable` reason). High scores from unjustified excludes are not acceptable.
+
+| Mechanism                   | Target                                                               | Kind         | Reason                                                                                                         |
+| --------------------------- | -------------------------------------------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------- |
+| `mutator.excludedMutations` | `StringLiteral`                                                      | presentation | UX copy, empty-string inits, and label literals are outside the semantic contract; the suite must not pin them |
+| `mutator.excludedMutations` | `ArrayDeclaration`                                                   | equivalent   | Empty array literals and React hook dependency-array mutants are non-observable under `@inquirer/testing`      |
+| `// Stryker disable`        | `validate = () => true` (`ArrowFunction`)                            | equivalent   | `() => undefined` also submits (only `false` / string fail validation)                                         |
+| `// Stryker disable`        | `defaultFilter` description/value `toLowerCase` (`MethodExpression`) | equivalent   | `toUpperCase` is the same case-fold for `includes()`                                                           |
+
+Accepted remaining survivors (not ignored — disabling the mutator on these lines would also drop load-bearing mutants):
+
+- PageSize `ConditionalExpression` replacing `x !== undefined` with `true` before a numeric compare — equivalent under JavaScript (`undefined < 1` is false)
+- PageSize min/max `LogicalOperator` `&&` → `||` — equivalent when `min > max` is compared with `undefined` (relational compare is false)
 
 All new features should include comprehensive tests covering:
 

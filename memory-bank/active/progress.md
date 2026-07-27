@@ -58,15 +58,26 @@ Kill load-bearing Stryker survivors, justify and exclude junk mutants, and decid
 
 | Target | Lines | Disposition | Notes |
 |--------|-------|-------------|-------|
-| Empty-filter short-circuit | 512 | **Kill** | Custom filter empty/whitespace → no rows |
-| `defaultFilter` empty short-circuit | 238 | **Exclude/Defer** | Dead behind L512 for default path; equivalent |
-| `checked ?? false` | 217 | **Kill** | Choice `checked: true` → Enter submits |
-| `loop = true` default | 450 | **Kill** | Omit `loop`; assert wrap |
-| `validate = () => true` | 452 | **Exclude** | Equivalent to `() => undefined` |
-| PageSize equality boundaries | 259,263,267,271,278 | **Kill** | Allow min/base=1, buffer/minBuffer=0, min===max |
-| PageSize `!== undefined` → true | 259–277 | **Exclude** | Equivalent under JS relational compare |
-| `renderItem` checked/disabled style | 859–861 | **Kill** | Theme-injection `style.checked` / `style.disabled` |
-| UX StringLiterals / empty inits | 58,892–931, etc. | **Exclude** | Pure presentation |
-| ArrayDeclaration deps/empty | 445,498,879… | **Exclude** | Equivalent / non-observable in suite |
-| Case `toUpperCase` filter | 243–244 | **Exclude** | Equivalent case-fold |
-| Remaining nav/keybinding long-tail | 542–805 | **Defer/accept** | After kill+exclude wave; gate criteria |
+| Empty-filter short-circuit | 512 | **Killed** | Custom filter empty/whitespace |
+| `checked ?? false` | 217 | **Killed** | Choice `checked: true` → Enter |
+| `loop = true` default | 450 | **Killed** | Omit `loop`; wrap |
+| PageSize equality boundaries | 259+ | **Killed** | Boundary equals + single-bound |
+| `renderItem` checked/disabled | 859–861 | **Killed** | Theme-injection styles |
+| `validate = () => true` | 452 | **Ignored** | Site disable (equivalent) |
+| Case-fold MethodExpression | 243–244 | **Ignored** | Site disable |
+| StringLiteral / ArrayDeclaration | many | **Ignored** | Config excludedMutations |
+| PageSize `!== undefined` / `&&`→`||` | 259–278 | **Accepted** | JS-equivalent; left visible |
+| Nav/render ConditionalExpression long-tail | rest | **Accepted** | Below gate floor |
+
+## 2026-07-26 - BUILD - COMPLETE
+
+* Work completed
+    - Kill wave + kill-verify; exclude wave + CONTRIBUTING ledger; cleaned re-run **88.14%** (was 82.07%)
+    - Set `thresholds.break: 80`; updated PR Mutation job + techContext/CONTRIBUTING
+    - 133 tests green; quality:check green; no product behavior changes
+* Decisions made
+    - Gate at 80 (modest floor under cleaned score); not vanity 100%
+    - Removed leaked file-wide LogicalOperator disable; document equivalent survivors instead
+* Insights
+    - Custom filter that returns `[]` is the honest oracle for empty-search short-circuit (defaultFilter mirrors L512)
+    - `// Stryker disable Mutator` without a working restore ignores the rest of the file — prefer `next-line` or leave accepted

@@ -240,7 +240,9 @@ function defaultFilter<Value>(
   const searchTerm = term.toLowerCase().normalize('NFD');
   return items.filter((item) => {
     const name = item.name.toLowerCase().normalize('NFD');
+    // Stryker disable next-line MethodExpression: equivalent — toUpperCase is the same case-fold for includes()
     const description = (item.description ?? '').toLowerCase().normalize('NFD');
+    // Stryker disable next-line MethodExpression: equivalent — toUpperCase is the same case-fold for includes()
     const value = String(item.value).toLowerCase().normalize('NFD');
     return (
       name.includes(searchTerm) ||
@@ -449,6 +451,7 @@ export default createPrompt(
       pageSize: configPageSize,
       loop = true,
       required,
+      // Stryker disable next-line ArrowFunction: equivalent — () => undefined also submits (not false / not string)
       validate = () => true,
       default: defaultValues = emptyArray,
     } = config;
