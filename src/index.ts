@@ -449,6 +449,7 @@ export default createPrompt(
       pageSize: configPageSize,
       loop = true,
       required,
+      // Stryker disable next-line ArrowFunction: equivalent — () => undefined also submits (not false / not string)
       validate = () => true,
       default: defaultValues = emptyArray,
     } = config;

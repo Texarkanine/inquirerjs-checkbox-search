@@ -7,5 +7,11 @@
   "mutate": ["src/**/*.ts", "!src/**/*.test.ts", "!src/__tests__/**"],
   "coverageAnalysis": "perTest",
   "timeoutMS": 10000,
-  "incremental": true
+  "incremental": true,
+  "thresholds": {
+    "break": 80
+  },
+  "mutator": {
+    "excludedMutations": ["StringLiteral", "ArrayDeclaration"]
+  }
 }

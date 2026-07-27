@@ -1,127 +1,189 @@
-# Task: Audit suite with SLOBAC and remediate High smells
+# Task: issue-147-max-test-qa / M3-mutation-hardening
 
-* Task ID: issue-147-m2-slobac-audit
-* Complexity: Level 2
-* Type: simple enhancement (test-quality)
+* Task ID: issue-147-m3-mutation-hardening
+* Complexity: Level 3
+* Type: enhancement (test quality / mutation tooling)
 
-Run a SLOBAC audit over `src/__tests__/`, then remediate every in-scope smell so the suite's High kill-power defects (and issue/invariant-named cousins) are gone — without product-code changes and without buying score via presentation-coupled oracles. One PR referencing `[#147]`, merged before M3.
+Kill load-bearing Stryker survivors with stronger semantic oracles, cut justified junk from the mutation denominator (`mutator.excludedMutations` / targeted `// Stryker disable`), re-baseline the score after M1/M2 suite changes, and decide whether CI should keep mutation advisory or set `thresholds.break` near the cleaned floor. One PR to `main` referencing `[#147]`. No product-behavior changes unless a new test reveals a genuine defect (then TDD + `fix:`).
+
+## Pinned Info
+
+### Survivor triage → kill / exclude / gate
+
+Shows the ordered M3 pipeline and where the CI-gating decision sits (after cleaned score, not before).
+
+```mermaid
+flowchart TD
+    A[Full Stryker baseline post-M1/M2] --> B[Triage survivors]
+    B --> C{Load-bearing logic?}
+    C -->|Yes| D[Strengthen semantic oracle + kill-verify]
+    C -->|Equivalent or pure presentation| E[Exclude with in-repo justification]
+    C -->|Unclear / low value| F[Document defer/accept]
+    D --> G[Full re-run → cleaned score]
+    E --> G
+    F --> G
+    G --> H{Gate criteria met?}
+    H -->|Yes| I[Set thresholds.break + update CI/docs]
+    H -->|No| J[Keep advisory + document why]
+    I --> K[quality:check + PR #147]
+    J --> K
+```
+
+## Component Analysis
+
+### Affected Components
+- **Test suite (`src/__tests__/*.test.ts`)**: behavior-sliced Vitest/`@inquirer/testing` suites → strengthen oracles that kill load-bearing survivors; place cases by behavior (`search-filtering`, `selection`, `page-sizing`/`pagesize-config`, `basic-functionality`/`compatibility`, `navigation`, etc.); never invent presentation-coupled pins
+- **`stryker.config.json`**: mutation harness config → add justified `mutator.excludedMutations` (and optionally `thresholds.break`); keep incremental/reporting behavior unless gating requires comment/job updates
+- **`.github/workflows/pr.yaml` (`mutation` job)**: advisory mutation CI → if gating: set break + rename/comments; if not: leave advisory with updated rationale comments if needed
+- **Docs (`memory-bank/techContext.md`, `CONTRIBUTING.md`)**: document advisory-vs-gate truth → surgical updates only if M3 changes the CI contract
+- **`src/index.ts`**: prompt implementation → **no edits by default**; only (a) TDD'd `fix:` if a test reveals a defect, or (b) narrowly scoped `// Stryker disable` with justification for site-specific equivalents that cannot be expressed as mutator excludes
+
+### Cross-Module Dependencies
+- Tests → `src/index.ts`: tests are the kill mechanism; production code is the mutate target
+- `stryker.config.json` → suite + `src/index.ts`: mutate globs and excludes shape the denominator; score is meaningless if excludes are unjustified
+- PR workflow → `stryker.config.json` + `npm run test:mutate`: CI reads config; `thresholds.break` is the gate lever (null = advisory)
+- Docs → CI/config: `techContext.md` / `CONTRIBUTING.md` must match whatever gate decision lands
+
+### Boundary Changes
+- **Public library API**: none intended
+- **CI contract**: possible change from “Mutation (advisory)” (score never fails) to score-gated failure via `thresholds.break` — must be explicit in workflow comments + docs
+- **Mutation denominator**: shrinks only via justified excludes/disables (invariant 4)
+
+### Invariants & Constraints
+1. No product behavior changes unless a genuine defect is found (then TDD + `fix:`)
+2. SLOBAC bar remains: no vacuous assertions, no presentation-coupled oracles (theme-injection / answer-array patterns only)
+3. Selection-across-filter invariant stays guarded
+4. Every `excludedMutations` entry and `// Stryker disable` has an in-repo reason (equivalent or pure presentation)
+5. Every strengthened test is kill-verified with a fresh `--incrementalFile` range run
+6. `npm run quality:check` green; `npm run format` before push
+7. One PR referencing `[#147]`, after M2 merge (already done: #158)
+8. Unreachable branches stay out-of-surface with recorded reason — do not fake coverage/kills
+9. Spurious 100% via label/theme/empty-string pins is a failed milestone
+
+## Open Questions
+
+None — implementation approach is clear from issue #147, L4 milestone scope, and the #145 archive decision notes. The CI `thresholds.break` choice is a **late go/no-go with fixed criteria** (see Implementation Plan step 7), not an up-front design fork requiring creative exploration.
 
 ## Test Plan (TDD)
 
-This milestone remediates existing tests; it does not add product behaviors. TDD cycles are per finding: change the test → prove the suite still passes → for any strengthened oracle, kill-verify the claimed lines (cross-milestone invariant 8). Renames and pure deletions skip kill-verify but must not drop coverage of load-bearing paths.
-
 ### Behaviors to Verify
 
-- [B1 — High smells cleared]: SLOBAC audit of `src/__tests__/` with the in-scope slug set → zero High-severity findings remain
-- [B2 — Issue-named Mediums cleared]: same audit → zero `naming-lies` findings remain (explicitly prioritized by #147 even though taxonomy severity is Medium)
-- [B3 — No presentation coupling introduced]: remediations do not add exact UX-copy / default-theme ANSI / glyph oracles; any pre-existing `presentation-coupled` findings in scope are fixed or replaced with semantic/theme-injection oracles (invariant 3)
-- [B4 — Selection-across-filter guarded]: after any consolidation/deletion, `search-filtering.test.ts` / `selection.test.ts` still assert that filtering does not drop selections (invariant 5)
-- [B5 — Strengthened oracles kill]: each test whose assertion body was strengthened → targeted Stryker range run moves mutants in the claimed lines from `NoCoverage`/`Survived` toward `Killed` (invariant 8)
-- [B6 — Green boundary]: `npm run quality:check` and full suite green before milestone close (invariant 6)
-- [Edge — No product edits]: diff against `main` contains no changes under `src/` except `src/__tests__/` (unless a genuine defect is found — then TDD a `fix:` and call it out)
-- [Edge — Deferred Medium/Low]: Medium/Low smells outside B2/B3 are listed in progress as deferred, not silently "fixed" by weakening coverage
+Pre-identified hit-list from milestones / #145 (exact line ranges come from the post-M1/M2 baseline triage — do not hard-code stale #145 lines):
+
+- **B1 empty-filter short-circuit**: filter that yields zero matches → navigation/selection behavior matches “no rows” contract; mutants that break the short-circuit die
+- **B2 default `checked` / `loop` / `validate`**: omitting those options → same observable behavior as documented defaults; default-literal mutants die via semantic outcome, not string pins
+- **B3 `default` values application**: choices with `default`/pre-checked config → submit answer includes them without extra toggles
+- **B4 `PageSizeConfig` boundaries**: min/max/autoBuffer edges → page size / scroll window respects bounds; boundary mutants die
+- **B5 `renderItem` checked/disabled branches (load-bearing only)**: checked vs unchecked and disabled vs enabled remain distinguishable via theme-injection or answer/behavior oracles — not raw ANSI/default glyphs
+- **B6 justified excludes**: each excluded mutant category/site has a recorded reason; unjustified excludes are forbidden
+- **B7 CI gate decision**: after cleaned score, either (a) `thresholds.break` set near floor and job fails below it, or (b) advisory retained with documented reason
+- **B8 selection-across-filter**: existing guard still asserts answer-array identity across filter changes
+- **B9 green boundary**: full suite + `quality:check` pass
+
+### Edge Cases
+- Survivor looks load-bearing but only flips presentation → exclude with reason, do not pin copy
+- Kill attempt requires product bug → TDD fix as `fix:`, call out in progress
+- Range kill-verify polluted by shared incremental file → always fresh nonexistent `--incrementalFile`
+- Full-run wall time / CI timeout (30m) → do not lower timeout to chase green; only change timeout with evidence
 
 ### Test Infrastructure
-
 - Framework: Vitest + `@inquirer/testing`
-- Test location: `src/__tests__/*.test.ts` (helpers in `src/__tests__/helpers/`)
-- Conventions: behavior-sliced suites (`systemPatterns.md`); no new suite files unless a smell requires regrouping that cannot land in an existing theme
-- Audit tooling: local `slobac-audit` skill (subagent-orchestrated); artifacts under `.slobac/<run-id>/`
-- Kill-verify: `npx stryker run --mutate "src/index.ts:<start>-<end>" --reporters clear-text --incrementalFile /tmp/stryker-range.json` (fresh nonexistent path)
-- New test files: none expected; migrate/delete only if `semantic-redundancy` / `deliverable-fossils` require it
+- Location: `src/__tests__/*.test.ts` (behavior-sliced)
+- Conventions: answer-array oracles first; theme-injection for styling; `expectAnswerPending` for pending; no B*/Feature fossils
+- Kill-verify: `npx stryker run --mutate "src/index.ts:<start>-<end>" --reporters clear-text --incrementalFile /tmp/stryker-range.json`
+- New test files: none expected — extend existing suites
 
-### In-scope SLOBAC slugs
-
-**Must remediate (High):** `vacuous-assertion`, `pseudo-tested`, `semantic-redundancy`, `deliverable-fossils`, `implementation-coupled`, `loose-text-oracle`, `over-specified-mock`, `prose-pin`
-
-**Must remediate (issue / invariant):** `naming-lies` (#147), `presentation-coupled` (invariant 3 — do not introduce; clear if found)
-
-**Audit invocation:** run `slobac-audit` against `src/__tests__/` with those slugs explicitly (or `all`, then filter remediation to the set above). Critical `tautology-theatre` is out of the milestone title but if found must be fixed — it is worse than High.
+### Integration Tests
+- Full `npm run test:mutate` after kill+exclude wave (suite × mutator × config)
+- PR workflow mutation job still completes (advisory or gated) — verified by config/docs consistency; live CI on the PR
 
 ## Implementation Plan
 
-1. **Baseline audit**
-   - Files: `src/__tests__/`; artifacts → `.slobac/<run-id>/`
-   - Changes: Invoke `slobac-audit` skill with target `src/__tests__/` and the in-scope slug set. Copy a triage table (file, test name, slug, severity, proposed fix) into `progress.md`. Do not remediate in this step.
+1. **Branch + workspace**
+    - Files: git branch `mutate-me-up` from the current L4 working tip (the commits that carry this plan ahead of `origin/main`), not a clean `main` checkout that drops memory-bank
+    - Changes: feature branch for M3-only commits; memory-bank updates travel with the work
 
-2. **Triage against invariants**
-   - Files: `memory-bank/active/progress.md`, `memory-bank/active/tasks.md` (checklist of findings)
-   - Changes: Mark each finding as remediable / false-positive / deferred. Reject any proposed fix that would assert exact UX copy or default ANSI. Confirm `should maintain selections across filtering` (and related selection invariants) are not on a delete list.
+2. **Baseline mutation run (post-M1/M2)**
+    - Files: `reports/` (local/CI cache), progress notes
+    - Changes: run `npm run test:mutate` (or equivalent); capture total/covered scores and survivor list; replace #145 numbers as working baseline
 
-3. **Remediate kill-power smells first** (`vacuous-assertion`, `pseudo-tested`, then High others)
-   - Files: whichever `src/__tests__/*.test.ts` the audit names (historically: `descriptions`, `navigation`, `selection`, `search-filtering`; M1 also touched `validation`, `compatibility`, `basic-functionality`)
-   - Changes: Per finding — strengthen or rewrite the oracle to a semantic assertion; use theme-injection if styling must be proven. TDD cycle (M1 amendment for already-correct production code): if adding a new replacement case, stub the empty `it(...)` first; then implement the oracle → `npx vitest run -t "…"` (green) → kill-verify claimed lines when the assertion body changed. Renames with unchanged bodies skip kill-verify.
+3. **Triage table**
+    - Files: `memory-bank/active/progress.md` (and optionally a short checklist subsection in this file)
+    - Changes: classify each high-value survivor → Kill / Exclude / Defer; seed with empty-filter, defaults, PageSizeConfig, renderItem checked/disabled; add any new load-bearing survivors the baseline surfaces
 
-4. **Remediate redundancy / fossils / naming**
-   - Files: suites named by audit; possible delete/migrate of a suite file
-   - Changes: Rename liey titles; migrate unique coverage into the matching behavior-sliced suite before deleting duplicates; re-run affected tests after each migration.
+4. **Kill wave (TDD per target)** — repeat per Kill row
+    - Files: appropriate `src/__tests__/<behavior>.test.ts`
+    - Changes: stub → implement stronger semantic oracle → green suite → kill-verify range → mark triage row done
+    - TDD amendment (same as M1/M2): production code already correct → stub→implement→green→kill-verify substitutes for red-first
 
-5. **Clear presentation-coupled findings (if any)**
-   - Files: audit-named suites — known pre-existing glyph pins include `search-filtering.test.ts` (`should maintain selections across filtering` and neighbors) and much of `navigation.test.ts` / `selection.test.ts`
-   - Changes: Replace glyph/ANSI/copy pins; **do not delete** the selection-across-filter cases. Preference order for replacements: (1) answer-array / behavioral oracles as in `basic-functionality.test.ts` ("Oracle is the answer array — not default-theme checked glyphs"), (2) theme-injected markers when mid-prompt visibility must be asserted, (3) extract a tiny helper under `src/__tests__/helpers/` only if the same injection is repeated across suites. Never "fix" by deleting the only assertion of a load-bearing path.
+5. **Exclude wave**
+    - Files: `stryker.config.json`; optionally narrow `// Stryker disable` in `src/index.ts`; durable ledger in `CONTRIBUTING.md` (or a short subsection under Testing) listing each exclude/disable with equivalent-vs-presentation reason
+    - Changes: add `mutator.excludedMutations` and/or site disables **only** with that ledger entry (JSON has no comments — the ledger is the in-repo justification). Prefer config-level excludes for operator categories; disable comments for site-specific cases
 
-6. **Re-audit loop**
-   - Files: `.slobac/<new-run-id>/`
-   - Changes: Re-run `slobac-audit` with the same slug set. If in-scope findings remain, return to step 3 for those items only. Exit when B1–B3 are satisfied.
+6. **Cleaned full re-run**
+    - Files: progress notes
+    - Changes: full `npm run test:mutate`; record cleaned score and remaining survivors; confirm kill-set grew and excludes are accounted for
 
-7. **Regression + quality gate + PR**
-   - Files: all of `src/__tests__/`; PR on `slobac-me-up`
-   - Changes: `npm test` / `npm run quality:check`; `npm run format` before push; open draft PR titled with conventional type + `[#147]`.
+7. **CI gating go/no-go** (criteria — apply after step 6)
+    - **Set `thresholds.break`** only if all hold: (a) load-bearing hit-list kills done or explicitly deferred with reason; (b) remaining denominator noise is justified-excluded or accepted as contract; (c) cleaned score is stable enough to pick a modest floor **below** the cleaned score (not aspirational 100%); (d) false-red risk from flaky/hang mutants is low given current timeout/incremental setup
+    - **Keep advisory** if presentation/equivalent long-tail still dominates without honest excludes, or cleaned score is too volatile to gate
+    - Files if gating: `stryker.config.json` (`thresholds.break`), `.github/workflows/pr.yaml` (job name/comments), `techContext.md`, `CONTRIBUTING.md`
+    - Files if advisory: progress + brief comment/doc note that M3 reaffirmed advisory and why
+
+8. **Docs sync**
+    - Files: `memory-bank/techContext.md`, `CONTRIBUTING.md` (gate contract if step 7 changed it; exclusion ledger from step 5 always if any excludes landed)
+    - Changes: surgical truth updates — advisory vs gated; keep exclusion ledger aligned with `stryker.config.json`
+
+9. **Boundary verification + PR**
+    - Run `npm run format` then `npm run quality:check` and full `npm test`
+    - Open draft PR titled with conventional type + `[#147]`; merge before L4 advances past M3
 
 ## Technology Validation
 
-No new technology - validation not required. Audit uses the existing local `slobac-audit` skill; tests remain Vitest + `@inquirer/testing`; kill-verify remains Stryker line-range targeting already documented in `techContext.md`.
-
-## Dependencies
-
-- Local `slobac-audit` skill (orchestrator + scout/assessor subagents)
-- M1 already on `main` (PR #157 merged) — suite under audit includes M1 coverage cases
-- Cross-milestone invariants 1–9 in `milestones.md`
-- Prior art: `memory-bank/archive/enhancements/20260513-slobac-fix-2026-05-13.md` (rename / strengthen / migrate pattern; `NO_COLOR` + theme-injection constraint)
+No new technology — validation not required. M3 uses existing StrykerJS + Vitest runner already in-repo from #145.
 
 ## Challenges & Mitigations
 
-- **Audit volume / cost on ~14 suites / ~3k LOC:** Mitigate by scoping remediation to the in-scope slug set; defer other Medium/Low with an explicit progress note.
-- **Findings are judgment calls, not compiler errors:** Mitigate with a written triage table before edits; false-positives must cite why (not "looks fine").
-- **Strengthening an oracle into presentation coupling:** Mitigate by invariant-3 gate in triage and in each remediation step; prefer theme injection / behavioral outcomes (selection, status, filter term).
-- **Consolidation deletes the selection-across-filter guard:** Mitigate by B4 checklist item before any file delete; never delete that case to clear `semantic-redundancy`.
-- **Kill-verify flaky / incremental pollution:** Mitigate with fresh `--incrementalFile` path per M1 tooling fact; do not use `--incremental=false`.
-- **Genuine product defect revealed by a stronger test:** Mitigate per invariant 1 — TDD a `fix:` commit, call out in progress; do not fold into chore(test) silently.
+- **Stale #145 survivor lines after M1/M2**: always re-baseline (step 2) before kill work; treat milestone hit-list as seeds, not coordinates
+- **Presentation mutants tempting copy pins**: refuse; exclude with reason or use theme-injection; invariant 3 / issue non-goals
+- **Incremental cache polluting range scores**: fresh nonexistent `--incrementalFile` every kill-verify
+- **Full mutate runtime (~8–15m CI / longer local)**: use range runs in the inner loop; one full run at baseline and one after exclude wave
+- **Pressure to set `thresholds.break` for a vanity number**: criteria in step 7; keeping advisory is a valid M3 completion if documented
+- **Accidental product edits**: diff-discipline — test/config/docs only unless defect proven
 
 ## Pre-Mortem
 
-- **Plan failed by treating "audit the whole taxonomy" as the acceptance bar:** Scope response already limits remediation to High + `naming-lies` + `presentation-coupled`; keep that fence in build.
-- **Plan failed because build started remediating before a frozen triage list, thrashing files:** Step 2 is mandatory; do not skip to edits from a partial scout.
-- **Plan failed by "fixing" High smells with weaker or deleted coverage so re-audit goes quiet:** B4/B5/B6 and invariant 2 forbid silent weakenings; re-audit zero is necessary but not sufficient without kill-verify on strengthened cases.
-- **Plan failed when `slobac-audit` subagent orchestration stalls:** Fall back to a single-pass manual review using the same slug definitions from the skill taxonomy, document the fallback in progress, still require a recorded findings table.
+- **Gated CI on a noisy score → chronic false reds**: already covered by Challenge (vanity gate) + step 7 criteria requiring modest floor and low false-red risk — prefer advisory over a brittle break
+- **“100% by exclusion” without kill-power**: strengthen invariant 4 check in preflight/QA — every exclude must name equivalent-vs-presentation; score alone is not acceptance
+- **Skipping baseline and hunting #145 line numbers**: step 2 is mandatory; preflight should fail the plan if build starts from stale coordinates
+- **Weakening selection-across-filter while consolidating kills**: B8 + cross-milestone invariant 5 — QA explicitly re-checks that guard
+
+## Preflight Amendments
+
+- Branch from L4 working tip (plan commits), not bare `main`
+- Exclusion justifications live in a durable `CONTRIBUTING.md` ledger (JSON cannot hold comments)
+- Kill-wave TDD confirmed: stub → implement oracle → green → kill-verify; any `src/index.ts` defect fix is a separate TDD `fix:` cycle
+
+## Build Progress
+
+- [x] 1. Branch `mutate-me-up` from L4 tip
+- [x] 2. Baseline mutation run (82.07% / 105 survived / 4 no-cov)
+- [x] 3. Triage table recorded in progress.md
+- [x] 4. Kill wave (TDD + kill-verify per target)
+- [x] 5. Exclude wave + CONTRIBUTING ledger
+- [x] 6. Cleaned full re-run (88.14% / 58 survived / 102 ignored)
+- [x] 7. CI gating go/no-go → set `thresholds.break: 80`
+- [x] 8. Docs sync (CONTRIBUTING ledger, techContext, pr.yaml)
+- [x] 9. Boundary verification (`format` + `quality:check` + 133 tests)
 
 ## Status
 
-- [x] Initialization complete
+- [x] Component analysis complete
+- [x] Open questions resolved
 - [x] Test planning complete (TDD)
 - [x] Implementation plan complete
 - [x] Technology validation complete
 - [x] Pre-Mortem complete
 - [x] Preflight
-- [x] Build (frozen — see Build Freeze)
+- [x] Build
 - [x] QA
-
-## Preflight Amendments (2026-07-26)
-
-1. TDD cycle for remediations explicitly mirrors M1: stub new replacement cases first; strengthen → green → kill-verify; renames skip kill-verify.
-2. Presentation-coupled remediation must preserve selection-across-filter coverage; prefer answer-array oracles, then theme injection, then a shared helper if repetition appears.
-
-## Build Freeze (2026-07-26)
-
-Stopped the re-audit loop after an independent Opus/Sol pass and remediation of clear High / issue-named smells. Acceptance is kill-power, not an empty findings list on every subsequent confirm.
-
-### Done
-
-1. Baseline audit + first remediation wave
-2. Independent Opus batch + Sol cross-suite re-audit; remediations through two Opus confirmation rounds
-3. Full suite green (128); quality gate green; `.slobac/` ignored
-
-### Explicit deferrals
-
-- Sol Phase B: dissolve `edge-cases.test.ts` into behavior-sliced suites — organizational; conflicts with documented grapheme placement in `systemPatterns.md`
-- Further confirmation-audit nits that do not clearly increase kill-power

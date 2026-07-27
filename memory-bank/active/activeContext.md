@@ -1,11 +1,11 @@
 # Active Context
 
-## Current Task: issue-147-max-test-qa / M2-slobac-audit
-**Phase:** REFLECT COMPLETE
+## Current Task: issue-147-max-test-qa / M3-mutation-hardening
+**Phase:** REFLECT - COMPLETE
 
 ## What Was Done
-- M2 SLOBAC remediation complete and frozen; reflection written; 128 tests, test-only diff
-- Deferred edge-cases Phase B and infinite confirm loops documented
+- Reflection written for M3 mutation hardening (88.14% cleaned, gate@80)
+- Persistent reconcile: techContext already updated in build; product/systemPatterns unchanged
 
 ## Next Step
-- Open/merge M2 PR referencing `[#147]`, then run `/niko` to advance L4 to M3
+- Operator: open draft PR for M3 on `mutate-me-up` referencing `[#147]`, then after merge run `/niko` (M3 is the last L4 milestone → capstone archive)

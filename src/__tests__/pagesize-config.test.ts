@@ -72,6 +72,22 @@ describe('PageSize Configuration', () => {
     it('should pass validation for empty config', () => {
       expect(() => validatePageSizeConfig({})).not.toThrow();
     });
+
+    /**
+     * Boundary equals must remain valid: min/base of 1, buffer/minBuffer of 0,
+     * and min === max. EqualityOperator mutants that widen `< 1`/`< 0`/`>` to
+     * `<=`/`>=` throw on these legal configs.
+     */
+    it('should allow PageSize boundary equals', () => {
+      expect(() => validatePageSizeConfig({ min: 1 })).not.toThrow();
+      expect(() => validatePageSizeConfig({ base: 1 })).not.toThrow();
+      expect(() => validatePageSizeConfig({ buffer: 0 })).not.toThrow();
+      expect(() => validatePageSizeConfig({ minBuffer: 0 })).not.toThrow();
+      expect(() => validatePageSizeConfig({ min: 5, max: 5 })).not.toThrow();
+      // Either bound alone is valid (min/max compare only applies when both are set)
+      expect(() => validatePageSizeConfig({ min: 5 })).not.toThrow();
+      expect(() => validatePageSizeConfig({ max: 5 })).not.toThrow();
+    });
   });
 
   describe('calculateDescriptionLines', () => {

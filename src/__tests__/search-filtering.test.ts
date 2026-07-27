@@ -57,6 +57,39 @@ describe('Search and filtering', () => {
     expect(screen).not.toContain('Cherry');
   });
 
+  /**
+   * Match via description or value alone (name must not contain the term).
+   * Kills description/value `toLowerCase` → `toUpperCase` MethodExpression
+   * mutants that the name OR-branch otherwise masks.
+   */
+  it('should match search terms found only in description or value', async () => {
+    const { events, getScreen } = await render(checkboxSearch, {
+      message: 'Select items',
+      choices: [
+        {
+          value: 'x1',
+          name: 'Fruit',
+          description: 'Red Apple cultivar',
+        },
+        {
+          value: 'apple-code',
+          name: 'Produce',
+        },
+        {
+          value: 'other',
+          name: 'Banana',
+          description: 'Yellow fruit',
+        },
+      ],
+    });
+
+    await events.type('apple');
+    const screen = getScreen();
+    expect(screen).toContain('Fruit');
+    expect(screen).toContain('Produce');
+    expect(screen).not.toContain('Banana');
+  });
+
   it('should clear filter with backspace', async () => {
     const { events, getScreen } = await render(checkboxSearch, {
       message: 'Select fruits',
@@ -150,6 +183,30 @@ describe('Search and filtering', () => {
     expect(screen).not.toContain('Banana');
     expect(screen).not.toContain('Cherry');
     expect(screen).toContain('xyz'); // Should show the search term
+  });
+
+  /**
+   * Empty and whitespace-only search must short-circuit before the custom
+   * filter runs. A filter that returns [] for every call would hide all rows
+   * if the short-circuit (or its `.trim()`) were removed.
+   */
+  it('should short-circuit filtering for empty and whitespace search terms', async () => {
+    const { events, getScreen } = await render(checkboxSearch, {
+      message: 'Select items',
+      choices: ['Apple', 'Banana', 'Cherry'],
+      filter: () => [],
+    });
+
+    let screen = getScreen();
+    expect(screen).toContain('Apple');
+    expect(screen).toContain('Banana');
+    expect(screen).toContain('Cherry');
+
+    await events.type('   ');
+    screen = getScreen();
+    expect(screen).toContain('Apple');
+    expect(screen).toContain('Banana');
+    expect(screen).toContain('Cherry');
   });
 
   it('keeps an item selected after a search filter hides the other choices', async () => {
