@@ -2,6 +2,7 @@
 
 [![npm version](https://badge.fury.io/js/inquirerjs-checkbox-search.svg)](https://www.npmjs.com/package/inquirerjs-checkbox-search)
 [![code coverage](https://codecov.io/gh/Texarkanine/inquirerjs-checkbox-search/graph/badge.svg)](https://codecov.io/gh/Texarkanine/inquirerjs-checkbox-search)
+[![REUSE status](https://api.reuse.software/badge/github.com/Texarkanine/inquirerjs-checkbox-search)](https://api.reuse.software/info/github.com/Texarkanine/inquirerjs-checkbox-search)
 
 A multi-select prompt with text filtering/search capability for [inquirer.js](https://github.com/SBoudrias/Inquirer.js).
 
