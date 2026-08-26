@@ -1,4 +1,32 @@
-# Contributing to inquirerjs-checkbox-search
+# Contributing
+
+Want to contribute? We'd love to see it! Thoughtful issues and PRs that make the project better are enthusiastically welcomed here!
+
+## Issues
+
+Open an issue for a bug, an idea, or a question.
+
+## Pull requests
+
+1. Fork the repository. If you already have write access, a branch on the origin is fine.
+2. Open a pull request against `main` and fill in the pull request template.
+3. Title the PR as a [conventional commit](https://www.conventionalcommits.org/): `feat`, `fix`, or `chore`. This repository uses release-please: `feat` and `fix` cut a release; `chore` does not.
+
+Keep the change focused: one concern per pull request when practical.
+
+Prefer a scoped `feat` or `fix` over `chore` when the change should release — for example `feat(ui):`, `fix(docs):`, or `fix(ci):`. `chore` does not cut a release.
+
+Before you open the PR:
+
+- Build succeeds: `npm run build`
+- All tests pass: `npm test`
+- Code is formatted: `npm run format`
+- No lint errors: `npm run lint`
+- TypeScript compiles: `npm run typecheck`
+- UI changes include screenshots or recordings
+- Documentation is updated when the change needs it
+
+CI must pass. Code coverage should not decrease significantly.
 
 ## Development Setup
 
@@ -10,46 +38,21 @@
 
 ### Setup
 
-1. Fork and clone the repository:
-
-   ```bash
-   git clone https://github.com/texarkanine/inquirerjs-checkbox-search.git
-   cd inquirerjs-checkbox-search
-   ```
-
-2. Install dependencies:
-
-   ```bash
-   npm install
-   ```
-
-3. Build the project:
-
-   ```bash
-   npm run build
-   ```
-
-4. Run tests to verify setup:
-   ```bash
-   npm test
-   ```
+```bash
+git clone https://github.com/Texarkanine/inquirerjs-checkbox-search.git
+cd inquirerjs-checkbox-search
+npm install
+npm run build
+npm test
+```
 
 ## Development Workflow
 
-### Making Changes
-
-1. Create a new branch for your feature/fix:
-
-   ```bash
-   git checkout -b feat/your-feature-name
-   # or
-   git checkout -b fix/your-bug-fix
-   ```
-
-2. Make your changes following our coding standards
-3. Add or update tests as needed
-4. Build the project: `npm run build`
-5. Run the test suite: `npm test`
+1. Create a branch for the change (`feat/your-feature-name` or `fix/your-bug-fix`).
+2. Make the change following the coding standards below.
+3. Add or update tests as needed.
+4. Build: `npm run build`
+5. Run the suite: `npm test`
 
 ### Testing
 
@@ -100,73 +103,20 @@ The project follows these standards:
 
 Demo GIFs in the README are automatically generated in CI; when you open a PR you'll get a comment on the PR with previews of any demos that changed as a result of your PR.
 
-## Commit Message Convention
-
-This project uses [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) for automated releases and changelog generation.
-
-### Commit Message Format
-
-```
-<type>[optional scope]: <description>
-
-[optional body]
-
-[optional footer(s)]
-```
-
-### Types
-
-- **feat**: A new feature for the user (triggers minor release)
-- **fix**: A bug fix for the user (triggers patch release)
-- **chore**: Maintenance tasks that don't affect the user (no release - avoid when possible)
-
-**Note**: `chore` commits do not trigger releases, so they should be avoided in most cases. Instead, use scopes to provide more context:
-
-- `feat(ui): add new search functionality`
-- `fix(docs): correct API examples`
-- `fix(ci): update Node.js version in workflow`
-
-### Breaking Changes
-
-Breaking changes should be indicated by:
-
-1. A `!` after the type: `feat!:` or `fix!:`
-2. A `BREAKING CHANGE:` footer explaining the change
-
-## Pull Request Process
-
-1. **Before submitting**:
-   - Ensure build succeeds: `npm run build`
-   - Ensure all tests pass: `npm test`
-   - Ensure code is properly formatted: `npm run format`
-   - Ensure no linting errors: `npm run lint`
-   - Ensure TypeScript compiles: `npm run typecheck`
-
-2. **Pull Request**:
-   - Use a descriptive title following conventional commit format
-   - Include a detailed description of changes
-   - Reference any related issues
-   - Include screenshots/recordings for UI changes
-   - Update documentation if needed
-
-3. **Review Process**:
-   - All PRs require at least one approval
-   - CI checks must pass
-   - Code coverage should not decrease significantly
-
-## Release Process
+## Releases
 
 Releases are automated using [release-please](https://github.com/googleapis/release-please):
 
 1. When PRs are merged to `main`, release-please analyzes commit messages
 2. It creates/updates a release PR with version bumps and changelog
-3. When the release PR is merged, it:
-   - Creates a GitHub release
-   - Publishes to npm automatically
-   - Updates version tags
+3. When the release PR is merged, it creates a GitHub release, publishes to npm, and updates version tags
 
 Version bumping follows semantic versioning:
 
 - `fix:` commits trigger patch releases (1.0.1)
 - `feat:` commits trigger minor releases (1.1.0)
 - `feat!:` or `BREAKING CHANGE:` trigger major releases (2.0.0)
+
+## License
+
+By opening a pull request, you license your contribution under this repository's license, and you grant Texarkanine a perpetual, worldwide, non-exclusive right to relicense that contribution as part of this project under any [OSI-approved](https://opensource.org/licenses) license. You keep your copyright.
