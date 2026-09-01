@@ -92,7 +92,7 @@
     "demo:generate:all": "node scripts/generate-demo.js all"
   },
   "dependencies": {
-    "@inquirer/core": "^11.1.2",
+    "@inquirer/core": "^12.0.1",
     "@inquirer/figures": "^2.0.2",
     "@inquirer/type": "^4.0.2",
     "ansi-escapes": "^7.0.0",
