@@ -25,3 +25,13 @@ Consolidate Dependabot PRs #169/#170 by bumping `@stryker-mutator/core` and `@st
     - Prefer `test:mutate:dry` first; full `test:mutate` if dry-run is clean
 * Insights
     - Stryker 10 release notes: vitest-runner change is warning noise fix; sole BREAKING CHANGE is Node 20 drop
+
+## 2026-09-02 - PREFLIGHT - COMPLETE
+
+* Work completed
+    - Validated plan against codebase, engines, and CI Node matrix (22/24/26)
+    - Wrote `.preflight-status` = PASS
+* Decisions made
+    - No plan amendments required
+* Insights
+    - Deps-only TDD encoding OK: operational gates after install, no change-detector version tests

@@ -71,6 +71,12 @@ No new technology — major version bump of existing Stryker packages already in
 - Plan fails because we only bump package.json and skip lockfile install: Step 2 explicitly runs `npm install`
 - Plan fails because Node 20 CI matrix exists: already checked — engines `>=22`; if workflow still uses 20, that would be a blocking discovery in preflight/build (unlikely given engines)
 
+## Preflight Findings
+
+- **PASS** — Plan matches deps-only scope; CI Node matrix is 22/24/26 (satisfies Stryker 10).
+- **TDD encoding**: No new product executable units; operational verification after install is correct (change-detector version asserts rejected).
+- **Advisory**: Prefer full `npm run test:mutate` after dry-run when feasible so local gate matches CI Mutation job.
+
 ## Status
 
 - [x] Initialization complete
@@ -78,6 +84,6 @@ No new technology — major version bump of existing Stryker packages already in
 - [x] Implementation plan complete
 - [x] Technology validation complete
 - [x] Pre-Mortem complete
-- [ ] Preflight
+- [x] Preflight
 - [ ] Build
 - [ ] QA
