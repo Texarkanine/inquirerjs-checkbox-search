@@ -11,6 +11,7 @@ SPDX-License-Identifier = "MIT"
 path = [
     ".cursor/rules/**",
     "**/*.mdc",
+    "AGENTS.md",
     "CLAUDE.md",
     ".claude/**"
 ]
@@ -26,3 +27,10 @@ path = [".cursor/rules/shared/**"]
 precedence = "override"
 SPDX-FileCopyrightText = "NOASSERTION"
 SPDX-License-Identifier = "LicenseRef-NOASSERTION"
+
+# Vendored SumMem CLI (https://github.com/Texarkanine/SumMem)
+[[annotations]]
+path = [".summem/summem"]
+precedence = "override"
+SPDX-FileCopyrightText = "Texarkanine"
+SPDX-License-Identifier = "AGPL-3.0-or-later"
