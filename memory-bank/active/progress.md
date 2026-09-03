@@ -25,3 +25,15 @@ Upgrade `@inquirer/core` to 12.0.1 and related Inquirer/tooling deps; adapt `src
     - Existing Vitest suite is the behavior regression net
 * Insights
     - `setActiveItemValue` sites are the NotFunction hazard; `renderItem` needs layout `index`
+
+## 2026-09-02 - PREFLIGHT - COMPLETE
+
+* Work completed
+    - Validated requested package versions exist and their Node engine ranges support the project baseline
+    - Inspected `@inquirer/core@12.0.1` declarations and confirmed the expected `usePagination` layout and `useState` callable-value constraint
+    - Checked source touchpoints and existing behavior-sliced test coverage
+* Decisions made
+    - Amended the build plan to test function-valued choice references before converting all active-item setter calls to reducer form
+    - Kept the `renderItem` adaptation annotation-only and covered by typecheck plus the existing behavior suite
+* Insights
+    - Directly setting a callable choice value causes core to invoke it as a reducer; reducer-form assignment is a runtime correctness fix, so existing navigation tests alone are insufficient

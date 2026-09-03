@@ -15,13 +15,14 @@ Runtime behavior of the prompt is not intentionally changing; verification is re
 - [Selection + navigation still work]: open prompt → Tab toggles, arrows move → Enter submits selected values unchanged
 - [Filtering still works]: type search → filtered list → selections persist across filter
 - [Async source still works]: async `source` loads and filters without crash
+- [Callable values remain values]: function-valued choices can be navigated, selected, and submitted by reference without the prompt invoking them while updating active state
 - [Type/build gate]: after bumps + code adapts, `npm run typecheck` and `npm run build` succeed (primary acceptance for the type fixes)
 - [Quality gate]: `npm run quality:check` passes under bumped ESLint/Vitest tooling
 - [Mutation floor]: `npm run test:mutate` stays at/above configured break threshold
 
 ### Edge Cases
 
-- `Value` that is a function type (if represented in types): `setActiveItemValue` must not be treated as a reducer incorrectly — use `NotFunction`-compatible form (e.g. wrap as reducer returning the value, or cast through a safe helper)
+- `Value` may be a function type: `setActiveItemValue` must not be treated as a reducer incorrectly — use a reducer returning the value
 - `renderItem` must accept full layout `{ item, index, isActive }` even if `index` is unused
 - Empty filtered list / only separators: existing navigation tests cover; no intentional change
 
@@ -39,20 +40,28 @@ Runtime behavior of the prompt is not intentionally changing; verification is re
 
 ## Implementation Plan
 
-1. **Bump dependencies in `package.json`**
+1. **Bump dependencies in `package.json`** (config only — not executable behavior)
    - Files: `package.json`
    - Changes: set versions listed in project brief (inquirer + eslint/vitest tooling)
-2. **Install lockfile**
+2. **Install lockfile** (config only)
    - Files: `package-lock.json`, `node_modules`
    - Changes: `npm install` in worktree
-3. **Observe type errors**
+3. **Observe type errors** (discovery)
    - Run `npm run typecheck` to confirm exact `TS2322` sites (expected: `renderItem` ~886; `setActiveItemValue` ~576/724/739)
-4. **TDD / adapt `renderItem`**
-   - Files: `src/index.ts`
-   - Changes: type `renderItem` callback parameter as the layout shape expected by `usePagination` (`{ item, index, isActive }` or imported layout type); keep body behavior identical (ignore `index` if unused)
-5. **TDD / adapt `useState` setters**
-   - Files: `src/index.ts` (and helper + test only if needed)
-   - Changes: call `setActiveItemValue` in a form accepted by `NotFunction<Value> | Reducer<Value | null> | null` — prefer reducer form `() => value` or documented cast without `any` if Value may be callable
+4. **Adapt `renderItem` layout typing** (annotation-only if body unchanged)
+   - If implementation stays annotation-only (add `index` to parameter type / destructure unused): no new test; prove with `typecheck` + existing suite
+   - If body must change to satisfy types: first add/adjust a regression case in `src/__tests__/basic-functionality.test.ts` or `selection.test.ts` asserting rendered selection UX still works, then change `src/index.ts`
+   - Files: `src/index.ts` (± test file only if body changes)
+5. **Adapt `useState` / `setActiveItemValue` call sites**
+   - First add a regression case to `src/__tests__/object-references.test.ts`: define function-valued choices that record calls, navigate/select/submit them, then assert neither function was invoked and the answer retains the exact function references. Run it and confirm the current direct-setter behavior fails.
+   - Change each `setActiveItemValue(nextValue)` call to a reducer-form call that returns `nextValue`, so callable values are stored rather than invoked. Re-run the focused regression test, then the existing navigation/selection tests.
+   - If a new helper is required for safe `NotFunction` assignment:
+     1. Stub helper signature in `src/` (or existing util module)
+     2. Stub + implement unit test in `src/__tests__/` asserting helper returns the next value without invoking it as a reducer incorrectly
+     3. Run that test (expect fail) → implement helper → pass
+     4. Wire call sites in `src/index.ts`
+   - If no helper: change the three call sites only after the callable-value regression is red; the regression is behavior coverage, not a change-detector.
+   - Files: `src/index.ts` (± helper + test if needed)
 6. **Verify gates**
    - `npm run build`
    - `npm run quality:check`
@@ -83,6 +92,12 @@ Versions are published Dependabot targets on the same package lines already in u
 - **Treated type error as behavior change and over-tested**: stick to existing suite + typecheck for annotation-only fixes (already covered by Test Plan note).
 - **Lockfile / peer mismatch leaves CI red despite local green**: use worktree-only `npm install`; do not hand-edit lockfile; re-run quality after install.
 
+## Preflight Findings
+
+- **Resolved — high:** Direct `setActiveItemValue(functionValue)` is observable behavior, not merely a type annotation change: core treats every function setter argument as a reducer. The plan now requires a focused callable-value regression test before converting all three call sites to reducer form.
+- **Verified — info:** `@inquirer/core@12.0.1` declares `renderItem` as `{ item, index, isActive }` and its `useState` setter excludes callable values, matching the planned adaptation.
+- **Advisory — low:** Keep the `renderItem` callback structurally typed with the required `index` property; do not add a new abstraction or cast solely to name the layout type.
+
 ## Status
 
 - [x] Initialization complete
@@ -90,6 +105,6 @@ Versions are published Dependabot targets on the same package lines already in u
 - [x] Implementation plan complete
 - [x] Technology validation complete
 - [x] Pre-Mortem complete
-- [ ] Preflight
+- [x] Preflight
 - [ ] Build
 - [ ] QA
