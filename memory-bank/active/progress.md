@@ -49,3 +49,13 @@ Upgrade `@inquirer/core` to 12.0.1 and related Inquirer/tooling deps; adapt `src
     - Kept the `renderItem` adaptation annotation-only and covered by typecheck plus the existing behavior suite
 * Insights
     - Directly setting a callable choice value causes core to invoke it as a reducer; reducer-form assignment is a runtime correctness fix, so existing navigation tests alone are insufficient
+
+## 2026-09-02 - QA - COMPLETE
+
+* Work completed
+    - Semantic review of `b246414` against `tasks.md` / `projectbrief.md`
+    - Wrote `memory-bank/active/.qa-validation-status` = PASS
+* Decisions made
+    - No trivial fixes; implementation matches plan without extra helpers or leftover direct setters
+* Insights
+    - Callable-value regression plus three reducer call sites fully cover the v12 `NotFunction` / Reducer overload hazard

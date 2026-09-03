@@ -1,7 +1,7 @@
 # Active Context
 
 **Current Task:** Inquirer ecosystem v12 upgrade (Dependabot #167/#168/#171)
-**Phase:** BUILD - COMPLETE
+**Phase:** QA - COMPLETE
 **Complexity:** Level 2
 
 ## What Was Done
@@ -10,6 +10,7 @@
 - TDD: red regression for function-valued choices, then reducer-form `setActiveItemValue` at three call sites
 - `renderItem` layout type includes `index`
 - Gates: build, quality:check, test (135), test:mutate (88.26 ≥ 80)
+- QA: semantic review of `b246414` vs plan — PASS; no trivial fixes
 
 ## Files Modified
 
@@ -25,4 +26,4 @@
 
 ## Next Step
 
-QA semantic review.
+Reflect phase (L2). Parent handles the phase-transition commit.
