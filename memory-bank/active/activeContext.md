@@ -1,15 +1,28 @@
 # Active Context
 
 **Current Task:** Inquirer ecosystem v12 upgrade (Dependabot #167/#168/#171)
-**Phase:** PREFLIGHT - COMPLETE
+**Phase:** BUILD - COMPLETE
 **Complexity:** Level 2
 
 ## What Was Done
 
-- Level 2 plan written: bump deps, adapt `renderItem` layout typing and `useState` setters, verify build/quality/test/mutate
-- Preflight validated the target packages and v12 hook declarations against the plan
-- TDD plan amended: callable `Value` setter conversion is behavior-changing and requires a regression test before implementation
+- Bumped `@inquirer/core` ^12.0.1, `@inquirer/type` ^4.1.0, `@inquirer/figures` ^2.0.8, `@inquirer/testing` ^3.3.11 and tooling (eslint/typescript-eslint/vitest family)
+- TDD: red regression for function-valued choices, then reducer-form `setActiveItemValue` at three call sites
+- `renderItem` layout type includes `index`
+- Gates: build, quality:check, test (135), test:mutate (88.26 ≥ 80)
+
+## Files Modified
+
+- `/Users/tex/worktrees/Texarkanine/inquirerjs-checkbox-search/inquirerjs-checkbox-search-inquirer-v12-upgrade/package.json`
+- `/Users/tex/worktrees/Texarkanine/inquirerjs-checkbox-search/inquirerjs-checkbox-search-inquirer-v12-upgrade/package-lock.json`
+- `/Users/tex/worktrees/Texarkanine/inquirerjs-checkbox-search/inquirerjs-checkbox-search-inquirer-v12-upgrade/src/index.ts`
+- `/Users/tex/worktrees/Texarkanine/inquirerjs-checkbox-search/inquirerjs-checkbox-search-inquirer-v12-upgrade/src/__tests__/object-references.test.ts`
+
+## Key Decisions
+
+- Reducer `() => nextValue` at all three `setActiveItemValue` sites (no helper/`any`)
+- Structural layout type for `renderItem` (preflight advisory)
 
 ## Next Step
 
-Build: install the planned dependencies, write the callable-value regression test, then adapt `src/index.ts`.
+QA semantic review.

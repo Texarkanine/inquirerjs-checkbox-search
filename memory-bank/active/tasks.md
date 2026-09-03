@@ -106,5 +106,5 @@ Versions are published Dependabot targets on the same package lines already in u
 - [x] Technology validation complete
 - [x] Pre-Mortem complete
 - [x] Preflight
-- [ ] Build
+- [x] Build
 - [ ] QA

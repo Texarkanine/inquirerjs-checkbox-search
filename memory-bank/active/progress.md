@@ -26,6 +26,18 @@ Upgrade `@inquirer/core` to 12.0.1 and related Inquirer/tooling deps; adapt `src
 * Insights
     - `setActiveItemValue` sites are the NotFunction hazard; `renderItem` needs layout `index`
 
+## 2026-09-02 - BUILD - COMPLETE
+
+* Work completed
+    - Bumped Inquirer + tooling deps; `npm install` refreshed lockfile
+    - Added function-value regression test (red under direct setters: fn invoked 7×)
+    - Converted three `setActiveItemValue` calls to reducer form; typed `renderItem` with `index`
+    - Verified build, quality:check, 135 tests, mutation score 88.26
+* Decisions made
+    - No helper abstraction; reducer at call sites only
+* Insights
+    - Core v12 treats every function setter arg as a Reducer — function Values must use `() => value`
+
 ## 2026-09-02 - PREFLIGHT - COMPLETE
 
 * Work completed
