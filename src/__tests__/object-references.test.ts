@@ -90,4 +90,38 @@ describe('Object value reference equality', () => {
     expect(result[0]).toBe(specialObject);
     expect(result[1]).toBe(normalObject);
   });
+
+  it('should store function-valued choices without invoking them as reducers', async () => {
+    let callsA = 0;
+    let callsB = 0;
+    const fnA = () => {
+      callsA += 1;
+      return 'a';
+    };
+    const fnB = () => {
+      callsB += 1;
+      return 'b';
+    };
+
+    const { answer, events } = await render(checkboxSearch<() => string>, {
+      message: 'Select functions',
+      choices: [
+        { value: fnA, name: 'Function A' },
+        { value: fnB, name: 'Function B' },
+      ],
+    });
+
+    // Navigate and toggle both — each move/select must set active value safely
+    await events.keypress('tab');
+    await events.keypress('down');
+    await events.keypress('tab');
+    await events.keypress('enter');
+    const result = await answer;
+
+    expect(callsA).toBe(0);
+    expect(callsB).toBe(0);
+    expect(result).toHaveLength(2);
+    expect(result[0]).toBe(fnA);
+    expect(result[1]).toBe(fnB);
+  });
 });
