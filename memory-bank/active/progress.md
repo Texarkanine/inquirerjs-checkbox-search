@@ -35,3 +35,13 @@ Consolidate Dependabot PRs #169/#170 by bumping `@stryker-mutator/core` and `@st
     - No plan amendments required
 * Insights
     - Deps-only TDD encoding OK: operational gates after install, no change-detector version tests
+
+## 2026-09-02 - BUILD - COMPLETE
+
+* Work completed
+    - Bumped both Stryker packages to ^10.0.0; npm install resolved 10.0.0
+    - quality:check, npm test (134), test:mutate:dry, test:mutate (87.50%) all passed
+* Decisions made
+    - No config or docs edits needed
+* Insights
+    - Full mutate completed in ~48s locally under Stryker 10 (faster than historical CI projections)
