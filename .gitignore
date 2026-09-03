@@ -25,6 +25,9 @@ reports/stryker-incremental.json
 # SLOBAC audit workdirs (ephemeral local artifacts)
 .slobac/
 
+# SumMem
+**/.summem/__pycache__/
+
 # Environment variables
 .env
 .env.local
