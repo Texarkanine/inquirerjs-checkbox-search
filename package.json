@@ -92,30 +92,30 @@
     "demo:generate:all": "node scripts/generate-demo.js all"
   },
   "dependencies": {
-    "@inquirer/core": "^11.1.2",
-    "@inquirer/figures": "^2.0.2",
-    "@inquirer/type": "^4.0.2",
+    "@inquirer/core": "^12.0.1",
+    "@inquirer/figures": "^2.0.8",
+    "@inquirer/type": "^4.1.0",
     "ansi-escapes": "^7.0.0",
     "yoctocolors-cjs": "^2.1.2"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.1",
     "@eslint/js": "^10.0.0",
-    "@inquirer/testing": "^3.0.2",
+    "@inquirer/testing": "^3.3.11",
     "@stryker-mutator/core": "^9.6.1",
     "@stryker-mutator/vitest-runner": "^9.6.1",
     "@types/node": "^22.0.0",
-    "@typescript-eslint/eslint-plugin": "^8.0.0",
-    "@typescript-eslint/parser": "^8.0.0",
-    "@vitest/coverage-v8": "^4.0.0",
-    "@vitest/ui": "^4.0.0",
-    "eslint": "^10.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.68.0",
+    "@typescript-eslint/parser": "^8.68.0",
+    "@vitest/coverage-v8": "^4.1.11",
+    "@vitest/ui": "^4.1.11",
+    "eslint": "^10.9.1",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.0.0",
     "rimraf": "^6.0.0",
     "tshy": "^4.1.1",
     "typescript": "^6.0.0",
-    "vitest": "^4.0.0"
+    "vitest": "^4.1.11"
   },
   "engines": {
     "node": ">=22"

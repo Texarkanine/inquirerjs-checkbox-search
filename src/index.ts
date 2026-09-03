@@ -573,7 +573,8 @@ export default createPrompt(
         const currentActiveValue = (activeItem as NormalizedChoice<Value>)
           .value;
         if (activeItemValue !== currentActiveValue) {
-          setActiveItemValue(currentActiveValue);
+          // Reducer form: Value may be a function; direct set would treat it as a reducer
+          setActiveItemValue(() => currentActiveValue);
         }
       }
     }, [active, filteredItems, activeItemValue]);
@@ -721,7 +722,8 @@ export default createPrompt(
         const nextFilteredIndex = selectableIndexes[nextSelectableIndex];
         const nextSelectableItem = filteredItems[nextFilteredIndex];
         if (nextSelectableItem && isSelectable(nextSelectableItem)) {
-          setActiveItemValue(nextSelectableItem.value);
+          // Reducer form: Value may be a function; direct set would treat it as a reducer
+          setActiveItemValue(() => nextSelectableItem.value);
         }
 
         return;
@@ -736,7 +738,8 @@ export default createPrompt(
           const activeValue = (activeItem as NormalizedChoice<Value>).value;
 
           // Set this as the active item value so cursor position is preserved
-          setActiveItemValue(activeValue);
+          // Reducer form: Value may be a function; direct set would treat it as a reducer
+          setActiveItemValue(() => activeValue);
 
           setAllItems(
             allItems.map((item) => {
@@ -828,7 +831,14 @@ export default createPrompt(
 
     // Create renderItem function that's reactive to current state but minimizes recreations
     const renderItem = useMemo(() => {
-      return ({ item, isActive }: { item: Item<Value>; isActive: boolean }) => {
+      return ({
+        item,
+        isActive,
+      }: {
+        item: Item<Value>;
+        index: number;
+        isActive: boolean;
+      }) => {
         const line: string[] = [];
 
         if (Separator.isSeparator(item)) {
