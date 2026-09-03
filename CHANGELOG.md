@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.1.3](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v2.1.2...v2.1.3) (2026-09-03)
+
+
+### Bug Fixes
+
+* **deps-dev:** bump @stryker-mutator/core and @stryker-mutator/vitest-runner to 10.0.0 ([#172](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/172)) ([5d13232](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/5d13232ae5d996dcf6ac5d9cf21af1d57c10cd42))
+* **deps:** bump @inquirer/core to 12.0.1 and update inquirer ecosystem ([#173](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/173)) ([5e2fa83](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/5e2fa83fec3bdf5906bb1450ceb14706d74d3a8d))
+* **deps:** bump fast-uri from 3.1.4 to 3.1.5 ([#164](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/164)) ([310394f](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/310394f854317700bb87603146768651c01dd8ec))
+
 ## [2.1.2](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v2.1.1...v2.1.2) (2026-07-27)
 
 
