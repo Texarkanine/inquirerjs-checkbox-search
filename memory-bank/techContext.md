@@ -36,7 +36,7 @@ Tests run in **Vitest** (configured in `vitest.config.ts`) and drive the prompt 
 - **Conventional Commits + release-please** drive versioning and changelog generation. Configuration: `release-please-config.json`, `.release-please-manifest.json`. Commit type controls the release (see `CONTRIBUTING.md`).
 - **GitHub Actions** workflows live in `.github/workflows/`. PR validation is in `.github/workflows/pr.yaml` (referenced by `.cursor/rules/dev-practices.mdc`); formatting must pass there.
 - **REUSE / licensing** metadata is tracked via `REUSE.toml` and the `LICENSES/` directory.
-- **SumMem** — repo-local agent memory via `.summem/summem`. Session start: `.summem/summem wake`. The write rule lives in `AGENTS.md` (`CLAUDE.md` `@`-imports it). The vendored script is AGPL-3.0-or-later.
+- **SumMem** (`.summem/summem`) — repo-local agent memory.
 
 ## Demos
 
