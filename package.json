@@ -115,7 +115,7 @@
     "rimraf": "^6.0.0",
     "tshy": "^4.1.1",
     "typescript": "^6.0.0",
-    "vitest": "^4.1.11"
+    "vitest": "^5.0.2"
   },
   "engines": {
     "node": ">=22"
