@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.1.4](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v2.1.3...v2.1.4) (2026-10-02)
+
+
+### Bug Fixes
+
+* **deps-dev:** bump brace-expansion from 5.0.8 to 5.0.12 ([#182](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/182)) ([546a86a](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/546a86a75ad68d8a327b4d73ba4f12128d2844c8))
+* **deps-dev:** bump the dev-deps-minor-patch group with 2 updates ([#185](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/185)) ([7d8a0f4](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/7d8a0f4f35ec947f30e604e5e06319a8cf4a6150))
+* **deps-dev:** bump the dev-deps-minor-patch group with 6 updates ([#177](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/177)) ([cdcc99d](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/cdcc99ddb7e125f7a06a37964019e754d1aee4af))
+* **deps:** bump @inquirer/core ([1a6be00](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/1a6be004cc86a7e9a63f8403b294999fd6dace96))
+* **deps:** bump @inquirer/core from 12.0.2 to 12.0.3 in the deps-minor-patch group ([#176](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/176)) ([1a6be00](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/1a6be004cc86a7e9a63f8403b294999fd6dace96))
+
 ## [2.1.3](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v2.1.2...v2.1.3) (2026-09-03)
 
 
