@@ -13,14 +13,14 @@ Description rows are measured with a direct `fast-wrap-ansi` dependency (`wordWr
 ## Build Tools
 
 - **`tshy`** - dual ESM/CJS build. Configuration in the `tshy` block of `package.json`. Build with `npm run build`; watch with `npm run dev`; clean with `npm run clean`.
-- **TypeScript** - strict mode; configuration in `tsconfig.json` (build) and `tsconfig.test.json` (tests). Type-check only via `npm run typecheck`.
+- **TypeScript** - strict mode; configuration in `tsconfig.json` (build), `tsconfig.test.json` (prompt tests), and `tsconfig.scripts.json` (scripts). Type-check via `npm run typecheck`, which runs the build project and the scripts project.
 - **ESLint** - configuration in `eslint.config.js`. Run via `npm run lint:check` (report) / `npm run lint` (autofix). Flat config does **not** read `.gitignore`, so every generated directory needs an explicit entry in the `ignores` block; Prettier 3 does read `.gitignore`, which is why a new build artifact can break lint while formatting stays green.
 - **Prettier** - configuration in `.prettierrc.json` / `.prettierignore`. Run via `npm run format:check` / `npm run format`.
 - **Combined quality gate**: `npm run quality:check` (report) / `npm run quality` (autofix where possible). See `.cursor/rules/dev-practices.mdc` for the project's required commands.
 
 ## Testing Process
 
-Tests run in **Vitest** (configured in `vitest.config.ts`) and drive the prompt through **`@inquirer/testing`**. Test files live in `src/__tests__/*.test.ts` and are organized by user-visible behavior (see `systemPatterns.md`).
+Tests run in **Vitest** (configured in `vitest.config.ts`) and drive the prompt through **`@inquirer/testing`**. Prompt tests live in `src/__tests__/*.test.ts` and are organized by user-visible behavior (see `systemPatterns.md`). Script tests live in `scripts/**/*.test.ts`. Coverage `include` stays on `src/**/*.ts`.
 
 - Whole suite: `npm test` (also runs the quality gate).
 - Unit-only: `npm run test:unit`.
@@ -42,4 +42,4 @@ Tests run in **Vitest** (configured in `vitest.config.ts`) and drive the prompt 
 
 ## Demos
 
-README GIFs in `docs/img/` are derived artifacts, not hand-recorded. The source of truth is the `.tape` scripts in `demos/`, which are run through [VHS](https://github.com/charmbracelet/vhs) inside the container defined by `demos/Dockerfile`. Local entry point is `scripts/generate-demo.js` (exposed as the `demo:*` npm scripts in `package.json`). CI regenerates affected GIFs on PRs via `.github/workflows/generate-demos.yaml`. To change a demo, edit its `.tape` file - do not hand-edit the GIF.
+README GIFs in `docs/img/` are derived artifacts, not hand-recorded. The source of truth is the `.tape` scripts in `demos/`, which are run through [VHS](https://github.com/charmbracelet/vhs) inside the container defined by `demos/Dockerfile`. Local entry point is `scripts/generate-demo.js` (exposed as the `demo:*` npm scripts in `package.json`). CI regenerates affected GIFs on PRs via `.github/workflows/generate-demos.yaml`. That workflow also records a shadow verdict for each demo. Which demos expand, and whether a release pull request amends GIFs, still follows the GIF diff. To change a demo, edit its `.tape` file - do not hand-edit the GIF.

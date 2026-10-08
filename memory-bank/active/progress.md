@@ -124,3 +124,14 @@ Detect demo changes from a text record and a frame-state sequence recorded for t
 * Insights
     - Clean separation of scratch execution preserves legacy demo generation untouched
     - Pure unit test coverage across all flowchart edge cases and CLI formats validates logic without requiring local Docker daemon
+
+## 2026-10-08 - REFLECT - COMPLETE
+
+* Work completed
+    - Wrote `memory-bank/active/reflection/reflection-issue-190.md`
+    - Updated `techContext.md` so typecheck, script tests, and the shadow verdict match the build
+* Decisions made
+    - `productContext.md` and `systemPatterns.md` stay as they are. This work does not change who the prompt is for, or the prompt's architecture
+* Insights
+    - The GIF-only generator path must not import the TypeScript fingerprint module
+    - Generator `--scratch` is the side directory. Fingerprint `--scratch` is the parent of `attempt-<n>`

@@ -1,7 +1,7 @@
 # Active Context
 
 ## Current Task: issue-190
-**Phase:** QA - COMPLETE (PASS)
+**Phase:** REFLECT COMPLETE
 
 ## What Was Done
 
@@ -30,4 +30,4 @@
 
 ## Next Step
 
-- Proceed to `/niko-reflect`.
+- Operator runs `/niko-archive`.
