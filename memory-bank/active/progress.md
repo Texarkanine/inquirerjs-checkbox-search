@@ -84,3 +84,15 @@ Detect demo changes from a text record and a frame-state sequence recorded for t
     - A Dockerfile change is CHANGED only when the fingerprints change
 * Insights
     - Scratch mode must not use the one-demo npm docker path, or a retry would build the wrong image tag
+
+## 2026-10-08 - PREFLIGHT - COMPLETE
+
+* Work completed
+    - Re-validated the second plan revision against the generator, tapes, workflow, detector, comment script, and Vitest/tsconfig/ESLint setup, plus upstream VHS docs
+    - Wrote `memory-bank/active/.preflight-status`; first line is `PASS WITH ADVISORY`
+* Decisions made
+    - No in-phase plan edits: test-first ordering holds in every executable unit, no scheduled change-detectors, no order swaps
+* Insights
+    - VHS `.txt`/`.ascii` outputs, trailing-slash `frames/` output, `frame-text-*`/`frame-cursor-*` naming, and `Wait+Screen /regex/` all check out against upstream docs
+    - Shadow step should pin serial recording and export `SHADOW_VERDICTS` for the envsubst template (advisories)
+    - The `.txt` framing assumption behind normalization fixtures wants confirmation from VHS source or the first CI shadow run (advisory)

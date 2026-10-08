@@ -1,7 +1,7 @@
 # Active Context
 
 ## Current Task: issue-190
-**Phase:** PLAN - COMPLETE
+**Phase:** PREFLIGHT - COMPLETE (PASS WITH ADVISORY)
 
 ## What Was Done
 
@@ -13,4 +13,4 @@
 
 ## Next Step
 
-- Re-run preflight on the second plan revision.
+- Operator runs `/niko-build`. Preflight passed with advisory.
