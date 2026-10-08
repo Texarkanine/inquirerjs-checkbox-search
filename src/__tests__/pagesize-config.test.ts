@@ -146,6 +146,56 @@ describe('PageSize Configuration', () => {
     });
 
     describe('with line width counting', () => {
+      // Three 50-character words. Character ceil at 80 columns is 2.
+      // Word wrap at width 79 is 3, because the third word does not fit on the second line.
+      const threeLongWords = [
+        'W'.repeat(50),
+        'W'.repeat(50),
+        'W'.repeat(50),
+      ].join(' ');
+
+      it('should count a space-separated line as more rows than character ceil', () => {
+        const originalColumns = process.stdout.columns;
+        Object.defineProperty(process.stdout, 'columns', {
+          configurable: true,
+          value: 80,
+        });
+
+        try {
+          const items = [createChoice(threeLongWords)];
+          expect(Math.ceil(threeLongWords.length / 80)).toBe(2);
+          expect(calculateDescriptionLines(items, true)).toBe(3);
+        } finally {
+          Object.defineProperty(process.stdout, 'columns', {
+            configurable: true,
+            value: originalColumns,
+          });
+        }
+      });
+
+      it('should fall back to an 80-column word wrap when stdout.columns is unavailable', () => {
+        const originalColumns = process.stdout.columns;
+        Object.defineProperty(process.stdout, 'columns', {
+          configurable: true,
+          value: undefined,
+        });
+
+        try {
+          const items = [createChoice(threeLongWords)];
+          expect(calculateDescriptionLines(items, true)).toBe(3);
+        } finally {
+          Object.defineProperty(process.stdout, 'columns', {
+            configurable: true,
+            value: originalColumns,
+          });
+        }
+      });
+
+      it('should count the word-wrap fixture as one line when width counting is off', () => {
+        const items = [createChoice(threeLongWords)];
+        expect(calculateDescriptionLines(items, false)).toBe(1);
+      });
+
       it('should account for terminal width wrapping when autoBufferCountsLineWidth=true', () => {
         const originalColumns = process.stdout.columns;
         Object.defineProperty(process.stdout, 'columns', {
@@ -158,7 +208,7 @@ describe('PageSize Configuration', () => {
             'This is a very long description that should wrap across multiple lines when considering terminal width of 80 characters total length';
           const items = [createChoice(longDescription)];
           // Pin columns=80 so wide developer TTYs still exercise wrapping.
-          // longDescription.length / 80 => 2 lines
+          // Word wrap at width 79 still fits this sentence in 2 lines.
           expect(calculateDescriptionLines(items, true)).toBe(2);
         } finally {
           Object.defineProperty(process.stdout, 'columns', {
@@ -178,8 +228,8 @@ describe('PageSize Configuration', () => {
         try {
           const longDescription = 'x'.repeat(160);
           const items = [createChoice(longDescription)];
-          // 160 chars / 80 width => 2 lines
-          expect(calculateDescriptionLines(items, true)).toBe(2);
+          // No spaces, so the line hard-breaks at width 79: ceil(160 / 79) => 3.
+          expect(calculateDescriptionLines(items, true)).toBe(3);
         } finally {
           Object.defineProperty(process.stdout, 'columns', {
             configurable: true,
@@ -282,6 +332,71 @@ describe('PageSize Configuration', () => {
         ];
 
         expect(resolvePageSize(config, items)).toBe(17); // 20 - 3
+      });
+
+      it('should word-wrap descriptions when autoBufferCountsLineWidth is omitted', () => {
+        const config: PageSizeConfig = {
+          base: 20,
+          autoBufferDescriptions: true,
+        };
+        const threeLongWords = [
+          'W'.repeat(50),
+          'W'.repeat(50),
+          'W'.repeat(50),
+        ].join(' ');
+        const items = [createChoice(threeLongWords)];
+
+        expect(resolvePageSize(config, items)).toBe(17); // 20 - 3 wrapped lines
+      });
+
+      it('should keep newline counting when autoBufferCountsLineWidth is false', () => {
+        const config: PageSizeConfig = {
+          base: 20,
+          autoBufferDescriptions: true,
+          autoBufferCountsLineWidth: false,
+        };
+        const threeLongWords = [
+          'W'.repeat(50),
+          'W'.repeat(50),
+          'W'.repeat(50),
+        ].join(' ');
+        const items = [createChoice(threeLongWords)];
+
+        expect(resolvePageSize(config, items)).toBe(19); // 20 - 1 newline line
+      });
+
+      it('should raise the description buffer to descriptionLineFloor', () => {
+        const config: PageSizeConfig = {
+          base: 20,
+          autoBufferDescriptions: true,
+        };
+        const items = [createChoice('Short')];
+
+        expect(resolvePageSize(config, items, 3)).toBe(17); // 20 - max(1, 3)
+      });
+
+      it('should keep the current description when it is taller than descriptionLineFloor', () => {
+        const config: PageSizeConfig = {
+          base: 20,
+          autoBufferDescriptions: true,
+        };
+        const threeLongWords = [
+          'W'.repeat(50),
+          'W'.repeat(50),
+          'W'.repeat(50),
+        ].join(' ');
+        const items = [createChoice(threeLongWords)];
+
+        expect(resolvePageSize(config, items, 1)).toBe(17); // 20 - max(3, 1)
+      });
+
+      it('should ignore descriptionLineFloor when autoBufferDescriptions is off', () => {
+        const config: PageSizeConfig = {
+          base: 20,
+        };
+        const items = [createChoice('Short')];
+
+        expect(resolvePageSize(config, items, 5)).toBe(20);
       });
 
       it('should combine autoBuffer + buffer + minBuffer correctly', () => {
