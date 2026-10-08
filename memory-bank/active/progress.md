@@ -79,5 +79,14 @@ Keep the checkbox-search frame height stable when choice descriptions wrap: word
     - Single-space padding on the final line elegantly mitigates ScreenManager's empty-line trailing newline quirk
     - Direct dependency on fast-wrap-ansi with hard wrapping ensures parity between measurement and terminal rendering
 
+## 2026-10-08 - PR - OPENED
+
+* Work completed
+    - Pushed `scroll-better` and opened draft PR #189 with title `feat!: keep the description frame stable when text wraps`
+* Decisions made
+    - The squash title stays `feat!:` so release-please cuts 3.0.0
+* Insights
+    - Archive is still unrun
+
 
 
