@@ -41,28 +41,32 @@ flowchart TD
 
 ### Affected Components
 
-- `scripts/demo-fingerprint.ts` (new): pure fingerprint and verdict logic. No such module exists today.
-- `scripts/demo-fingerprint.test.ts` (new): Vitest coverage for that logic.
-- `scripts/generate-demo.js`: builds one image tagged `vhs-node-demo` and runs tapes with `--output` pointed at `docs/img`. Gains an image tag, a scratch directory, and a temporary tape that adds the text and frame `Output` lines.
-- `demos/*.tape`: after `Enter` on `node examples/….js`, each tape sleeps 1s while hidden. That sleep becomes `Wait+Screen /Search:/`. The rendered prompt prefix is `Search:` (`src/index.ts`).
-- `.github/workflows/generate-demos.yaml`: generates head GIFs, uploads them, and decides CHANGED by git-diffing those GIFs. Gains a merge-base worktree, a second image, scratch recordings, and a shadow verdict step.
+- `scripts/demo-fingerprint.ts` (new): pure fingerprint and verdict logic, plus the scratch reader and CLI. No such module exists today. Node 22.22 runs it directly (type stripping is on by default in this environment). No enums and no parameter properties. Local imports use a `.ts` suffix.
+- `scripts/demo-fingerprint.test.ts` (new): Vitest coverage for that module.
+- `scripts/generate-demo.js`: builds one image tagged `vhs-node-demo` and runs tapes with `--output` pointed at `docs/img`. Gains flags and imports `./demo-fingerprint.ts` for the tape rewrite and the docker argv. The process that runs is always this file from the workflow checkout, never the copy inside a base worktree.
+- `tsconfig.scripts.json` (new): `noEmit`, `rootDir` overridden off `./src`, `allowImportingTsExtensions`, `include` of `scripts/**/*.ts`. `npm run typecheck` runs `tsc --noEmit` and `tsc --noEmit -p tsconfig.scripts.json`. ESLint's `parserOptions.project` gains this file. `tsconfig.test.json` stays `src` tests only, so it does not inherit a `rootDir` conflict (TS6059).
+- `demos/*.tape` on this branch: after `Enter` on `node examples/….js`, each tape sleeps 1s while hidden. That sleep becomes `Wait+Screen /Search:/`. The rendered prompt prefix is `Search:` (`src/index.ts`). Tapes at the merge-base keep `Sleep 1s` until this lands. Shadow tolerates that: this pull request's own verdicts compare different preambles, and comparable verdicts start once the merge-base contains the wait.
+- `.github/workflows/generate-demos.yaml`: today's GIF generation, upload, GIF diff, and release-please amend stay on the checkout, which for `pull_request` is the synthetic merge commit. Shadow recordings are additional. They do not write `docs/img`.
 - `.github/workflows/scripts/detect-demo-changes.sh`: git-diffs `docs/img/*-demo.gif`. Stays the source of today's expand/collapse and of the release-please amend decision.
 - `.github/workflows/scripts/templates/demo-comment.md`: gains one shadow-verdict line. The `<details>` blocks stay driven by the GIF diff.
-- `vitest.config.ts` and `tsconfig.test.json`: let the new script tests run and typecheck. Coverage include stays `src/**/*.ts`. Stryker mutate stays `src/**/*.ts`.
+- `vitest.config.ts`: `include` adds `scripts/**/*.test.ts`. Coverage `include` stays `src/**/*.ts`. Stryker mutate stays `src/**/*.ts`.
 
 ### Cross-Module Dependencies
 
-- The workflow calls `generate-demo.js` twice, once per tree, then calls the fingerprint CLI on the two scratch trees.
-- `generate-demo.js` calls the tape rewriter, then `docker run` with the scratch mount.
-- The comment template reads `SHADOW_VERDICTS` from the workflow. It does not read the fingerprint module.
-- Base and head images are both `FROM ghcr.io/charmbracelet/vhs:v0.10` via that tree's `demos/Dockerfile`. They are tagged `vhs-node-demo:base` and `vhs-node-demo:head` so the builds do not overwrite each other.
-- Recordings of the two sides run one after the other, and demos inside a side run one at a time, so frame capture is not competing with itself on a 4-vCPU runner.
+- The workflow checkout's `generate-demo.js` records both sides. For the base side, `--demos-dir` and `--build-context` point at the merge-base worktree. For the shadow head side, they point at a worktree of `pull_request.head.sha`. The script inside either worktree is not executed.
+- `generate-demo.js` calls `withFingerprintOutputs` and `buildDockerRunArgs` from `scripts/demo-fingerprint.ts`, then `docker build` and `docker run`.
+- The workflow then runs `node scripts/demo-fingerprint.ts` on the scratch tree. That CLI prints one assessment per demo.
+- The comment template reads `SHADOW_VERDICTS` from the workflow. It does not import the module.
+- Each side's image is built from that worktree's `demos/Dockerfile` (`FROM ghcr.io/charmbracelet/vhs:v0.10`). Tags are `vhs-node-demo:base` and `vhs-node-demo:head`.
+- Worktrees and scratch live under `$RUNNER_TEMP`, outside the repo. `.dockerignore` does not exclude them, and the Dockerfile `COPY . .` would otherwise bake them into the checkout's image.
+- Recordings of the two sides run one after the other, and demos inside a side run one at a time.
 
 ### Boundary Changes
 
-- No package export, npm script contract, or published file changes. `npm run demo:generate*` without the new flags still writes only the GIF.
+- No package export or published file changes. `npm run demo:generate*` without the new flags still writes only the GIF, from the checkout, with `--output`.
+- `docs/img` continues to be produced by today's generate step on the checkout (the merge commit). Shadow gifs stay in scratch. The GIF diff and the release-please amend therefore compare the same bytes they compare today.
 - The pull-request comment gains one shadow line. Which `<details>` blocks are open does not change.
-- Release-please still amends GIF bytes whenever the old detector says they differ.
+- `npm run typecheck` also typechecks `scripts/**/*.ts`.
 
 ### Invariants and Constraints
 
@@ -71,7 +75,7 @@ flowchart TD
 - A text mismatch is CHANGED on the first comparison.
 - A frame mismatch is CHANGED when a retry pair also mismatches. SAME when the first frames differ and every retry pair matches.
 - A retry whose text differs from the first recording of that same side is UNSTABLE. Shadow prints it and exits 0, so the required check stays green.
-- Head is `pull_request.head.sha`. Base is `git merge-base` of that SHA and the PR base. The synthetic merge commit is not the head recording.
+- The shadow head tree is a worktree of `pull_request.head.sha`. The shadow base tree is a worktree of `git merge-base` of that SHA and the PR base. The checkout itself stays the merge commit and stays the only writer of `docs/img`.
 - A pull request that changes `demos/Dockerfile` or the VHS version reads as CHANGED for every demo that still has a tape.
 - Durations are not compared.
 - This build does not switch the comment and does not gate release-please GIF commits on the new verdict. Those wait until shadow shows dependency bumps as SAME. The verdict vocabulary is the contract that follow-up consumes.
@@ -99,15 +103,21 @@ None. The issue specifies the fingerprints, the same-job recording, and shadow m
 - First frames differ, the only retry's frames match, retry text matches the first text → SAME.
 - First frames differ, a retry's frames also differ → CHANGED.
 - Two retries, the first retry matches and the second differs → CHANGED.
-- Temporary tape copy → original bytes untouched; appended `Output` lines use quoted absolute paths for the text file and the frames directory.
-- Docker argv when scratch is set → image tag, scratch mount, gif mount, in-container tape path, gif `--output`. Without scratch → today's gif-only command.
+- Temporary tape copy → original bytes untouched; appended `Output` lines use quoted container paths; the frames path ends in `/`.
+- Docker argv when scratch is set → image tag, scratch mount at `/workspace/scratch`, in-container tape path, and no `--output` flag. The gif is an `Output` line in the tape, so the CLI flag cannot replace or duplicate the tape outputs. Without scratch → today's gif-only `--output` command.
+- `parseGenerateArgs` → `--image`, `--scratch`, `--demos-dir`, and `--build-context` round-trip. Unknown flags fail.
+- Scratch reader given `frame-text-*.png` and `frame-cursor-*.png` → the fingerprint is built only from `frame-text-*.png`, in filename order.
+- Scratch reader given a missing `record.txt`, a missing `frames/` directory, or a `frames/` directory with no `frame-text-*.png` → throws.
+- A demo name that is not `^[a-zA-Z0-9_-]+$` → throws.
+- `assessScratch` on attempt-0 only, with matching text and differing frames → prints `NEED_FRAME_RETRY` and the process exit helper returns 0.
+- `assessScratch` including attempt-1 → applies the verdict rule and returns 0 for CHANGED, SAME, and UNSTABLE.
+- `assessScratch` on a bad name or a missing recording → the exit helper returns 1.
 
 ### Edge Cases
 
 - Text record that is empty after normalization matches another empty record.
-- A missing text file or an unreadable frame is an error from the reader, not a SAME.
-- Demo names that are not a single path segment are rejected.
-- `Wait+Screen /Search:/` replaces only the hidden sleep after `node examples/….js`. The later `Sleep` lines stay.
+- A frames path passed to `withFingerprintOutputs` without a trailing slash is stored with one.
+- `Wait+Screen /Search:/` replaces only the hidden sleep after `node examples/….js`. The later `Sleep` lines stay. Merge-base tapes still contain that sleep until this change is on `main`.
 
 ### Test Infrastructure
 
@@ -116,7 +126,7 @@ None. The issue specifies the fingerprints, the same-job recording, and shadow m
 - Conventions: behavior names, `src/**/*.test.ts` today. This file is the first test outside `src/`.
 - New test files: `scripts/demo-fingerprint.test.ts`.
 - `vitest.config.ts` `include` adds `scripts/**/*.test.ts`. Coverage `include` stays `src/**/*.ts`.
-- `tsconfig.test.json` `include` adds the script module and its test so ESLint's type-aware project can see them.
+- `tsconfig.scripts.json` includes the module and its test. `npm run typecheck` runs it. ESLint's project list includes it. `tsconfig.test.json` is unchanged.
 - No test infrastructure exists for bash or for GitHub Actions. The workflow step is glue over the tested CLI. No new runner.
 
 ### Integration Tests
@@ -127,12 +137,12 @@ None. The issue specifies the fingerprints, the same-job recording, and shadow m
 
 ### 1. Text normalization — executable
 
-- Files: `scripts/demo-fingerprint.ts`, `scripts/demo-fingerprint.test.ts`, `vitest.config.ts`, `tsconfig.test.json`
+- Files: `scripts/demo-fingerprint.ts`, `scripts/demo-fingerprint.test.ts`, `vitest.config.ts`, `tsconfig.scripts.json`, `package.json`, `eslint.config.js`
 
 1. Stub tests: empty cases for dropping bare-prompt frames, collapsing consecutive screens, and keeping a one-character text change.
-2. Stub interface: `normalizeTextRecord(text: string): string`.
+2. Stub interface: `normalizeTextRecord(text: string): string`. The file uses erasable TypeScript only: no enums, no parameter properties. Imports of local TypeScript use a `.ts` suffix.
 3. Write tests and run red: the issue's separator is `─` repeated 80 times; drop frames matching `/^[>\s]*$/`; collapse consecutive identical frames; join the kept frames with that separator.
-4. Write code and run green: implement that function. Register the test file with Vitest and `tsconfig.test.json`.
+4. Write code and run green: implement that function. Add `tsconfig.scripts.json` with `noEmit`, `allowImportingTsExtensions`, `rootDir` set to the repo root, and `include` of `scripts/**/*.ts`. Point `npm run typecheck` at it as a second `tsc --noEmit -p`. Add it to ESLint `parserOptions.project`. Register the test with Vitest. Do not add `scripts/` to `tsconfig.test.json`.
 
 ### 2. Frame-state fingerprint — executable
 
@@ -156,30 +166,39 @@ None. The issue specifies the fingerprints, the same-job recording, and shadow m
 
 - Files: `scripts/demo-fingerprint.ts`, `scripts/demo-fingerprint.test.ts`, `scripts/generate-demo.js`
 
-1. Stub tests: empty cases for the temporary tape and for `buildDockerRunArgs`.
-2. Stub interface: `withFingerprintOutputs(tapeSource: string, textPath: string, framesDir: string): string` and `buildDockerRunArgs(options): string[]`.
-3. Write tests and run red: the source string is unchanged; the result appends quoted absolute `Output` lines; args include the image, both mounts, the scratch tape path, and the gif `--output`. Without a scratch directory the args match today's gif-only invocation.
-4. Write code and run green: implement the helpers. `generate-demo.js` accepts `--image`, `--scratch`, and `--gif-dir`. When scratch is set it writes the temporary tape under the scratch mount, mounts scratch and the gif directory, and runs demos one at a time. When scratch is omitted, behavior stays as it is now.
+1. Stub tests: empty cases for the temporary tape, for `buildDockerRunArgs`, and for `parseGenerateArgs`.
+2. Stub interface: `withFingerprintOutputs(tapeSource: string, textPath: string, framesDir: string): string`, `buildDockerRunArgs(options): string[]`, and `parseGenerateArgs(argv: readonly string[]): GenerateArgs` exported from `scripts/generate-demo.js`.
+3. Write tests and run red: the source string is unchanged; the result appends quoted `Output` lines for the gif, the text file, and the frames directory; the frames path ends in `/`; those paths are the container paths under `/workspace/scratch`. Args for a scratch run include the image, the host scratch mounted at `/workspace/scratch`, and the in-container tape path, and they omit `--output`. Args with no scratch match today's gif-only `--output` invocation. `parseGenerateArgs` accepts `--image`, `--scratch`, `--demos-dir`, and `--build-context`.
+4. Write code and run green: implement the helpers. `generate-demo.js` imports them from `./demo-fingerprint.ts`. When `--scratch` is set, read tapes from `--demos-dir`, build with `docker build -f <context>/demos/Dockerfile -t <image> <context>`, write the temporary tape under the host scratch directory, and run demos one at a time. When those flags are omitted, behavior stays as it is now, including `npm run demo:docker:build` and `--output`.
 
-### 5. Harden the tapes — executable
+### 5. Scratch CLI — executable
+
+- Files: `scripts/demo-fingerprint.ts`, `scripts/demo-fingerprint.test.ts`
+
+1. Stub tests: empty cases for frame-text selection, missing recordings, demo-name rejection, attempt layout, and exit codes.
+2. Stub interface: `listFrameTextPngs(framesDir: string): string[]`, `readSide(demoDir: string): { text: string, frames: string }`, `assessScratch(options: { scratchRoot: string, baseTapesDir: string, headTapesDir: string }): { lines: string[], exitCode: number }`. Layout is `<scratchRoot>/attempt-<n>/{base,head}/<demo>/{record.txt,frames/}`. `main` parses argv and writes the lines to stdout.
+3. Write tests and run red: only `frame-text-*.png` is hashed; `frame-cursor-*.png` is ignored; a missing text file, a missing frames directory, or a frames directory with no text frames throws; a demo name outside `^[a-zA-Z0-9_-]+$` throws; a first-attempt frame mismatch returns `NEED_FRAME_RETRY` with exit 0; a completed retry returns the flowchart verdict with exit 0, including UNSTABLE; a structural error returns exit 1.
+4. Write code and run green: implement the reader and `assessScratch`. The workflow invokes `node scripts/demo-fingerprint.ts --scratch <root> --base-tapes <dir> --head-tapes <dir>`.
+
+### 6. Harden the tapes — executable
 
 - Files: `demos/basic.tape`, `demos/validation.tape`, `demos/custom-theme.tape`
-- No tests: a test that asserts the tape source goes red only when that source is edited. The hidden `Sleep 1s` after `node examples/….js` becomes `Wait+Screen /Search:/`. Every later `Sleep` stays.
+- No tests: a test that asserts the tape source goes red only when that source is edited. The hidden `Sleep 1s` after `node examples/….js` becomes `Wait+Screen /Search:/`. Every later `Sleep` stays. Shadow compares these tapes with the merge-base tapes, which still sleep, until this change reaches `main`.
 
-### 6. Shadow workflow — prose/policy
+### 7. Shadow workflow — prose/policy
 
 - Files: `.github/workflows/generate-demos.yaml`, `.github/workflows/scripts/templates/demo-comment.md`
-- No tests: prose/policy artifact. The executable decision is the CLI from steps 1–4. This step only invokes it.
+- No tests: prose/policy artifact. The executable decision is the CLI from step 5. This step only invokes it.
 - Creative ref: none
 
-1. After checkout, resolve head as `github.event.pull_request.head.sha` and base as the merge-base of that SHA and the PR base ref. On `workflow_dispatch`, use `HEAD` and `origin/main`.
-2. `git worktree add --detach` the base. Build `vhs-node-demo:base` from the worktree and `vhs-node-demo:head` from the PR head tree, each with that tree's `demos/Dockerfile`.
-3. Record base into the scratch tree, then head. Head GIFs still land in `docs/img` for the existing upload. Base GIFs, all text records, and all frames stay in scratch.
-4. Run the fingerprint CLI. For each `NEED_FRAME_RETRY` demo, record that demo again on both sides into a second scratch directory, then assess again.
+1. Leave the existing generate, upload, detect, and release-please amend steps as they are. They keep reading and writing `docs/img` from the checkout, which is the merge commit.
+2. Under `$RUNNER_TEMP`, add a detached worktree at the merge-base and a detached worktree at `pull_request.head.sha`. On `workflow_dispatch`, use `origin/main`'s merge-base with `HEAD`, and use `HEAD` as the shadow head. Create the scratch directory beside those worktrees, not inside the repo.
+3. From the checkout, run the checkout's `generate-demo.js` for the base worktree, then for the head worktree. Pass `--demos-dir` and `--build-context` for that worktree, `--image vhs-node-demo:base` or `:head`, and `--scratch` pointed at `attempt-0/<side>`. Do not pass a gif directory. Shadow output stays in scratch.
+4. Run the fingerprint CLI. For each `NEED_FRAME_RETRY` name, record that demo again on both sides into `attempt-1/<side>` and run the CLI again. Exit 0 from the CLI is success, including UNSTABLE. Exit 1 fails the step.
 5. Append the shadow line to `$GITHUB_STEP_SUMMARY` and pass it to the comment as `SHADOW_VERDICTS`. Add one line to the comment template. Do not change `detect-demo-changes.sh`, the `<details>` logic, or the release-please amend condition.
-6. Leave the worktree and scratch on the runner. Do not upload scratch. Do not commit verdicts.
+6. Do not upload scratch. Do not commit verdicts.
 
-### 7. Docs pointer — prose/policy
+### 8. Docs pointer — prose/policy
 
 - Files: none under `memory-bank/` persistent docs. `techContext.md` still describes GIF regeneration, which remains what the comment and the release amend do.
 - No tests: prose/policy artifact
@@ -188,15 +207,19 @@ None. The issue specifies the fingerprints, the same-job recording, and shadow m
 
 ## Technology Validation
 
-No new technology - validation not required. Fingerprints use `node:crypto`. VHS stays the v0.10 image already pinned in `demos/Dockerfile`. ffmpeg is already in that image and is unused until a later change builds the stacked before/after GIF.
+No new dependency. Fingerprints use `node:crypto`. Node v22.22.1 on this machine runs a `.js` file that imports a `.ts` file with no flag, and `node --experimental-strip-types` also works. VHS stays the v0.10 image already pinned in `demos/Dockerfile`. ffmpeg is already in that image and is unused until a later change builds the stacked before/after GIF.
 
 ## Challenges and Mitigations
 
 - A busy runner skips a short frame: record sides serially at parallelism 1, then apply the frame retry. Text does not depend on that sampler.
 - The same commit's text differs across attempts: report UNSTABLE, exit 0, and do not call the demo SAME.
-- Recording the merge commit would blame later `main` commits on an unrelated pull request: record `pull_request.head.sha` against the merge-base.
+- Recording the merge commit as the shadow head would blame later `main` commits on an unrelated pull request: the shadow head is a worktree of `pull_request.head.sha`. The checkout stays the merge commit and stays the only writer of `docs/img`.
+- The merge-base copy of `generate-demo.js` has none of the new flags: the workflow always runs the checkout's script and points `--demos-dir` and `--build-context` at the worktree.
+- A worktree or scratch directory inside the repo is copied by `docker build`: both live under `$RUNNER_TEMP`.
+- `--output` together with tape `Output` lines is unverified in VHS 0.10: scratch runs put the gif, the text file, and the frames directory in the tape and omit `--output`. The frames path ends in `/`. The CLI fails if the text file or the text frames are missing.
 - Two Docker builds share one tag: use `:base` and `:head`.
-- Scratch PNGs get uploaded or committed: artifact path stays `docs/img/*.gif`. Release amend stays `git add docs/img/*.gif`.
+- Scratch PNGs get uploaded or committed: shadow writes stay in `$RUNNER_TEMP`. The artifact path stays `docs/img/*.gif`. Release amend stays `git add docs/img/*.gif`.
+- This pull request's shadow verdicts compare `Wait+Screen` tapes with merge-base `Sleep 1s` tapes. That difference is expected until the wait is on `main`.
 - `Wait+Screen` times out because the prompt prefix changed: the pattern is the literal `Search:` prefix in `src/index.ts`. A prefix change is a real demo change and will also fail the recording, which is the right failure.
 - This machine has no Docker: build verification is Vitest plus `npm run quality:check`. The first shadow observation is CI.
 - Expanding Vitest's include pulls script files into the coverage gate: coverage `include` stays `src/**/*.ts`.
@@ -204,9 +227,10 @@ No new technology - validation not required. Fingerprints use `node:crypto`. VHS
 ## Pre-Mortem
 
 - The visible comment still marks every demo CHANGED, so the pull request that merges this looks like the old bug. That is the shadow rollout. The plan's job-summary line is the evidence. Switching the `<details>` blocks in this build would skip the evidence the issue requires.
-- Head recorded from the wrong SHA makes dependency-bump pull requests look CHANGED and the shadow week "fails" a working detector. Step 6 pins the head SHA and the merge-base.
+- Head recorded from the wrong SHA makes dependency-bump pull requests look CHANGED and the shadow week fails a working detector. Step 7 pins the shadow head SHA, the merge-base, and leaves `docs/img` on the checkout.
 - The frame retry is implemented as "SAME if any pair matches", which the operator rejected. Step 3's two-retry test locks the opposite rule before the workflow exists.
 - CI text is unstable and we treat that as ordinary CHANGED noise. UNSTABLE is a separate assessment so a self-disagreement cannot be read as a demo change.
+- An in-process tape replayer would avoid Docker for the text half. It is a second interpreter of the tape language and can drift from VHS. The signal this issue asks for is the VHS text record and the VHS frames. The replayer is not part of this plan.
 
 ## Status
 

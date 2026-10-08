@@ -34,3 +34,29 @@ Detect demo changes from a text record and a frame-state sequence recorded for t
 * Insights
     - The rendered prompt prefix is `Search:` even though the example messages are not
     - A tape-source assertion would be a change-detector, so the `Wait+Screen` edit has no unit test
+
+## 2026-10-08 - PREFLIGHT - COMPLETE
+
+* Work completed
+    - Validated the Level 3 plan against the generator, tapes, workflow, detector, Vitest/tsconfig/ESLint setup, and VHS docs
+    - Wrote `memory-bank/active/.preflight-status`; first line is `FAIL (fixable)`
+* Decisions made
+    - No in-phase plan edits: no scheduled change-detectors and no test-order swaps were found
+* Insights
+    - The fingerprint CLI is relied on by Step 6 but no step builds or tests it
+    - The base side cannot run a generator that does not exist at the merge-base yet
+    - The checkout is the merge commit, not the PR head
+    - `tsconfig.test.json` inherits `rootDir: ./src`, and `npm run typecheck` does not cover tests
+
+## 2026-10-08 - PLAN - COMPLETE
+
+* Work completed
+    - Revised the plan for every blocking preflight finding
+* Decisions made
+    - The checkout's generator and CLI record both worktrees. The worktree's own scripts are not executed
+    - Shadow output stays in `$RUNNER_TEMP`. `docs/img` stays the checkout's merge-commit GIFs
+    - `tsconfig.scripts.json` typechecks the new module. `tsconfig.test.json` stays unchanged
+    - Scratch runs omit `--output` and put a trailing-slash frames path in the tape
+    - The in-process tape replayer is out of scope
+* Insights
+    - Node v22.22.1 imports `.ts` from `.js` with type stripping on by default
