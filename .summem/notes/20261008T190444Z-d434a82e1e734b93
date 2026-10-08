@@ -1,0 +1,1 @@
+Pagination pointer (middle-lock vs edge) is @inquirer/core usePointerPosition; this prompt only passes items/active/renderItem/pageSize/loop. Edge-scroll preference is issue #188, separate from description-height work.
