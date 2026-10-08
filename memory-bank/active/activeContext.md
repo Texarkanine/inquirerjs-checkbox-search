@@ -13,4 +13,4 @@
 
 ## Next Step
 
-- Re-run preflight on the revised plan.
+- Re-run preflight on the second plan revision.

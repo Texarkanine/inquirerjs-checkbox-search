@@ -44,7 +44,7 @@ Feature pull requests get no bot commits. A release pull request gets GIF commit
 
 1. VHS is v0.10, the version `demos/Dockerfile` pins. The `--output` flag accepts only `.gif`, `.webm`, and `.mp4`.
 2. Frame hashes match only within one environment. Both sides of a comparison must use the same runner and the same kind of image.
-3. A pull request that changes `demos/Dockerfile` or the VHS version reads as changed for every demo.
+3. A pull request that changes `demos/Dockerfile` or the VHS version is CHANGED when that change shows up in the text record or the frame-text pixels. A Dockerfile edit that leaves both alone is SAME.
 4. Durations are not compared. A change that only makes a demo slower reads as SAME.
 5. Demos show only what the tapes exercise.
 6. No bot commits on feature pull requests.

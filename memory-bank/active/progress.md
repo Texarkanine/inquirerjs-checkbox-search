@@ -60,3 +60,27 @@ Detect demo changes from a text record and a frame-state sequence recorded for t
     - The in-process tape replayer is out of scope
 * Insights
     - Node v22.22.1 imports `.ts` from `.js` with type stripping on by default
+
+## 2026-10-08 - PREFLIGHT - COMPLETE
+
+* Work completed
+    - Re-validated the revised Level 3 plan against `scripts/generate-demo.js`, the tapes, the workflow, the detector, and the Vitest/tsconfig/ESLint setup
+    - Wrote `memory-bank/active/.preflight-status`; first line is `FAIL (fixable)`
+* Decisions made
+    - No in-phase plan edits: no scheduled change-detectors and no test-order swaps were found
+* Insights
+    - `generate-demo.js` runs `main()` at import, so `parseGenerateArgs` cannot be tested from there
+    - The shadow line and the retry-name hand-off have no CLI producer
+    - The Dockerfile-change CHANGED invariant has no mechanism
+
+## 2026-10-08 - PLAN - COMPLETE
+
+* Work completed
+    - Revised the plan for the second preflight's three findings
+* Decisions made
+    - `parseGenerateArgs` lives in `scripts/demo-fingerprint.ts`. Tests do not import `generate-demo.js`
+    - The gif-only path does not load the TypeScript module. `engines` stays `>=22`
+    - CLI stdout is sorted `<demo>: <ASSESSMENT>` lines plus a final `SHADOW_VERDICTS=` line
+    - A Dockerfile change is CHANGED only when the fingerprints change
+* Insights
+    - Scratch mode must not use the one-demo npm docker path, or a retry would build the wrong image tag
