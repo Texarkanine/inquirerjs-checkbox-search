@@ -14,7 +14,7 @@ Set PlaybackSpeed 0.75
 Hide
 Type "node examples/custom-theme.js"
 Enter
-Sleep 1s
+Wait+Screen /Search:/
 # Wait for the prompt to appear, then interact with it
 Show
 

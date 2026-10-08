@@ -96,3 +96,18 @@ Detect demo changes from a text record and a frame-state sequence recorded for t
     - VHS `.txt`/`.ascii` outputs, trailing-slash `frames/` output, `frame-text-*`/`frame-cursor-*` naming, and `Wait+Screen /regex/` all check out against upstream docs
     - Shadow step should pin serial recording and export `SHADOW_VERDICTS` for the envsubst template (advisories)
     - The `.txt` framing assumption behind normalization fixtures wants confirmation from VHS source or the first CI shadow run (advisory)
+
+## 2026-10-08 - BUILD - COMPLETE
+
+* Work completed
+    - Added `scripts/demo-fingerprint.ts` and its Vitest file
+    - Taught `scripts/generate-demo.js` a serial scratch mode that does not import TypeScript unless a scratch flag is present
+    - Replaced the hidden post-launch sleep in the three tapes with `Wait+Screen /Search:/`
+    - Added a shadow step to `generate-demos.yaml` and one `SHADOW_VERDICTS` line to the comment template
+* Decisions made
+    - Scratch mode records one demo at a time
+    - The gif path is derived as `<demoDir>/<demoName>-demo.gif`
+    - The shadow sentence says the verdicts are not used to expand demos
+* Insights
+    - `npm test` passed: 164 tests, format, lint, and typecheck
+    - Docker is not installed on this machine, so the shadow step is unverified until CI

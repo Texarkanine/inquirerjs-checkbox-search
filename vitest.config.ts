@@ -4,7 +4,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'scripts/**/*.test.ts'],
     exclude: ['inquirer-source-code-ref/**/*', 'node_modules/**/*'],
     onUnhandledError(error) {
       // After upgrading to @inquirer/core v11, the library aggressively closes
