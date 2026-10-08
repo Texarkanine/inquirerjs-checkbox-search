@@ -48,3 +48,18 @@ Published callers of `pageSize: { autoBufferDescriptions: true }` change layout:
 - The description block is padded to the reserved height, so short descriptions no longer shrink the frame.
 
 Callers who never set `autoBufferDescriptions` are unaffected. The TypeScript options do not gain a required field. The break is observable layout for an existing opt-in, which on 2.x is a major bump (`CONTRIBUTING.md`).
+
+## Rework
+
+Operator direction on 2026-10-08, from the PR #189 feedback judgment. The original brief above still holds. This section is the delta.
+
+### Fix
+
+1. The reserved height is the wrap of the styled description, `theme.style.description(text)`, using the same wrap the padded block paints. A style that adds visible columns can paint a row the raw peak did not reserve. The default style is ANSI color and adds no width. `examples/custom-theme.js` prefixes `💬 `, and the description tests wrap with `**`.
+2. When `autoBufferCountsLineWidth` is false, the painted block does not word-wrap. Counting and painting stay on newline rows. Padding still holds that reserved height.
+
+### Leave
+
+1. Do not cache or skip the wrap that runs again when a selection toggle replaces `allItems`. Measured `wrapAnsi` at width 79: about 2 ms for 50 items, about 8 ms for 200, about 35 ms for 5,000, and the page-size memo runs that path twice. A description signature would skip it on Tab. A signature that drifts from `calculateDescriptionLines` would freeze the frame when descriptions actually change. That risk sits in the code this rework is correcting, and the payoff is not visible at list sizes this prompt is for.
+2. The session peak does not shrink. Widening the terminal leaves the reserved block. This is a product decision: do not reclaim rows, and do not move the frame under the user.
+3. The duplicated description-region helper in the tests stays as it is.

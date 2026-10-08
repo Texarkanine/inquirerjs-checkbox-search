@@ -88,5 +88,18 @@ Keep the checkbox-search frame height stable when choice descriptions wrap: word
 * Insights
     - Archive is still unrun
 
+## 2026-10-08 - REWORK - INITIATED
+
+* Work completed
+    - Operator chose rework over archive, from the PR #189 feedback judgment
+* Decisions made
+    - Fix the styled-vs-raw peak: reserve the wrap of `theme.style.description(text)`, the same wrap the pad paints
+    - Fix the width-counting opt-out: when `autoBufferCountsLineWidth` is false, do not word-wrap the painted block
+    - Do not change the per-toggle re-wrap. `wrapAnsi` at width 79 on short prose was about 2 ms for 50 items, about 8 ms for 200, and about 35 ms for 5,000 (one pass; the page-size memo runs that path twice). A description signature would skip the wrap on Tab, and building the signature was under 1 ms. A signature that drifts from `calculateDescriptionLines` would freeze the frame on a real description change, in the code this rework is correcting. That cost is not offset by a hitch at list sizes this prompt is for
+    - The peak never shrinks, including after the terminal widens. Product decision: do not reclaim rows and do not move the frame under the user
+    - Leave the duplicated description-region test helper as it is
+* Insights
+    - The re-wrap is real and the skip is small. It is not free of frame risk, and the payoff is not user-visible here
+
 
 
