@@ -15,3 +15,16 @@ Keep the checkbox-search frame height stable when choice descriptions wrap: word
     - Issue #188 may proceed in parallel
 * Insights
     - Pointer placement is `@inquirer/core` `usePointerPosition`. Description height is `calculateDescriptionLines`, `resolvePageSize`, and the bottom description string. They do not block each other.
+
+## 2026-10-08 - PLAN - COMPLETE
+
+* Work completed
+    - Wrote the Level 2 plan: word-wrap counting, description-line floor, session peak, padded description, README
+    - Proved `fast-wrap-ansi` 0.2.2 word-wraps the three-word fixture to 3 lines where `ceil(length / 80)` is 2
+* Decisions made
+    - Direct dependency on `fast-wrap-ansi`. `@inquirer/core` does not export `breakLines`, and its `breakLines` uses `wordWrap: false`
+    - Wrap width is `(process.stdout.columns || 80) - 1` so `ScreenManager` does not reflow the lines we already wrapped
+    - Peak lives in a prompt ref over `allItems` and is passed into `resolvePageSize` as `descriptionLineFloor`
+* Insights
+    - `ScreenManager.render` hard-wraps the entire prompt string before paint. Padding has to be real newlines inserted first, or the measured height and the painted height diverge
+
