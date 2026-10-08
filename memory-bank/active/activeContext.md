@@ -1,13 +1,15 @@
 # Active Context
 
 ## Current Task: issue-190
-**Phase:** COMPLEXITY-ANALYSIS - COMPLETE
+**Phase:** PLAN - COMPLETE
 
 ## What Was Done
 
-- Classified [issue #190](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/190) as Level 3. It is a complete demo-preview feature across the tapes, the generator, and the pull-request workflow, and it leaves the prompt's architecture alone.
-- Recorded the operator's retry amendment: a text mismatch is CHANGED on the first comparison; a frame mismatch counts when it survives re-recording; one agreeing pair does not erase a recorded difference; a text record that disagrees with itself across re-recordings of the same commit fails the approach.
+- Classified [issue #190](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/190) as Level 3.
+- Planned shadow-mode detection. The merge-base and the pull-request head are recorded in one job. Verdicts come from the normalized text record and the frame-text fingerprint.
+- Kept today's GIF-diff comment and today's release-please amend. The new verdict is a job-summary line and one comment line until dependency-bump pull requests come out SAME.
+- Locked the operator's retry rule: a text mismatch is CHANGED immediately; a frame mismatch counts when a retry still disagrees; a matching retry does not erase a later mismatch; text that disagrees with itself is UNSTABLE.
 
 ## Next Step
 
-- Load the Level 3 workflow and run the plan phase.
+- Run preflight on the plan.

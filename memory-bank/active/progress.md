@@ -20,3 +20,17 @@ Detect demo changes from a text record and a frame-state sequence recorded for t
     - GIF bytes differ on every recording because frame timing and the palette vary
     - The text record is taken once per tape command, so a skipped animation frame does not change it
     - The frame-state sequence is sampled on a timer and can skip a short state when the runner is busy
+
+## 2026-10-08 - PLAN - COMPLETE
+
+* Work completed
+    - Mapped the demo workflow, the GIF detector, the three tapes, and the `Search:` prompt prefix
+    - Wrote the Level 3 plan in `memory-bank/active/tasks.md`
+* Decisions made
+    - This build reports verdicts in shadow and leaves expand/collapse and release-please GIF amends on the old detector
+    - Verdict logic lives in `scripts/demo-fingerprint.ts` and is tested with Vitest. Coverage stays on `src/`
+    - Head is the pull-request head SHA. Base is the merge-base. Sides are recorded serially
+    - UNSTABLE exits 0 during shadow so the required check stays green
+* Insights
+    - The rendered prompt prefix is `Search:` even though the example messages are not
+    - A tape-source assertion would be a change-detector, so the `Wait+Screen` edit has no unit test
