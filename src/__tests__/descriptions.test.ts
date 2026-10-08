@@ -249,4 +249,60 @@ describe('Description display', () => {
       expect(plainRegion.every((line) => line.trim() === '')).toBe(true);
     });
   });
+
+  it('should reserve a row when the description style adds visible width', async () => {
+    await withColumns(80, async () => {
+      const wide = 'a'.repeat(77);
+      const { events, getScreen } = await render(checkboxSearch, {
+        message: 'Select items',
+        pageSize: { autoBufferDescriptions: true },
+        choices: [
+          { value: 'wide', name: 'Wide', description: wide },
+          { value: 'short', name: 'Short', description: 'Short' },
+        ],
+        theme: {
+          style: {
+            description: (text: string) => `>>>${text}`,
+          },
+        },
+      });
+
+      const wideRegion = descriptionRegion(frame(getScreen));
+      expect(wideRegion).toHaveLength(2);
+      expect(wideRegion.join('')).toContain(wide);
+
+      await events.keypress('down');
+
+      const shortRegion = descriptionRegion(frame(getScreen));
+      expect(shortRegion).toHaveLength(2);
+      expect(shortRegion[0]).toContain('>>>Short');
+      expect(shortRegion.some((line) => line.trim() === '')).toBe(true);
+    });
+  });
+
+  it('should not word-wrap the description when width counting is off', async () => {
+    await withColumns(80, async () => {
+      const { events, getScreen } = await render(checkboxSearch, {
+        message: 'Select items',
+        pageSize: {
+          autoBufferDescriptions: true,
+          autoBufferCountsLineWidth: false,
+        },
+        choices: [
+          { value: 'long', name: 'Long', description: threeLongWords },
+          { value: 'short', name: 'Short', description: 'Short' },
+        ],
+      });
+
+      const longRegion = descriptionRegion(frame(getScreen));
+      expect(longRegion).toHaveLength(1);
+      expect(longRegion[0]).toContain(threeLongWords);
+
+      await events.keypress('down');
+
+      const shortRegion = descriptionRegion(frame(getScreen));
+      expect(shortRegion).toHaveLength(1);
+      expect(shortRegion[0]).toContain('Short');
+    });
+  });
 });

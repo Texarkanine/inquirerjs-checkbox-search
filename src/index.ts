@@ -325,14 +325,39 @@ function wrapDescription(text: string): string {
 }
 
 /**
- * Wrap a description and extend it with blank lines up to a reserved height.
+ * Copy items with each description passed through the theme style.
  *
- * @param text - Description text, possibly already styled. Empty when the active item has none.
+ * The peak must measure the text the pad will paint. A style that adds
+ * visible columns can wrap onto a row the raw description did not need.
+ *
+ * @param items - Choices and separators to measure
+ * @param style - Theme description style
+ * @returns Items whose descriptions are the styled strings
+ */
+function withStyledDescriptions<Value>(
+  items: readonly Item<Value>[],
+  style: (text: string) => string,
+): readonly Item<Value>[] {
+  return items.map((item) => {
+    if (Separator.isSeparator(item) || !item.description) {
+      return item;
+    }
+    return { ...item, description: style(item.description) };
+  });
+}
+
+/**
+ * Extend a description block with blank lines up to a reserved height.
+ *
+ * The caller wraps first when width counting is on. When width counting is
+ * off, the text stays on its newline rows and this function only pads.
+ *
+ * @param text - Description text, possibly already styled and wrapped. Empty when the active item has none.
  * @param reservedLines - Session peak line count to hold the block at
- * @returns The wrapped block, padded with empty lines
+ * @returns The block, padded with empty lines
  */
 function padDescription(text: string, reservedLines: number): string {
-  const lines = wrapDescription(text).split('\n');
+  const lines = text.split('\n');
   while (lines.length < reservedLines) {
     lines.push('');
   }
@@ -554,7 +579,10 @@ export default createPrompt(
         if (autoBuffer) {
           const countLineWidth =
             configPageSize.autoBufferCountsLineWidth !== false;
-          const lines = calculateDescriptionLines(allItems, countLineWidth);
+          const lines = calculateDescriptionLines(
+            withStyledDescriptions(allItems, theme.style.description),
+            countLineWidth,
+          );
           if (lines > descriptionPeakRef.current) {
             descriptionPeakRef.current = lines;
           }
@@ -1023,7 +1051,11 @@ export default createPrompt(
       const styled = activeDescription
         ? theme.style.description(activeDescription)
         : '';
-      descriptionLine = `\n${padDescription(styled, descriptionPeakRef.current)}`;
+      const countLineWidth =
+        typeof configPageSize === 'object' &&
+        configPageSize.autoBufferCountsLineWidth !== false;
+      const block = countLineWidth ? wrapDescription(styled) : styled;
+      descriptionLine = `\n${padDescription(block, descriptionPeakRef.current)}`;
     } else if (activeDescription) {
       descriptionLine = `\n${theme.style.description(activeDescription)}`;
     }

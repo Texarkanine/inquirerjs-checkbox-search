@@ -111,5 +111,17 @@ Keep the checkbox-search frame height stable when choice descriptions wrap: word
 * Insights
     - Level 1 skips plan, creative, and preflight and goes to build
 
+## 2026-10-08 - BUILD - COMPLETE
+
+* Work completed
+    - Peak measures the styled description, then the pad uses that same wrap when width counting is on
+    - When `autoBufferCountsLineWidth` is false, the pad does not word-wrap
+    - `npm test` passed: format, lint, typecheck, and 148 tests
+* Decisions made
+    - `padDescription` only pads. Wrapping stays at the call site, gated on the width-counting flag
+    - `resolvePageSize` still measures raw items. The styled count is the `descriptionLineFloor`, and `Math.max` keeps the taller of the two
+* Insights
+    - The wide-style failure showed up on the short choice: the long choice already painted the extra row because the pad does not truncate
+
 
 

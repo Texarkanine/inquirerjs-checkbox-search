@@ -1,13 +1,14 @@
 # Active Context
 
 ## Current Task: Stable description frame rework
-**Phase:** COMPLEXITY-ANALYSIS - COMPLETE
+**Phase:** BUILD - COMPLETE
 
 ## What Was Done
 
-- Classified the rework as Level 1. Two layout bugs in the description measure and pad, one component.
-- The per-toggle re-wrap stays. The peak still never shrinks. The test helper stays.
+- The peak measures `theme.style.description(text)` with the same wrap the pad paints.
+- When `autoBufferCountsLineWidth` is false, the painted block stays on newline rows and the pad only pads.
+- Two new description tests. Full suite: 148 passed. Format, lint, and typecheck passed.
 
 ## Next Step
 
-- Load the Level 1 workflow and build.
+- Level 1 QA.
