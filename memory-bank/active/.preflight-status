@@ -1,0 +1,15 @@
+PASS WITH ADVISORY
+
+## Findings Summary
+
+The Level 2 implementation plan in `memory-bank/active/tasks.md` is sound, comprehensive, and strictly adheres to test-driven development (TDD) principles. All executable units sequence test stubbing, failing test execution, and implementation code in the correct order. Public interface backward compatibility is maintained via optional parameters, and the breaking layout change is correctly flagged for a major semver bump (`feat!:`).
+
+## Advisory Findings
+
+- **Terminal width dependency in memoization**: `src/index.ts` currently memoizes `pageSize` against `[configPageSize, terminalHeight, allItems]`. Since `calculateDescriptionLines` and `fast-wrap-ansi` depend on terminal width (`process.stdout.columns`), horizontal terminal resize without vertical resize could leave `pageSize` stale. Tracking `const terminalWidth = process.stdout.columns;` in the `pageSize` dependency list ensures layout recomputes on horizontal resizes.
+- **Wrap width lower-bound protection**: The calculation `(process.stdout.columns || 80) - 1` could yield zero or negative width in edge environments where `columns` is reported as 1 or 0. Clamping with `Math.max(1, (process.stdout.columns || 80) - 1)` prevents runtime errors in `fast-wrap-ansi`.
+- **Zero-peak description handling**: When a prompt has no choices with descriptions, `peak` evaluates to 0. Ensuring that `descriptionLine` evaluates to an empty string when `peak === 0` and `activeDescription` is falsy avoids rendering empty blank lines.
+
+## Radical Innovation
+
+- **Description line-count memoization cache**: During interactive prompt usage, toggling choice selection updates `allItems` (changing `checked` status on selected choices), which causes the `pageSize` calculation to re-evaluate and re-wrap every description in `allItems` with `fast-wrap-ansi`. Because checking choices does not alter description strings, caching line counts by `description` string (e.g., via a module-level or prompt-scoped `Map<string, number>`) or memoizing the choice peak separately from selection state would make choice toggling O(1) with respect to description wrapping, eliminating redundant ANSI parsing across renders.

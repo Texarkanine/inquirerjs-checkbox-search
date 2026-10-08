@@ -28,3 +28,16 @@ Keep the checkbox-search frame height stable when choice descriptions wrap: word
 * Insights
     - `ScreenManager.render` hard-wraps the entire prompt string before paint. Padding has to be real newlines inserted first, or the measured height and the painted height diverge
 
+## 2026-10-08 - PREFLIGHT - COMPLETE
+
+* Work completed
+    - Validated the Level 2 implementation plan against codebase architecture and TDD requirements
+    - Verified test ordering, dependency impact, and contract compatibility for `fast-wrap-ansi` integration
+    - Recorded preflight status as `PASS WITH ADVISORY`
+* Decisions made
+    - Plan approved for build without structural modifications
+    - Documented advisory findings regarding terminal width tracking and safe width clamping
+* Insights
+    - Line wrap calculations on choice descriptions can be cached by description text to eliminate redundant ANSI parsing when toggling selection state
+
+
