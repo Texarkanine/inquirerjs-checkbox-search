@@ -2,6 +2,8 @@
 
 TypeScript library for Node.js (>=22, see `engines` in `package.json` and `.nvmrc`) that publishes a single Inquirer.js prompt as a dual ESM/CJS npm package. Built on `@inquirer/core` primitives.
 
+Description rows are measured with a direct `fast-wrap-ansi` dependency (`wordWrap` and `hard`). `@inquirer/core` already depends on that package, but it does not export `breakLines`, and its own wrap uses `wordWrap: false`.
+
 ## Environment Setup
 
 - Node.js version per `engines` in `package.json` and `.nvmrc` (currently `>=22`).
