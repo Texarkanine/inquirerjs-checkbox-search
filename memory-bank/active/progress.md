@@ -2,7 +2,7 @@
 
 Keep the checkbox-search frame height stable when choice descriptions wrap: word-wrap line counts by default under `autoBufferDescriptions`, a session peak across choices, and a padded description block. Ship it as a major (`feat!:`) because published 2.x callers of that option will see a different layout.
 
-**Complexity:** Level 2
+**Complexity:** Level 1
 
 ## 2026-10-08 - COMPLEXITY-ANALYSIS - COMPLETE
 
@@ -100,6 +100,16 @@ Keep the checkbox-search frame height stable when choice descriptions wrap: word
     - Leave the duplicated description-region test helper as it is
 * Insights
     - The re-wrap is real and the skip is small. It is not free of frame risk, and the payoff is not user-visible here
+
+## 2026-10-08 - COMPLEXITY-ANALYSIS - COMPLETE
+
+* Work completed
+    - Classified the rework as Level 1
+* Decisions made
+    - Bug fix in one subsystem: the description measure and the padded paint in `src/index.ts`. Decision tree: bug fix, single component, Level 1
+    - The two fixes are specified. No approach choice remains. The per-toggle re-wrap stays out
+* Insights
+    - Level 1 skips plan, creative, and preflight and goes to build
 
 
 
