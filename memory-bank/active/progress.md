@@ -123,5 +123,17 @@ Keep the checkbox-search frame height stable when choice descriptions wrap: word
 * Insights
     - The wide-style failure showed up on the short choice: the long choice already painted the extra row because the pad does not truncate
 
+## 2026-10-08 - QA - COMPLETE
+
+* Work completed
+    - Reviewed the rework diff (`withStyledDescriptions`, pad-only `padDescription`, conditional wrap at paint site) against the rework brief
+    - Verified measure-equals-paint on both width-counting branches, guard and signature preservation, and JSDoc accuracy
+    - Ran `npm test`: format, lint, typecheck, and 148/148 tests passed
+    - Wrote `memory-bank/active/.qa-validation-status`: PASS
+* Decisions made
+    - PASS: implementation accepted as-is. One non-blocking advisory (per-memo copied array) noted in `tasks.md`
+* Insights
+    - `makeTheme` guarantees `theme.style.description` is always a function, so the styled-measure call needs no undefined guard
+
 
 
