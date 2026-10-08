@@ -40,4 +40,20 @@ Keep the checkbox-search frame height stable when choice descriptions wrap: word
 * Insights
     - Line wrap calculations on choice descriptions can be cached by description text to eliminate redundant ANSI parsing when toggling selection state
 
+## 2026-10-08 - BUILD - COMPLETE
+
+* Work completed
+    - Word-wrap counting in `calculateDescriptionLines` via `fast-wrap-ansi`
+    - `resolvePageSize` defaults width counting on under `autoBufferDescriptions` and accepts `descriptionLineFloor`
+    - The prompt holds a session peak on `allItems` and pads the styled description to that peak
+    - README documents the default, the padding, and a `pageSize` example
+    - `npm test` passed (146 tests) and `npm run build` passed
+    - Implementation commit `2a197af` is `feat!:` with a `BREAKING CHANGE:` footer
+* Decisions made
+    - `hard: true` as well as `wordWrap: true`, so a spaceless line still splits at the column
+    - The last padded row is a single space, because ScreenManager appends a newline when the final line length is 0
+    - Took the preflight width-clamp and terminal-width memo advisories. Skipped the description-line cache
+* Insights
+    - `getScreen()` trims trailing blank lines, so the padding tests read the raw frame and strip ANSI without trimming
+
 
