@@ -2,7 +2,9 @@
 
 Detect demo changes from a text record and a frame-state sequence recorded for the merge-base and the pull request in the same job, so a demo comment expands only when that demo's behavior changed. Roll out in shadow mode first. A text mismatch is final; a frame mismatch counts only when it survives re-recording.
 
-**Complexity:** Level 3
+The rework makes the shadow step on pull request #191 exit 0 with a visible verdict. VHS must leave its frame PNGs on the scratch mount.
+
+**Complexity:** Level 1
 
 ## 2026-10-08 - COMPLEXITY-ANALYSIS - COMPLETE
 
@@ -145,3 +147,12 @@ Detect demo changes from a text record and a frame-state sequence recorded for t
 * Insights
     - The six recordings finished. The fingerprint CLI then exited 1, and command substitution under `set -e` hid its message
     - VHS v0.10 renames the frame directory from the container temp dir onto the bind-mounted frames path and ignores the error, so the frames directory stays empty
+
+## 2026-10-08 - COMPLEXITY-ANALYSIS - COMPLETE
+
+* Work completed
+    - Classified the rework as Level 1
+* Decisions made
+    - Level 1: one bug in the scratch Docker run. The frames must land on the bind mount, and a structural CLI error must show up in the job log
+* Insights
+    - Expand and collapse stay on the GIF diff. This rework does not change the verdict rule
