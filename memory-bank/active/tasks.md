@@ -26,3 +26,18 @@ The container command ran `mkdir -p /tmp/vhs-frames` before `vhs`. VHS v0.10.0 r
 ### Verification
 
 `npm test` passed: format, lint, typecheck, and 169 tests. The local vhs v0.10.0 recording wrote the PNGs when the directory was absent.
+
+### QA Findings
+
+Reviewed the rework diff (`scripts/demo-fingerprint.ts`, `scripts/demo-fingerprint.test.ts`, `memory-bank/techContext.md`) against the task notes above:
+
+- **KISS**: Single inline shell conditional preserving exit status without extra helper scripts or abstractions.
+- **DRY**: Reuses existing `containerFramesDir` constant.
+- **YAGNI**: Strictly removes the pre-creation `mkdir` that triggers the VHS rename failure; adds no speculative behavior.
+- **Completeness**: Command no longer pre-creates `/tmp/vhs-frames`, preserves `vhs` exit status, and guards `chmod` with a directory check.
+- **Regression**: Existing container naming, read-only volume mounting, argument forwarding, and fingerprinting untouched; all 169 tests pass.
+- **Integrity**: No placeholder strings, magic numbers, or temporary debug scaffolding.
+- **Documentation**: `memory-bank/techContext.md` and module comments updated with the VHS rename behavior rationale.
+
+Advisory: Docker is not installed on this machine, so container execution itself is verified via CI Generate job, though the rename behavior was reproduced locally with vhs v0.10.0.
+
