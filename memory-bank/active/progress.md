@@ -2,7 +2,7 @@
 
 Detect demo changes from a text record and a frame-state sequence recorded for the merge-base and the pull request in the same job, so a demo comment expands only when that demo's behavior changed. Roll out in shadow mode first. A text mismatch is final; a frame mismatch counts only when it survives re-recording.
 
-The rework makes the shadow step on pull request #191 exit 0 with a visible verdict. VHS must leave its frame PNGs on the scratch mount.
+The rework makes the shadow step on pull request #191 finish and exit 0 with a visible verdict. Frame PNGs must land on the host scratch directory. Process-wide `TMPDIR` must stay off the scratch bind mount.
 
 **Complexity:** Level 1
 
@@ -202,3 +202,14 @@ The rework makes the shadow step on pull request #191 exit 0 with a visible verd
 * Insights
     - The shadow step printed `File:` for the first base `basic` tape at 00:56:10Z and then nothing until the job was cancelled at 06:54:12Z
     - The same job's GIF step finished in about 90 seconds. The previous shadow step, without `TMPDIR` on the bind mount, finished in about 3.5 minutes and then exited 1
+
+## 2026-10-09 - COMPLEXITY-ANALYSIS - COMPLETE
+
+* Work completed
+    - Compared [run 37867082815](https://github.com/Texarkanine/inquirerjs-checkbox-search/actions/runs/37867082815/job/113616261602) with the previous shadow failure and with the GIF step in the same job
+    - Classified the rework as Level 1
+* Decisions made
+    - Level 1: one bug in the scratch Docker run. Do not retry the cancelled commit
+* Insights
+    - VHS prints `File:` before it starts ttyd and Chromium. The log never gets past that line
+    - Chromium's profile and the frame directory both come from the process temp dir. Pointing that at the bind mount is the change that turned a three-minute failure into a six-hour hang
