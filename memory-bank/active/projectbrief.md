@@ -55,3 +55,11 @@ Feature pull requests get no bot commits. A release pull request gets GIF commit
 2. A pull request that changes visible text or color in one demo expands that demo and only that demo, with before and after.
 3. Re-running the workflow on the same commit gives the same verdicts.
 4. Feature pull requests get no bot commits. Release pull requests get GIF commits only when a demo is CHANGED.
+
+## Rework
+
+Pull request [#191](https://github.com/Texarkanine/inquirerjs-checkbox-search/pull/191) failed its Generate job: [run 37865549229](https://github.com/Texarkanine/inquirerjs-checkbox-search/actions/runs/37865549229/job/113611367454).
+
+Both sides recorded. The shadow step then exited 1 and printed no verdict. VHS v0.10 moves its frame directory with `os.Rename` from the container temp directory onto the frames Output path and ignores the error. That rename crosses the Docker bind mount, so the frames directory stays empty and the fingerprint CLI exits 1. `CLI_OUT="$(run_cli)"` under `set -e` discards that message.
+
+The shadow step must exit 0 and print the verdict line, so the pull request check is green and the change is reviewable. Expand and collapse stay on the GIF diff.

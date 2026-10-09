@@ -135,3 +135,13 @@ Detect demo changes from a text record and a frame-state sequence recorded for t
 * Insights
     - The GIF-only generator path must not import the TypeScript fingerprint module
     - Generator `--scratch` is the side directory. Fingerprint `--scratch` is the parent of `attempt-<n>`
+
+## 2026-10-08 - REWORK - IN-PROGRESS
+
+* Work completed
+    - Operator asked to rework issue-190 because the Generate job on pull request #191 exited 1 in the shadow step
+* Decisions made
+    - Rework the completed task instead of archiving it
+* Insights
+    - The six recordings finished. The fingerprint CLI then exited 1, and command substitution under `set -e` hid its message
+    - VHS v0.10 renames the frame directory from the container temp dir onto the bind-mounted frames path and ignores the error, so the frames directory stays empty
