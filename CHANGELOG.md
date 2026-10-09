@@ -1,5 +1,21 @@
 # Changelog
 
+## [3.0.0](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v2.1.4...v3.0.0) (2026-10-09)
+
+
+### ⚠ BREAKING CHANGES
+
+* autoBufferDescriptions reserves terminal word-wrap rows unless autoBufferCountsLineWidth is false, and the description block stays at that height. Existing 2.x callers of the option will see fewer choice rows and blank lines under shorter descriptions.
+
+### Features
+
+* keep the description frame stable when text wraps ([#189](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/189)) ([f62acce](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/f62acce100594ede72e35adfbee73d441e542903))
+
+
+### Bug Fixes
+
+* **deps-dev:** bump source-map-js from 1.2.1 to 1.2.2 ([#186](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/186)) ([2e41b90](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/2e41b90597b9cbbca7907a7ea8986494c655a58e))
+
 ## [2.1.4](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v2.1.3...v2.1.4) (2026-10-02)
 
 
