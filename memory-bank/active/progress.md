@@ -315,6 +315,20 @@ The rework makes the shadow step on pull request #191 finish and exit 0 with a v
 * Insights
     - Dropping a one-frame state that sits between two copies of the same screen must not merge those copies into one run
 
+## 2026-10-09 - QA - COMPLETE
+
+* Work completed
+    - Evaluated implementation against the Level 1 rework requirements and system patterns
+    - Verified KISS, DRY, YAGNI, Completeness, Regression, Integrity, and Documentation criteria
+    - Verified all 173 unit tests pass with formatting, linting, and dual-tsconfig typecheck
+    - Wrote PASS to `memory-bank/active/.qa-validation-status`
+* Decisions made
+    - PASS with two advisories: the 8-frame settled cutoff is calibrated from local busy-core testing, and NOISY safely surfaces frame timing jitter without failing the shadow step
+* Insights
+    - Preserving collapsed runs before filtering ensures repeated screens separated by passing frames remain distinct
+    - Requiring both sides to repeat their first recordings in a retry isolates genuine visual differences from runner timing noise
+
+
 
 
 

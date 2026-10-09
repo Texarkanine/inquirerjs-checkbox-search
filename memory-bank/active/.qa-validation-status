@@ -1,0 +1,16 @@
+PASS
+
+## QA Validation Findings
+
+- KISS: PASS. Simple pure functions for frame run collapsing and settled frame hashing. Logic in assessFingerprints cleanly expresses retry stability.
+- DRY: PASS. Collapsed frame run logic is shared between raw frame fingerprint, settled frame fingerprint, and logging.
+- YAGNI: PASS. Scope is strictly confined to the rework items without extraneous additions.
+- Completeness: PASS. All three rework requirements are implemented and covered by unit tests (passing frame filter, repeat-match retry check returning NOISY, and run logging).
+- Regression: PASS. All 173 unit tests pass. Formatting, linting, and typechecking all succeed cleanly.
+- Integrity: PASS. MIN_SETTLED_FRAMES is documented with empirical rationale. No debugging artifacts or hardcoded shortcuts.
+- Documentation: PASS. Memory bank records reflect rework scope and design decisions.
+
+## Advisories
+
+1. The settled frame threshold (MIN_SETTLED_FRAMES = 8) is calibrated from busy-core testing (where passing states were <= 5 frames and settled states >= 13 frames). CI runner load may vary, but 8 frames provides a healthy margin.
+2. NOISY is an allowable assessment value that surfaces non-reproducible frame differences without failing the shadow step.
