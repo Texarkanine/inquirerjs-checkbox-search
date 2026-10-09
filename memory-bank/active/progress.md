@@ -238,3 +238,13 @@ The rework makes the shadow step on pull request #191 finish and exit 0 with a v
     - PASS with one advisory: the container copy path is unverified until the next Generate job (no Docker here)
 * Insights
     - Named container plus `docker cp`/`docker rm -f` in a `finally` keeps frames on the container filesystem while still landing them on the host
+
+## 2026-10-09 - REWORK - IN-PROGRESS
+
+* Work completed
+    - Operator asked to rework issue-190 again. Generate job [37949632608](https://github.com/Texarkanine/inquirerjs-checkbox-search/actions/runs/37949632608/job/113884741326) failed after 5 minutes
+* Decisions made
+    - Rework the completed task instead of archiving it
+* Insights
+    - All six shadow recordings finished. The fingerprint CLI then found no frame-text PNGs
+    - Local vhs v0.10.0 leaves a precreated frames directory empty and writes the PNGs when that directory does not exist yet

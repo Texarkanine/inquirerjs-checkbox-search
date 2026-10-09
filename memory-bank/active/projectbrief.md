@@ -71,3 +71,9 @@ The follow-up Generate job on pull request [#191](https://github.com/Texarkanine
 The shadow step printed `File:` for the first base `basic` tape and then produced no further output. The previous shadow run, without `TMPDIR` on the scratch mount, finished every recording in about three minutes and then exited 1. The GIF step in the cancelled job finished in about 90 seconds. Do not retry that commit.
 
 Scratch recording must finish and leave the frame PNGs on the host. Process-wide `TMPDIR` must not point at the scratch bind mount. VHS starts Chromium and writes its frame directory from the process temp dir, and that temp dir on the bind mount is what changed between the three-minute failure and the six-hour hang.
+
+## Rework
+
+Generate job [37949632608](https://github.com/Texarkanine/inquirerjs-checkbox-search/actions/runs/37949632608/job/113884741326) failed after 5 minutes. The GIF step succeeded. The shadow step recorded all six tapes, wrote the GIFs, then exited 1 with `no frame-text PNGs` in the host frames directory.
+
+VHS v0.10.0 `os.Rename`s its temp frame directory onto the Output path and ignores the error. Creating that directory first makes the rename fail, Cleanup deletes the real frames, and the precreated directory stays empty. A local recording with vhs v0.10.0 reproduced this: a precreated frames directory stayed empty, and the same tape without that directory wrote `frame-text-*.png`. The container command must not create `/tmp/vhs-frames` before `vhs` runs.
