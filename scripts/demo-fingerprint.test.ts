@@ -11,6 +11,8 @@ import {
   formatShadowLine,
   frameStateFingerprint,
   listFrameTextPngs,
+  MIN_SETTLED_FRAMES,
+  settledFrameFingerprint,
   normalizeTextRecord,
   parseGenerateArgs,
   readSide,
@@ -111,6 +113,29 @@ describe('frameStateFingerprint', () => {
       'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
     );
   });
+
+  it('ignores a state held for fewer frames than the settled minimum', () => {
+    const frameC = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x04]);
+    const held = (bytes: Buffer) =>
+      Array.from({ length: MIN_SETTLED_FRAMES }, () => bytes);
+    const passing = writeFrames([...held(frameA), frameB, ...held(frameC)]);
+    const settled = writeFrames([...held(frameA), ...held(frameC)]);
+
+    expect(settledFrameFingerprint(passing)).toBe(
+      settledFrameFingerprint(settled),
+    );
+  });
+
+  it('keeps a state held for the settled minimum', () => {
+    const held = (bytes: Buffer) =>
+      Array.from({ length: MIN_SETTLED_FRAMES }, () => bytes);
+    const withPassingScreen = writeFrames([...held(frameA), ...held(frameB)]);
+    const withoutIt = writeFrames(held(frameA));
+
+    expect(settledFrameFingerprint(withPassingScreen)).not.toBe(
+      settledFrameFingerprint(withoutIt),
+    );
+  });
 });
 
 describe('assessFingerprints', () => {
@@ -186,7 +211,18 @@ describe('assessFingerprints', () => {
     ).toBe('SAME');
   });
 
-  it('reports CHANGED when a retry frame pair also differs', () => {
+  it('reports CHANGED when the retry repeats each side of the first mismatch', () => {
+    expect(
+      assessFingerprints(
+        both([
+          { base: side('same', 'left'), head: side('same', 'right') },
+          { base: side('same', 'left'), head: side('same', 'right') },
+        ]),
+      ),
+    ).toBe('CHANGED');
+  });
+
+  it('reports NOISY when a retry disagrees but a side does not match its first recording', () => {
     expect(
       assessFingerprints(
         both([
@@ -197,19 +233,16 @@ describe('assessFingerprints', () => {
           },
         ]),
       ),
-    ).toBe('CHANGED');
+    ).toBe('NOISY');
   });
 
-  it('reports CHANGED when an earlier retry matches and a later retry differs', () => {
+  it('reports CHANGED when a later retry repeats the first mismatch after an earlier retry agreed', () => {
     expect(
       assessFingerprints(
         both([
           { base: side('same', 'left'), head: side('same', 'right') },
           { base: side('same', 'agreed'), head: side('same', 'agreed') },
-          {
-            base: side('same', 'later-left'),
-            head: side('same', 'later-right'),
-          },
+          { base: side('same', 'left'), head: side('same', 'right') },
         ]),
       ),
     ).toBe('CHANGED');
@@ -410,12 +443,17 @@ describe('readSide', () => {
     const framesDir = join(demoDir, 'frames');
     mkdirSync(framesDir);
     writeFileSync(join(demoDir, 'record.txt'), 'Search:\n');
-    writePng(framesDir, 'frame-text-00000.png', [1, 2, 3]);
+    const textFrames = Array.from(
+      { length: MIN_SETTLED_FRAMES },
+      (_, index) => {
+        const name = `frame-text-${String(index).padStart(5, '0')}.png`;
+        writePng(framesDir, name, [1, 2, 3]);
+        return join(framesDir, name);
+      },
+    );
     writePng(framesDir, 'frame-cursor-00000.png', [9, 9, 9]);
 
-    expect(readSide(demoDir).frames).toBe(
-      frameStateFingerprint([join(framesDir, 'frame-text-00000.png')]),
-    );
+    expect(readSide(demoDir).frames).toBe(settledFrameFingerprint(textFrames));
   });
 
   it('throws when the text record or the text frames are missing', () => {
@@ -466,12 +504,17 @@ function writeAttempt(
   demo: string,
   text: string,
   frameByte: number,
+  copies = MIN_SETTLED_FRAMES,
 ): void {
   const demoDir = join(scratchRoot, `attempt-${attempt}`, sideName, demo);
   const framesDir = join(demoDir, 'frames');
   mkdirSync(framesDir, { recursive: true });
   writeFileSync(join(demoDir, 'record.txt'), text);
-  writePng(framesDir, 'frame-text-00000.png', [frameByte]);
+  for (let index = 0; index < copies; index += 1) {
+    writePng(framesDir, `frame-text-${String(index).padStart(5, '0')}.png`, [
+      frameByte,
+    ]);
+  }
   writePng(framesDir, 'frame-cursor-00000.png', [255]);
 }
 
@@ -491,6 +534,26 @@ describe('assessScratch', () => {
 
     expect(result.exitCode).toBe(0);
     expect(result.lines).toContain('basic: NEED_FRAME_RETRY');
+    expect(result.lines.join('\n')).toMatch(
+      /^basic attempt-0 base: [0-9a-f]+ x8$/m,
+    );
+  });
+
+  it('reports SAME when the only frame difference is held for one frame', () => {
+    const tree = recordingTree();
+    writeTape(tree.baseTapes, 'basic');
+    writeTape(tree.headTapes, 'basic');
+    writeAttempt(tree.scratchRoot, 0, 'base', 'basic', 'Search:\n', 1, 1);
+    writeAttempt(tree.scratchRoot, 0, 'head', 'basic', 'Search:\n', 2, 1);
+
+    const result = assessScratch({
+      scratchRoot: tree.scratchRoot,
+      baseTapesDir: tree.baseTapes,
+      headTapesDir: tree.headTapes,
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.lines).toContain('basic: SAME');
   });
 
   it('returns UNSTABLE with exit 0 when the retry text disagrees with the first text', () => {

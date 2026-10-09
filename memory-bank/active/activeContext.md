@@ -1,12 +1,15 @@
 # Active Context
 
 ## Current Task: issue-190
-**Phase:** COMPLEXITY-ANALYSIS - COMPLETE
+**Phase:** BUILD - COMPLETE
 
 ## What Was Done
 
-- Classified the rework as Level 1: one bug in the frame verdict
+- Passing frame-text states are left out of the compared fingerprint
+- A retry is CHANGED only when each side repeats itself
+- The fingerprint command prints collapsed runs and hold counts
+- `npm test` passed: format, lint, typecheck, and 173 tests
 
 ## Next Step
 
-- Load the Level 1 workflow
+- Level 1 QA

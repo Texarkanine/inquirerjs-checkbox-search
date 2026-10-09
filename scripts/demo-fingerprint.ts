@@ -27,25 +27,98 @@ export function normalizeTextRecord(text: string): string {
 }
 
 /**
- * Hash the frame-text PNGs in the order given.
- *
- * Each file is SHA-256, truncated to 16 hex characters. Consecutive
- * identical hashes collapse to one, then that sequence is hashed.
- * An empty list hashes the empty sequence.
+ * A passing screen — one typed letter, one backspace — is a handful of
+ * frames. A screen the tape holds with Sleep stays well above this, even
+ * when capture slows down. States shorter than this are left out of the
+ * comparison. Local recordings on two busy cores kept passing screens at
+ * 5 frames or fewer and settled screens at 13 or more.
  */
-export function frameStateFingerprint(framePaths: readonly string[]): string {
-  const shortHashes = framePaths.map((path) =>
-    createHash('sha256').update(readFileSync(path)).digest('hex').slice(0, 16),
-  );
-  const collapsed = shortHashes.filter(
-    (hash, index) => index === 0 || hash !== shortHashes[index - 1],
-  );
-  const sequence = collapsed.map((hash) => `${hash}\n`).join('');
+export const MIN_SETTLED_FRAMES = 8;
+
+export interface FrameRun {
+  hash: string;
+  count: number;
+}
+
+/**
+ * Collapse consecutive identical frame-text PNGs into runs.
+ *
+ * Each file is SHA-256, truncated to 16 hex characters. `count` is how
+ * many frames that image was held.
+ */
+export function collapsedFrameRuns(framePaths: readonly string[]): FrameRun[] {
+  const runs: FrameRun[] = [];
+  for (const path of framePaths) {
+    const hash = createHash('sha256')
+      .update(readFileSync(path))
+      .digest('hex')
+      .slice(0, 16);
+    const last = runs.at(-1);
+    if (last && last.hash === hash) {
+      last.count += 1;
+    } else {
+      runs.push({ hash, count: 1 });
+    }
+  }
+  return runs;
+}
+
+function fingerprintRunHashes(hashes: readonly string[]): string {
+  const sequence = hashes.map((hash) => `${hash}\n`).join('');
   return createHash('sha256').update(sequence).digest('hex');
 }
 
+/**
+ * Hash the frame-text PNGs in the order given.
+ *
+ * Consecutive identical frames collapse to one, then that sequence is
+ * hashed. An empty list hashes the empty sequence. Passing screens are
+ * included; {@link settledFrameFingerprint} is what a verdict compares.
+ */
+export function frameStateFingerprint(framePaths: readonly string[]): string {
+  return fingerprintRunHashes(
+    collapsedFrameRuns(framePaths).map((run) => run.hash),
+  );
+}
+
+/**
+ * Hash the settled frame-text states.
+ *
+ * A run held for fewer than {@link MIN_SETTLED_FRAMES} frames is dropped
+ * before the sequence is hashed.
+ */
+export function settledFrameFingerprint(framePaths: readonly string[]): string {
+  return fingerprintRunHashes(
+    collapsedFrameRuns(framePaths)
+      .filter((run) => run.count >= MIN_SETTLED_FRAMES)
+      .map((run) => run.hash),
+  );
+}
+
+/**
+ * One job-log line of collapsed frame runs, including passing screens.
+ */
+export function formatFrameRunLine(
+  demo: string,
+  attempt: number,
+  side: 'base' | 'head',
+  runs: readonly FrameRun[],
+): string {
+  const body =
+    runs.length === 0
+      ? 'none'
+      : runs.map((run) => `${run.hash} x${run.count}`).join(', ');
+  return `${demo} attempt-${attempt} ${side}: ${body}`;
+}
+
 export type Assessment =
-  'NEW' | 'REMOVED' | 'CHANGED' | 'SAME' | 'UNSTABLE' | 'NEED_FRAME_RETRY';
+  | 'NEW'
+  | 'REMOVED'
+  | 'CHANGED'
+  | 'SAME'
+  | 'UNSTABLE'
+  | 'NEED_FRAME_RETRY'
+  | 'NOISY';
 
 /** One side of one recording, already normalized. */
 export interface SideFingerprint {
@@ -72,9 +145,12 @@ export interface AssessmentInput {
  * Decide one demo's verdict from the pinned retry rule.
  *
  * A text mismatch on the first recording is CHANGED. A frame mismatch
- * is CHANGED only when a retry still disagrees. A retry whose text
- * differs from that side's first text is UNSTABLE. One agreeing retry
- * does not erase a later retry that still disagrees.
+ * is CHANGED only when a retry repeats each side's first frames and
+ * those frames still differ. A retry whose text differs from that
+ * side's first text is UNSTABLE. A retry whose frames differ, but
+ * where a side does not repeat its own first frames, is NOISY. One
+ * agreeing retry does not erase a later retry that repeats the first
+ * mismatch.
  */
 export function assessFingerprints(input: AssessmentInput): Assessment {
   if (!input.baseTapeExists && input.headTapeExists) {
@@ -103,6 +179,8 @@ export function assessFingerprints(input: AssessmentInput): Assessment {
     return 'NEED_FRAME_RETRY';
   }
 
+  let stableDisagreement = false;
+  let noisy = false;
   for (const retry of retries) {
     if (!retry.base || !retry.head) {
       throw new Error('retry recording is missing a side');
@@ -113,12 +191,22 @@ export function assessFingerprints(input: AssessmentInput): Assessment {
     ) {
       return 'UNSTABLE';
     }
+    const baseSame = retry.base.frames === first.base.frames;
+    const headSame = retry.head.frames === first.head.frames;
+    const sidesDiffer = retry.base.frames !== retry.head.frames;
+    if (baseSame && headSame && sidesDiffer) {
+      stableDisagreement = true;
+    } else if (sidesDiffer) {
+      noisy = true;
+    }
   }
-
-  const everyRetryAgrees = retries.every(
-    (retry) => retry.base?.frames === retry.head?.frames,
-  );
-  return everyRetryAgrees ? 'SAME' : 'CHANGED';
+  if (stableDisagreement) {
+    return 'CHANGED';
+  }
+  if (noisy) {
+    return 'NOISY';
+  }
+  return 'SAME';
 }
 
 /**
@@ -352,7 +440,7 @@ export function readSide(demoDir: string): { text: string; frames: string } {
   }
   return {
     text: normalizeTextRecord(readFileSync(textPath, 'utf8')),
-    frames: frameStateFingerprint(framePaths),
+    frames: settledFrameFingerprint(framePaths),
   };
 }
 
@@ -450,6 +538,37 @@ function attemptsForDemo(
   return loaded;
 }
 
+function frameRunLines(
+  scratchRoot: string,
+  demos: readonly string[],
+): string[] {
+  const lines: string[] = [];
+  for (const demo of demos) {
+    for (const attempt of attemptNames(scratchRoot)) {
+      const attemptIndex = Number(attempt.slice('attempt-'.length));
+      for (const side of ['base', 'head'] as const) {
+        const framesDir = join(scratchRoot, attempt, side, demo, 'frames');
+        if (!existsSync(framesDir)) {
+          continue;
+        }
+        const framePaths = listFrameTextPngs(framesDir);
+        if (framePaths.length === 0) {
+          continue;
+        }
+        lines.push(
+          formatFrameRunLine(
+            demo,
+            attemptIndex,
+            side,
+            collapsedFrameRuns(framePaths),
+          ),
+        );
+      }
+    }
+  }
+  return lines;
+}
+
 export function assessScratch(options: ScratchOptions): {
   lines: string[];
   exitCode: number;
@@ -476,7 +595,11 @@ export function assessScratch(options: ScratchOptions): {
         ),
       }),
     }));
-    return { lines: formatCliStdout(entries).split('\n'), exitCode: 0 };
+    const runLines = frameRunLines(options.scratchRoot, names);
+    return {
+      lines: [...runLines, ...formatCliStdout(entries).split('\n')],
+      exitCode: 0,
+    };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return { lines: [message], exitCode: 1 };

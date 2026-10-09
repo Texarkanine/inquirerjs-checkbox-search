@@ -302,5 +302,19 @@ The rework makes the shadow step on pull request #191 finish and exit 0 with a v
 * Insights
     - The job log already prints the fingerprint command's stdout, so the sequence lines go there
 
+## 2026-10-09 - BUILD - COMPLETE
+
+* Work completed
+    - Left frame runs shorter than 8 frames out of the compared fingerprint
+    - A retry is CHANGED only when each side repeats its first frames
+    - The fingerprint command prints collapsed runs and hold counts
+    - `npm test` passed: format, lint, typecheck, and 173 tests
+* Decisions made
+    - 8 frames is the cutoff. Local recordings on two busy cores kept passing screens at 5 or fewer and settled screens at 13 or more
+    - A side that does not repeat itself is NOISY, and the shadow step still exits 0
+* Insights
+    - Dropping a one-frame state that sits between two copies of the same screen must not merge those copies into one run
+
+
 
 
