@@ -11,6 +11,7 @@
 - The hidden `Sleep 1s` after each example command is now `Wait+Screen /Search:/`. Later sleeps are unchanged.
 - The demo workflow records the merge-base and the pull-request head under `$RUNNER_TEMP`, retries `NEED_FRAME_RETRY` demos once, and exports `SHADOW_VERDICTS` into the existing comment. Expand/collapse and the release-please amend still follow the GIF diff.
 - Completed structured semantic QA review against KISS, DRY, YAGNI, Completeness, Regression, Integrity, and Documentation.
+- Opened draft pull request [#191](https://github.com/Texarkanine/inquirerjs-checkbox-search/pull/191). It references #190 and does not close it.
 
 ## Key Decisions
 
@@ -30,4 +31,4 @@
 
 ## Next Step
 
-- Operator runs `/niko-archive`.
+- Operator runs `/niko-archive`. CI on #191 is the first run of the shadow recording.
