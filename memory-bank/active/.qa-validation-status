@@ -1,0 +1,4 @@
+PASS
+
+Rework matches the plan: no TMPDIR on the bind mount, no --rm, frames under container /tmp/vhs-frames, docker cp to host, docker rm -f in a finally (also on failure), chmod for mode-0600 PNGs, 20-minute shadow timeout. npm test passed: format, lint, typecheck, 169 tests.
+Advisory: Docker is not installed here, so the container copy path is unverified until the next Generate job.

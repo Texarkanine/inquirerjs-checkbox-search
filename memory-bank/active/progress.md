@@ -227,3 +227,14 @@ The rework makes the shadow step on pull request #191 finish and exit 0 with a v
     - VHS frame PNGs are mode 0600, so the container command makes them readable before `docker cp`
     - Docker is not installed here, so the copy is unverified until the next Generate job
 
+
+## 2026-10-09 - QA - COMPLETE
+
+* Work completed
+    - Reviewed the rework diff against the task notes and the Level 1 plan
+    - Ran `npm test`: format, lint, typecheck, and 169 tests pass
+    - Wrote PASS to `memory-bank/active/.qa-validation-status`
+* Decisions made
+    - PASS with one advisory: the container copy path is unverified until the next Generate job (no Docker here)
+* Insights
+    - Named container plus `docker cp`/`docker rm -f` in a `finally` keeps frames on the container filesystem while still landing them on the host

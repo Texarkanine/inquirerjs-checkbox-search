@@ -1,7 +1,7 @@
 # Active Context
 
 ## Current Task: issue-190
-**Phase:** BUILD - COMPLETE
+**Phase:** QA - COMPLETE (PASS)
 
 ## What Was Done
 
@@ -9,7 +9,8 @@
 - Copy frame PNGs from container `/tmp/vhs-frames` after VHS exits, including when the recording fails
 - Capped the shadow step at 20 minutes
 - `npm test` passed: format, lint, typecheck, and 169 tests
+- QA reviewed the rework diff against the plan: PASS with one advisory (Docker copy unverified until CI)
 
 ## Next Step
 
-- Run QA
+- Done — Level 1 QA passed; parent handles wrap-up
