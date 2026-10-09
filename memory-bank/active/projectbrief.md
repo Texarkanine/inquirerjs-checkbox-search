@@ -63,3 +63,11 @@ Pull request [#191](https://github.com/Texarkanine/inquirerjs-checkbox-search/pu
 Both sides recorded. The shadow step then exited 1 and printed no verdict. VHS v0.10 moves its frame directory with `os.Rename` from the container temp directory onto the frames Output path and ignores the error. That rename crosses the Docker bind mount, so the frames directory stays empty and the fingerprint CLI exits 1. `CLI_OUT="$(run_cli)"` under `set -e` discards that message.
 
 The shadow step must exit 0 and print the verdict line, so the pull request check is green and the change is reviewable. Expand and collapse stay on the GIF diff.
+
+## Rework
+
+The follow-up Generate job on pull request [#191](https://github.com/Texarkanine/inquirerjs-checkbox-search/pull/191), [run 37867082815](https://github.com/Texarkanine/inquirerjs-checkbox-search/actions/runs/37867082815/job/113616261602), was cancelled after 6 hours.
+
+The shadow step printed `File:` for the first base `basic` tape and then produced no further output. The previous shadow run, without `TMPDIR` on the scratch mount, finished every recording in about three minutes and then exited 1. The GIF step in the cancelled job finished in about 90 seconds. Do not retry that commit.
+
+Scratch recording must finish and leave the frame PNGs on the host. Process-wide `TMPDIR` must not point at the scratch bind mount. VHS starts Chromium and writes its frame directory from the process temp dir, and that temp dir on the bind mount is what changed between the three-minute failure and the six-hour hang.

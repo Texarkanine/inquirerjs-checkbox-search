@@ -1,5 +1,0 @@
-PASS
-Task: issue-190-rework (Level 1)
-Checks: npm test passed (format, lint, typecheck, 167 tests)
-Advisory: the cross-device rename fix is unverified until the next Generate job; Docker is not installed locally.
-Advisory: a structural CLI error still fails the shadow step under set -e. The message is now visible on stderr. This is correct for a structural error and needs no change.

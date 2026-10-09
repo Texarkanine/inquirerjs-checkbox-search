@@ -191,3 +191,14 @@ The rework makes the shadow step on pull request #191 exit 0 with a visible verd
     - [Run 37867082815](https://github.com/Texarkanine/inquirerjs-checkbox-search/actions/runs/37867082815/job/113616261602) cancelled the shadow step after about six hours
     - The log stops on the first base `basic` recording, after "Recording into" and before VHS prints `File:`
     - The earlier run finished every recording in minutes and then exited 1 with an empty frame directory
+
+## 2026-10-09 - REWORK - IN-PROGRESS
+
+* Work completed
+    - Operator asked to rework issue-190 again. Generate job [37867082815](https://github.com/Texarkanine/inquirerjs-checkbox-search/actions/runs/37867082815/job/113616261602) was cancelled after 6h
+* Decisions made
+    - Rework the completed task instead of archiving it
+    - Do not re-run that commit. The hang is the `TMPDIR` change, not a runner flake
+* Insights
+    - The shadow step printed `File:` for the first base `basic` tape at 00:56:10Z and then nothing until the job was cancelled at 06:54:12Z
+    - The same job's GIF step finished in about 90 seconds. The previous shadow step, without `TMPDIR` on the bind mount, finished in about 3.5 minutes and then exited 1
