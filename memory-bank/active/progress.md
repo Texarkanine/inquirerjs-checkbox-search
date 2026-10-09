@@ -248,3 +248,15 @@ The rework makes the shadow step on pull request #191 finish and exit 0 with a v
 * Insights
     - All six shadow recordings finished. The fingerprint CLI then found no frame-text PNGs
     - Local vhs v0.10.0 leaves a precreated frames directory empty and writes the PNGs when that directory does not exist yet
+
+## 2026-10-09 - COMPLEXITY-ANALYSIS - COMPLETE
+
+* Work completed
+    - Compared [run 37949632608](https://github.com/Texarkanine/inquirerjs-checkbox-search/actions/runs/37949632608/job/113884741326) with a local vhs v0.10.0 recording
+    - Classified the rework as Level 1
+* Decisions made
+    - Level 1: one bug in the container command that runs before VHS
+* Insights
+    - The GIF step succeeded. The shadow step's six recordings succeeded. The host frames directory was empty
+    - Do not create the frames Output directory before `vhs`. VHS renames its temp directory onto that path and ignores a failure
+
