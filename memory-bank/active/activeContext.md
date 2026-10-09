@@ -13,4 +13,4 @@
 
 ## Next Step
 
-- Task wrap-up (reconcile persistent files and finalize commit)
+- Level 1 task is complete. `memory-bank/active/` stays until the operator deletes it.
