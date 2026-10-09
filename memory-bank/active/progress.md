@@ -293,5 +293,14 @@ The rework makes the shadow step on pull request #191 finish and exit 0 with a v
     - Local recordings of the main tape and this branch's tape match, including on two busy cores
     - The retry calls CHANGED when the sides disagree again, without checking that each side reproduced itself
 
+## 2026-10-09 - COMPLEXITY-ANALYSIS - COMPLETE
+
+* Work completed
+    - Classified the rework as Level 1
+* Decisions made
+    - Level 1: one bug in the frame verdict. Passing screens are ignored, and a retry is CHANGED only when each side reproduces itself
+* Insights
+    - The job log already prints the fingerprint command's stdout, so the sequence lines go there
+
 
 
