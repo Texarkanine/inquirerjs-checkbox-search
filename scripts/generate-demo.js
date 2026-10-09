@@ -163,8 +163,8 @@ async function runScratch(argv) {
   const {
     parseGenerateArgs,
     withFingerprintOutputs,
-    buildDockerRunArgs,
-    hostVhsTempDir,
+    runScratchRecording,
+    containerFramesDir,
   } = await import('./demo-fingerprint.ts');
   const parsed = parseGenerateArgs(argv);
   if (
@@ -191,8 +191,6 @@ async function runScratch(argv) {
     }
   }
 
-  mkdirSync(hostVhsTempDir(parsed.scratch), { recursive: true });
-
   console.log(`🔨 Building ${parsed.image} from ${parsed.buildContext}`);
   execFileSync(
     'docker',
@@ -209,7 +207,8 @@ async function runScratch(argv) {
 
   for (const demoName of demos) {
     const hostDemoDir = join(parsed.scratch, demoName);
-    mkdirSync(join(hostDemoDir, 'frames'), { recursive: true });
+    const hostFramesDir = join(hostDemoDir, 'frames');
+    mkdirSync(hostFramesDir, { recursive: true });
     const tapeSource = readFileSync(
       join(parsed.demosDir, `${demoName}.tape`),
       'utf8',
@@ -218,18 +217,21 @@ async function runScratch(argv) {
     const rewritten = withFingerprintOutputs(
       tapeSource,
       `${containerDemo}/record.txt`,
-      `${containerDemo}/frames`,
+      containerFramesDir,
     );
     writeFileSync(join(hostDemoDir, 'tape.tape'), rewritten);
     console.log(`🎬 [${demoName}] Recording into ${hostDemoDir}`);
-    execFileSync(
-      'docker',
-      buildDockerRunArgs({
+    runScratchRecording(
+      {
         image: parsed.image,
         hostScratch: parsed.scratch,
         containerTapePath: `${containerDemo}/tape.tape`,
-      }),
-      { stdio: 'inherit' },
+        demoName,
+        hostFramesDir,
+      },
+      (args) => {
+        execFileSync('docker', args, { stdio: 'inherit' });
+      },
     );
   }
 }

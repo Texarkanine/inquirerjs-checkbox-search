@@ -1,13 +1,15 @@
 # Active Context
 
 ## Current Task: issue-190
-**Phase:** COMPLEXITY-ANALYSIS - COMPLETE
+**Phase:** BUILD - COMPLETE
 
 ## What Was Done
 
-- Classified the cancelled Generate job as Level 1
-- The hang is one bug in the scratch Docker run: process-wide `TMPDIR` on the bind mount
+- Stopped pointing scratch `TMPDIR` at the bind mount
+- Copy frame PNGs from container `/tmp/vhs-frames` after VHS exits, including when the recording fails
+- Capped the shadow step at 20 minutes
+- `npm test` passed: format, lint, typecheck, and 169 tests
 
 ## Next Step
 
-- Load the Level 1 workflow and build
+- Run QA

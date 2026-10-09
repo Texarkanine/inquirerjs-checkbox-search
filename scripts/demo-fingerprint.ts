@@ -148,6 +148,20 @@ export interface DockerRunOptions {
   image: string;
   hostScratch: string;
   containerTapePath: string;
+  containerName: string;
+}
+
+/**
+ * Options for one scratch recording and the host copy that follows it.
+ * `demoName` becomes the container name. `hostFramesDir` receives the
+ * frame PNGs after VHS exits.
+ */
+export interface ScratchRecordingOptions {
+  image: string;
+  hostScratch: string;
+  containerTapePath: string;
+  demoName: string;
+  hostFramesDir: string;
 }
 
 /**
@@ -173,35 +187,84 @@ export function withFingerprintOutputs(
 }
 
 /**
+ * Frames directory inside the container. VHS v0.10 writes frames under
+ * its temp dir (`/tmp`) and `os.Rename`s that directory onto this path.
+ * A bind-mounted destination is a different filesystem, so the rename
+ * fails and the frames are deleted. This path stays on the container's
+ * own `/tmp`. The process temp dir is left alone: Chromium's profile
+ * lives there, and pointing `TMPDIR` at the scratch mount hung the
+ * recording.
+ */
+export const containerFramesDir = '/tmp/vhs-frames';
+
+/**
  * Docker arguments for one scratch recording. The host scratch directory
  * is mounted at `/workspace/scratch`. The gif is an Output line in the
  * tape, so these arguments do not pass `--output`.
  *
- * `TMPDIR` is on that mount. VHS v0.10 writes frames under the temp dir
- * and then `os.Rename`s the directory onto the frames Output path. The
- * error from a cross-device rename is ignored, which leaves the frames
- * directory empty.
+ * The container is not removed. The caller copies the frames out and
+ * then removes it. VHS writes frame PNGs as mode 0600, so the command
+ * makes them readable before the copy.
  */
 export function buildDockerRunArgs(options: DockerRunOptions): string[] {
   return [
     'run',
-    '--rm',
-    '-e',
-    'TMPDIR=/workspace/scratch/.vhs-tmp',
+    '--name',
+    options.containerName,
     '-v',
     `${options.hostScratch}:/workspace/scratch`,
+    '--entrypoint',
+    'bash',
     options.image,
+    '-c',
+    `mkdir -p ${containerFramesDir} && vhs "$1" && chmod -R a+rX ${containerFramesDir}`,
+    'bash',
     options.containerTapePath,
   ];
 }
 
 /**
- * Host path of the directory VHS must use as its temp dir during a
- * scratch recording. The container sees this same directory at
- * `/workspace/scratch/.vhs-tmp`.
+ * `docker cp` arguments that copy the container frames directory onto
+ * the host. The source path ends in `/.` so the PNGs land in
+ * `hostFramesDir` rather than a nested directory.
  */
-export function hostVhsTempDir(hostScratch: string): string {
-  return join(hostScratch, '.vhs-tmp');
+export function buildDockerCpArgs(
+  containerName: string,
+  hostFramesDir: string,
+): string[] {
+  return ['cp', `${containerName}:${containerFramesDir}/.`, hostFramesDir];
+}
+
+/**
+ * `docker rm` arguments that delete the recording container. `-f`
+ * succeeds when the container is already gone.
+ */
+export function buildDockerRmArgs(containerName: string): string[] {
+  return ['rm', '-f', containerName];
+}
+
+/**
+ * Run one scratch recording, copy its frames to the host, and remove
+ * the container. The container is removed when the recording fails too.
+ */
+export function runScratchRecording(
+  options: ScratchRecordingOptions,
+  exec: (args: string[]) => void,
+): void {
+  const containerName = `vhs-scratch-${options.demoName}`;
+  try {
+    exec(
+      buildDockerRunArgs({
+        image: options.image,
+        hostScratch: options.hostScratch,
+        containerTapePath: options.containerTapePath,
+        containerName,
+      }),
+    );
+    exec(buildDockerCpArgs(containerName, options.hostFramesDir));
+  } finally {
+    exec(buildDockerRmArgs(containerName));
+  }
 }
 
 /**

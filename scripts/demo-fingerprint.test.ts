@@ -10,11 +10,11 @@ import {
   formatCliStdout,
   formatShadowLine,
   frameStateFingerprint,
-  hostVhsTempDir,
   listFrameTextPngs,
   normalizeTextRecord,
   parseGenerateArgs,
   readSide,
+  runScratchRecording,
   withFingerprintOutputs,
   writeCliResult,
   type AssessmentInput,
@@ -256,12 +256,15 @@ describe('withFingerprintOutputs', () => {
 });
 
 describe('buildDockerRunArgs', () => {
+  const options = {
+    image: 'vhs-node-demo:base',
+    hostScratch: '/tmp/scratch/attempt-0/base',
+    containerTapePath: '/workspace/scratch/basic/tape.tape',
+    containerName: 'vhs-scratch-basic',
+  };
+
   it('mounts the host scratch, passes the in-container tape, and omits --output', () => {
-    const args = buildDockerRunArgs({
-      image: 'vhs-node-demo:base',
-      hostScratch: '/tmp/scratch/attempt-0/base',
-      containerTapePath: '/workspace/scratch/basic/tape.tape',
-    });
+    const args = buildDockerRunArgs(options);
 
     expect(args).toContain('vhs-node-demo:base');
     expect(args).toContain('/tmp/scratch/attempt-0/base:/workspace/scratch');
@@ -269,18 +272,56 @@ describe('buildDockerRunArgs', () => {
     expect(args).not.toContain('--output');
   });
 
-  it('puts the VHS temp dir on the scratch mount so the frame rename stays on one filesystem', () => {
-    const args = buildDockerRunArgs({
-      image: 'vhs-node-demo:base',
-      hostScratch: '/tmp/scratch/attempt-0/base',
-      containerTapePath: '/workspace/scratch/basic/tape.tape',
-    });
-    const envFlag = args.indexOf('-e');
+  it('keeps the process temp dir off the bind mount and leaves the container so frames can be copied', () => {
+    const args = buildDockerRunArgs(options);
 
-    expect(args[envFlag + 1]).toBe('TMPDIR=/workspace/scratch/.vhs-tmp');
-    expect(hostVhsTempDir('/tmp/scratch/attempt-0/base')).toBe(
-      '/tmp/scratch/attempt-0/base/.vhs-tmp',
+    expect(args.join('\n')).not.toContain('TMPDIR');
+    expect(args).not.toContain('--rm');
+    expect(args).toContain('--name');
+    expect(args).toContain('vhs-scratch-basic');
+    expect(args).toContain(
+      'mkdir -p /tmp/vhs-frames && vhs "$1" && chmod -R a+rX /tmp/vhs-frames',
     );
+  });
+});
+
+describe('runScratchRecording', () => {
+  const options = {
+    image: 'vhs-node-demo:base',
+    hostScratch: '/tmp/scratch/attempt-0/base',
+    containerTapePath: '/workspace/scratch/basic/tape.tape',
+    demoName: 'basic',
+    hostFramesDir: '/tmp/scratch/attempt-0/base/basic/frames',
+  };
+
+  it('copies frames from the container filesystem after a recording', () => {
+    const calls: string[][] = [];
+
+    runScratchRecording(options, (args) => {
+      calls.push(args);
+    });
+
+    expect(calls.map((args) => args[0])).toEqual(['run', 'cp', 'rm']);
+    expect(calls[1]).toEqual([
+      'cp',
+      'vhs-scratch-basic:/tmp/vhs-frames/.',
+      '/tmp/scratch/attempt-0/base/basic/frames',
+    ]);
+    expect(calls[2]).toEqual(['rm', '-f', 'vhs-scratch-basic']);
+  });
+
+  it('removes the container when the recording fails', () => {
+    const calls: string[][] = [];
+
+    expect(() =>
+      runScratchRecording(options, (args) => {
+        calls.push(args);
+        if (args[0] === 'run') {
+          throw new Error('vhs failed');
+        }
+      }),
+    ).toThrow('vhs failed');
+    expect(calls.map((args) => args[0])).toEqual(['run', 'rm']);
   });
 });
 

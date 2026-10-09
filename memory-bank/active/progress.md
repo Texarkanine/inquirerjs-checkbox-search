@@ -213,3 +213,17 @@ The rework makes the shadow step on pull request #191 finish and exit 0 with a v
 * Insights
     - VHS prints `File:` before it starts ttyd and Chromium. The log never gets past that line
     - Chromium's profile and the frame directory both come from the process temp dir. Pointing that at the bind mount is the change that turned a three-minute failure into a six-hour hang
+
+## 2026-10-09 - BUILD - COMPLETE
+
+* Work completed
+    - Kept the process temp dir off the scratch mount and copied frames out of container `/tmp/vhs-frames`
+    - Capped the shadow step at 20 minutes
+    - `npm test` passed: format, lint, typecheck, and 169 tests
+* Decisions made
+    - Do not retry the cancelled commit
+    - Leave expand and collapse on the GIF diff
+* Insights
+    - VHS frame PNGs are mode 0600, so the container command makes them readable before `docker cp`
+    - Docker is not installed here, so the copy is unverified until the next Generate job
+

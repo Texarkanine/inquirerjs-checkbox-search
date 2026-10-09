@@ -222,6 +222,7 @@ jobs:
       - name: Shadow demo verdicts (not used to expand demos)
         if: steps.check_demo_bot.outputs.is_demo_bot != 'true'
         id: shadow
+        timeout-minutes: 20
         run: |
           set -euo pipefail
           SHADOW_ROOT="${RUNNER_TEMP}/demo-shadow"

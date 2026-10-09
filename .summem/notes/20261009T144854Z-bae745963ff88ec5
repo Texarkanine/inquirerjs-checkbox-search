@@ -1,0 +1,1 @@
+Scratch recordings copy frames from container /tmp/vhs-frames. Do not set TMPDIR on the scratch mount: that hung VHS for 6h after File: (run 37867082815). Shadow step timeout is 20m.
