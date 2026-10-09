@@ -2,4 +2,22 @@
 
 ## Current Task: issue-190-rework
 
-Level 1 bug fix. Checklists are filled in by the build phase.
+### What broke
+
+The Generate job on pull request #191 exited 1 in the shadow step after all six recordings finished. The fingerprint CLI found no `frame-text-*.png` files. Its message was on stdout, and `CLI_OUT="$(run_cli)"` under `set -e` discarded it.
+
+### Why
+
+VHS v0.10 writes frames in its temp directory and `os.Rename`s that directory onto the frames Output path. The rename error is ignored. Container `/tmp` and the scratch bind mount are different filesystems, so the frames directory stayed empty.
+
+### What changed
+
+- `buildDockerRunArgs` sets `TMPDIR=/workspace/scratch/.vhs-tmp`, which is on the scratch mount.
+- Scratch mode creates that directory on the host before `docker run`.
+- A non-zero CLI result is written to stderr, so the job log keeps the message.
+
+### Files
+
+- `scripts/demo-fingerprint.ts`
+- `scripts/demo-fingerprint.test.ts`
+- `scripts/generate-demo.js`

@@ -156,3 +156,15 @@ The rework makes the shadow step on pull request #191 exit 0 with a visible verd
     - Level 1: one bug in the scratch Docker run. The frames must land on the bind mount, and a structural CLI error must show up in the job log
 * Insights
     - Expand and collapse stay on the GIF diff. This rework does not change the verdict rule
+
+## 2026-10-08 - BUILD - COMPLETE
+
+* Work completed
+    - Set scratch `TMPDIR` on the bind mount and created that directory before `docker run`
+    - Wrote structural CLI errors to stderr
+    - `npm test` passed: format, lint, typecheck, and 167 tests
+* Decisions made
+    - Leave expand and collapse on the GIF diff
+    - Do not change the verdict rule
+* Insights
+    - Docker is not installed here, so the rename itself is unverified until the next Generate job

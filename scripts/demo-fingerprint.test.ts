@@ -10,11 +10,13 @@ import {
   formatCliStdout,
   formatShadowLine,
   frameStateFingerprint,
+  hostVhsTempDir,
   listFrameTextPngs,
   normalizeTextRecord,
   parseGenerateArgs,
   readSide,
   withFingerprintOutputs,
+  writeCliResult,
   type AssessmentInput,
   type SideFingerprint,
 } from './demo-fingerprint.ts';
@@ -265,6 +267,50 @@ describe('buildDockerRunArgs', () => {
     expect(args).toContain('/tmp/scratch/attempt-0/base:/workspace/scratch');
     expect(args).toContain('/workspace/scratch/basic/tape.tape');
     expect(args).not.toContain('--output');
+  });
+
+  it('puts the VHS temp dir on the scratch mount so the frame rename stays on one filesystem', () => {
+    const args = buildDockerRunArgs({
+      image: 'vhs-node-demo:base',
+      hostScratch: '/tmp/scratch/attempt-0/base',
+      containerTapePath: '/workspace/scratch/basic/tape.tape',
+    });
+    const envFlag = args.indexOf('-e');
+
+    expect(args[envFlag + 1]).toBe('TMPDIR=/workspace/scratch/.vhs-tmp');
+    expect(hostVhsTempDir('/tmp/scratch/attempt-0/base')).toBe(
+      '/tmp/scratch/attempt-0/base/.vhs-tmp',
+    );
+  });
+});
+
+describe('writeCliResult', () => {
+  it('writes a structural error to stderr so a failed command substitution still shows it', () => {
+    const stdout: string[] = [];
+    const stderr: string[] = [];
+
+    writeCliResult(
+      { lines: ['no frame-text PNGs in /frames'], exitCode: 1 },
+      { write: (chunk) => stdout.push(chunk) },
+      { write: (chunk) => stderr.push(chunk) },
+    );
+
+    expect(stdout).toEqual([]);
+    expect(stderr).toEqual(['no frame-text PNGs in /frames\n']);
+  });
+
+  it('writes a successful verdict to stdout', () => {
+    const stdout: string[] = [];
+    const stderr: string[] = [];
+
+    writeCliResult(
+      { lines: ['basic: SAME'], exitCode: 0 },
+      { write: (chunk) => stdout.push(chunk) },
+      { write: (chunk) => stderr.push(chunk) },
+    );
+
+    expect(stdout).toEqual(['basic: SAME\n']);
+    expect(stderr).toEqual([]);
   });
 });
 

@@ -176,16 +176,49 @@ export function withFingerprintOutputs(
  * Docker arguments for one scratch recording. The host scratch directory
  * is mounted at `/workspace/scratch`. The gif is an Output line in the
  * tape, so these arguments do not pass `--output`.
+ *
+ * `TMPDIR` is on that mount. VHS v0.10 writes frames under the temp dir
+ * and then `os.Rename`s the directory onto the frames Output path. The
+ * error from a cross-device rename is ignored, which leaves the frames
+ * directory empty.
  */
 export function buildDockerRunArgs(options: DockerRunOptions): string[] {
   return [
     'run',
     '--rm',
+    '-e',
+    'TMPDIR=/workspace/scratch/.vhs-tmp',
     '-v',
     `${options.hostScratch}:/workspace/scratch`,
     options.image,
     options.containerTapePath,
   ];
+}
+
+/**
+ * Host path of the directory VHS must use as its temp dir during a
+ * scratch recording. The container sees this same directory at
+ * `/workspace/scratch/.vhs-tmp`.
+ */
+export function hostVhsTempDir(hostScratch: string): string {
+  return join(hostScratch, '.vhs-tmp');
+}
+
+/**
+ * Write a CLI result. A structural error goes to stderr so a caller
+ * that captures stdout still leaves the message in the job log.
+ */
+export function writeCliResult(
+  result: { lines: string[]; exitCode: number },
+  stdout: { write: (chunk: string) => void },
+  stderr: { write: (chunk: string) => void },
+): void {
+  const text = `${result.lines.join('\n')}\n`;
+  if (result.exitCode === 0) {
+    stdout.write(text);
+    return;
+  }
+  stderr.write(text);
 }
 
 /**
@@ -430,7 +463,7 @@ const isDirectRun =
 if (isDirectRun) {
   try {
     const result = assessScratch(parseScratchArgs(process.argv.slice(2)));
-    process.stdout.write(`${result.lines.join('\n')}\n`);
+    writeCliResult(result, process.stdout, process.stderr);
     process.exit(result.exitCode);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

@@ -160,8 +160,12 @@ function scratchDemoNames(demosDir, requested) {
 }
 
 async function runScratch(argv) {
-  const { parseGenerateArgs, withFingerprintOutputs, buildDockerRunArgs } =
-    await import('./demo-fingerprint.ts');
+  const {
+    parseGenerateArgs,
+    withFingerprintOutputs,
+    buildDockerRunArgs,
+    hostVhsTempDir,
+  } = await import('./demo-fingerprint.ts');
   const parsed = parseGenerateArgs(argv);
   if (
     !parsed.image ||
@@ -186,6 +190,8 @@ async function runScratch(argv) {
       process.exit(1);
     }
   }
+
+  mkdirSync(hostVhsTempDir(parsed.scratch), { recursive: true });
 
   console.log(`🔨 Building ${parsed.image} from ${parsed.buildContext}`);
   execFileSync(
