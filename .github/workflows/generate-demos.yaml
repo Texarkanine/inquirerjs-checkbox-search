@@ -219,6 +219,79 @@ jobs:
 
           echo "✅ Successfully amended release-please PR with demo updates"
 
+      - name: Shadow demo verdicts (not used to expand demos)
+        if: steps.check_demo_bot.outputs.is_demo_bot != 'true'
+        id: shadow
+        timeout-minutes: 20
+        run: |
+          set -euo pipefail
+          SHADOW_ROOT="${RUNNER_TEMP}/demo-shadow"
+          BASE_WT="${SHADOW_ROOT}/base"
+          HEAD_WT="${SHADOW_ROOT}/head"
+          SCRATCH="${SHADOW_ROOT}/scratch"
+          mkdir -p "$SCRATCH"
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            git fetch origin main
+            HEAD_SHA="$(git rev-parse HEAD)"
+            BASE_SHA="$(git merge-base HEAD origin/main)"
+          else
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+            BASE_TIP="${{ github.event.pull_request.base.sha }}"
+            git fetch origin "$HEAD_SHA"
+            git fetch origin "$BASE_TIP"
+            BASE_SHA="$(git merge-base "$HEAD_SHA" "$BASE_TIP")"
+          fi
+
+          git worktree add --detach "$BASE_WT" "$BASE_SHA"
+          git worktree add --detach "$HEAD_WT" "$HEAD_SHA"
+
+          record_side() {
+            local attempt="$1"
+            local side="$2"
+            local worktree="$3"
+            local image="$4"
+            shift 4
+            node scripts/generate-demo.js "$@" \
+              --image="$image" \
+              --scratch="${SCRATCH}/attempt-${attempt}/${side}" \
+              --demos-dir="${worktree}/demos" \
+              --build-context="$worktree"
+          }
+
+          run_cli() {
+            node scripts/demo-fingerprint.ts \
+              --scratch "$SCRATCH" \
+              --base-tapes "${BASE_WT}/demos" \
+              --head-tapes "${HEAD_WT}/demos"
+          }
+
+          record_side 0 base "$BASE_WT" vhs-node-demo:base all
+          record_side 0 head "$HEAD_WT" vhs-node-demo:head all
+
+          CLI_OUT="$(run_cli)"
+          printf '%s\n' "$CLI_OUT"
+          mapfile -t RETRIES < <(printf '%s\n' "$CLI_OUT" | awk -F': ' '$2 == "NEED_FRAME_RETRY" { print $1 }')
+          if [ "${#RETRIES[@]}" -gt 0 ]; then
+            for demo in "${RETRIES[@]}"; do
+              if [ -z "$demo" ]; then
+                continue
+              fi
+              record_side 1 base "$BASE_WT" vhs-node-demo:base "$demo"
+              record_side 1 head "$HEAD_WT" vhs-node-demo:head "$demo"
+            done
+            CLI_OUT="$(run_cli)"
+            printf '%s\n' "$CLI_OUT"
+          fi
+
+          SHADOW_VERDICTS="$(printf '%s\n' "$CLI_OUT" | sed -n 's/^SHADOW_VERDICTS=//p' | tail -n 1)"
+          printf '%s\n' "$SHADOW_VERDICTS" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "shadow_verdicts<<EOF"
+            echo "$SHADOW_VERDICTS"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Find existing demo comment
         if: steps.check_demo_bot.outputs.is_demo_bot != 'true' && steps.context.outputs.is_pr == 'true'
         uses: peter-evans/find-comment@v4
@@ -231,6 +304,8 @@ jobs:
       - name: Generate demo preview comment
         if: steps.check_demo_bot.outputs.is_demo_bot != 'true' && steps.context.outputs.is_pr == 'true'
         id: generate_comment
+        env:
+          SHADOW_VERDICTS: ${{ steps.shadow.outputs.shadow_verdicts }}
         run: |
           # Generate comment using template with flags
           COMMENT_BODY=$(.github/workflows/scripts/generate-demo-comment.sh \

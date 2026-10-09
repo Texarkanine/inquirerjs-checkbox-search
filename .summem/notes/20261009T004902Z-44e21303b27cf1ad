@@ -1,0 +1,1 @@
+VHS v0.10 os.Rename of the frame dir from container /tmp onto a Docker bind mount fails EXDEV and the error is ignored, so scratch frames stay empty.

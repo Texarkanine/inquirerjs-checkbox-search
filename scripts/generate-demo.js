@@ -1,7 +1,13 @@
 #!/usr/bin/env node
 
-import { exec, execSync } from 'child_process';
-import { readdirSync, existsSync } from 'fs';
+import { exec, execFileSync, execSync } from 'child_process';
+import {
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  existsSync,
+  writeFileSync,
+} from 'fs';
 import { join, basename } from 'path';
 import { promisify } from 'util';
 
@@ -11,6 +17,7 @@ const DEFAULT_OUTPUT_DIR = 'docs/img';
 
 // Configuration constants
 const DEFAULT_MAX_PARALLELISM = 4;
+const DEMO_NAME = /^[a-zA-Z0-9_-]+$/;
 const BUFFER_SIZE = 10 * 1024 * 1024; // 10 MB buffer for Docker output
 
 function runCommand(command) {
@@ -108,9 +115,133 @@ function showUsage() {
   console.log('  node scripts/generate-demo.js basic validation');
   console.log('  node scripts/generate-demo.js all');
   console.log('  node scripts/generate-demo.js all --max-parallelism=2');
+  console.log('');
+  console.log(
+    'Scratch mode records one demo at a time and writes text, frames, and a gif',
+  );
+  console.log(
+    'under the scratch directory. It requires all four flags and does not use --output:',
+  );
+  console.log(
+    '  node scripts/generate-demo.js all --image=vhs-node-demo:base --scratch=/tmp/attempt-0/base --demos-dir=/tmp/base/demos --build-context=/tmp/base',
+  );
+}
+
+function hasScratchFlag(args) {
+  return args.some((arg) =>
+    /^(--image|--scratch|--demos-dir|--build-context)(=|$)/.test(arg),
+  );
+}
+
+function scratchDemoNames(demosDir, requested) {
+  if (requested.length === 1 && requested[0] === 'all') {
+    if (!existsSync(demosDir)) {
+      console.error(`❌ Demos directory not found: ${demosDir}`);
+      process.exit(1);
+    }
+    const names = readdirSync(demosDir)
+      .filter((file) => file.endsWith('.tape'))
+      .map((file) => basename(file, '.tape'))
+      .sort();
+    if (names.length === 0) {
+      console.error(`❌ No .tape files found in ${demosDir}/`);
+      process.exit(1);
+    }
+    return names;
+  }
+
+  for (const name of requested) {
+    if (!DEMO_NAME.test(name) || !existsSync(join(demosDir, `${name}.tape`))) {
+      console.error(`❌ Demo not found: ${name}.tape`);
+      process.exit(1);
+    }
+  }
+  return [...requested];
+}
+
+async function runScratch(argv) {
+  const {
+    parseGenerateArgs,
+    withFingerprintOutputs,
+    runScratchRecording,
+    containerFramesDir,
+  } = await import('./demo-fingerprint.ts');
+  const parsed = parseGenerateArgs(argv);
+  if (
+    !parsed.image ||
+    !parsed.scratch ||
+    !parsed.demosDir ||
+    !parsed.buildContext
+  ) {
+    console.error(
+      '❌ Scratch mode requires --image, --scratch, --demos-dir, and --build-context',
+    );
+    process.exit(1);
+  }
+  if (parsed.demos.length === 0) {
+    console.error('❌ No demo names provided');
+    process.exit(1);
+  }
+
+  const demos = scratchDemoNames(parsed.demosDir, parsed.demos);
+  for (const name of demos) {
+    if (!DEMO_NAME.test(name)) {
+      console.error(`❌ Demo name is not safe: ${name}`);
+      process.exit(1);
+    }
+  }
+
+  console.log(`🔨 Building ${parsed.image} from ${parsed.buildContext}`);
+  execFileSync(
+    'docker',
+    [
+      'build',
+      '-f',
+      join(parsed.buildContext, 'demos', 'Dockerfile'),
+      '-t',
+      parsed.image,
+      parsed.buildContext,
+    ],
+    { stdio: 'inherit' },
+  );
+
+  for (const demoName of demos) {
+    const hostDemoDir = join(parsed.scratch, demoName);
+    const hostFramesDir = join(hostDemoDir, 'frames');
+    mkdirSync(hostFramesDir, { recursive: true });
+    const tapeSource = readFileSync(
+      join(parsed.demosDir, `${demoName}.tape`),
+      'utf8',
+    );
+    const containerDemo = `/workspace/scratch/${demoName}`;
+    const rewritten = withFingerprintOutputs(
+      tapeSource,
+      `${containerDemo}/record.txt`,
+      containerFramesDir,
+    );
+    writeFileSync(join(hostDemoDir, 'tape.tape'), rewritten);
+    console.log(`🎬 [${demoName}] Recording into ${hostDemoDir}`);
+    runScratchRecording(
+      {
+        image: parsed.image,
+        hostScratch: parsed.scratch,
+        containerTapePath: `${containerDemo}/tape.tape`,
+        demoName,
+        hostFramesDir,
+      },
+      (args) => {
+        execFileSync('docker', args, { stdio: 'inherit' });
+      },
+    );
+  }
 }
 
 async function main() {
+  if (hasScratchFlag(process.argv.slice(2))) {
+    await runScratch(process.argv.slice(2));
+    return;
+  }
+
   let args = process.argv.slice(2);
   let maxParallelism = DEFAULT_MAX_PARALLELISM;
 

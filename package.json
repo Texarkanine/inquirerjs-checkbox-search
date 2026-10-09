@@ -79,7 +79,7 @@
     "test:mutate": "stryker run",
     "test:mutate:dry": "stryker run --dryRunOnly",
     "test:ui": "vitest --ui",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.scripts.json",
     "attw": "attw --pack",
     "pkg:inspect": "rimraf package-inspect *.tgz && npm run build && npm pack && mkdir package-inspect && tar -xzf *.tgz -C package-inspect && echo '\\n📦 Package extracted to package-inspect/ for inspection'",
     "prepublishOnly": "npm run clean && npm run build && npm run test:ci && npm run attw",
