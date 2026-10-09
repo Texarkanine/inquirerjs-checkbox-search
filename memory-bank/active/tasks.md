@@ -25,3 +25,7 @@ VHS v0.10 writes frames in its temp directory and `os.Rename`s that directory on
 ### QA
 
 PASS. The change is limited to the three planned files. Each behavior has a unit test: the `TMPDIR` argument, the host temp path, and stderr routing of a structural error. `npm test` passed with 167 tests. Advisories: the rename fix is unverified until the next Generate job, and a structural CLI error still fails the shadow step, now with a visible message.
+
+### Follow-up CI
+
+The next Generate job, [run 37867082815](https://github.com/Texarkanine/inquirerjs-checkbox-search/actions/runs/37867082815/job/113616261602), was cancelled. The shadow step sat from 00:55:59Z to 06:54:12Z on the first base `basic` recording and never printed VHS's `File:` line. Process-wide `TMPDIR` on the bind mount is what changed between the fast exit 1 and this hang.

@@ -180,3 +180,14 @@ The rework makes the shadow step on pull request #191 exit 0 with a visible verd
 * Insights
     - `TMPDIR` on the scratch mount keeps VHS's temp directory and the frames path on one filesystem
     - `.vhs-tmp` sits beside the demo directories and the fingerprint reader ignores it
+
+## 2026-10-09 - CI - CANCELLED
+
+* Work completed
+    - Read the Generate job that ran after the `TMPDIR` push
+* Decisions made
+    - Do not treat process-wide `TMPDIR` on the scratch mount as the fix
+* Insights
+    - [Run 37867082815](https://github.com/Texarkanine/inquirerjs-checkbox-search/actions/runs/37867082815/job/113616261602) cancelled the shadow step after about six hours
+    - The log stops on the first base `basic` recording, after "Recording into" and before VHS prints `File:`
+    - The earlier run finished every recording in minutes and then exited 1 with an empty frame directory
