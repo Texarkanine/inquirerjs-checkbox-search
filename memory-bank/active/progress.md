@@ -283,5 +283,15 @@ The rework makes the shadow step on pull request #191 finish and exit 0 with a v
     - Omitting precreation of `/tmp/vhs-frames` allows VHS v0.10.0 `os.Rename` to succeed
     - Shell command safely guards chmod with directory existence and preserves original vhs exit code
 
+## 2026-10-09 - REWORK - IN-PROGRESS
+
+* Work completed
+    - Operator asked to rework issue-190. The shadow verdict marked basic CHANGED with no visual difference
+* Decisions made
+    - Rework the completed task instead of archiving it
+* Insights
+    - Local recordings of the main tape and this branch's tape match, including on two busy cores
+    - The retry calls CHANGED when the sides disagree again, without checking that each side reproduced itself
+
 
 

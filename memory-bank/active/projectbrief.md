@@ -77,3 +77,15 @@ Scratch recording must finish and leave the frame PNGs on the host. Process-wide
 Generate job [37949632608](https://github.com/Texarkanine/inquirerjs-checkbox-search/actions/runs/37949632608/job/113884741326) failed after 5 minutes. The GIF step succeeded. The shadow step recorded all six tapes, wrote the GIFs, then exited 1 with `no frame-text PNGs` in the host frames directory.
 
 VHS v0.10.0 `os.Rename`s its temp frame directory onto the Output path and ignores the error. Creating that directory first makes the rename fail, Cleanup deletes the real frames, and the precreated directory stays empty. A local recording with vhs v0.10.0 reproduced this: a precreated frames directory stayed empty, and the same tape without that directory wrote `frame-text-*.png`. The container command must not create `/tmp/vhs-frames` before `vhs` runs.
+
+## Rework
+
+Shadow verdicts on pull request [#191](https://github.com/Texarkanine/inquirerjs-checkbox-search/pull/191) marked `basic` CHANGED. Local recordings of the `main` tape and this branch's tape produce the same frame-text sequence, including when the recorder is pinned to two busy cores. There is no visual difference.
+
+`assessFingerprints` treats a retry as CHANGED whenever base and head disagree again. It does not require each side to match its own first recording. A passing screen held for only a few frames can be missed, which changes the sequence hash without a change in the prompt.
+
+The fix:
+
+- Ignore frame-text states held for less than a quarter second.
+- A frame mismatch is CHANGED only when each side's retry matches that side's first recording and the two sides still differ. When a side does not match itself, the verdict says the frames were noisy.
+- The job log prints each side's collapsed sequence and how long each state was held.
