@@ -260,3 +260,14 @@ The rework makes the shadow step on pull request #191 finish and exit 0 with a v
     - The GIF step succeeded. The shadow step's six recordings succeeded. The host frames directory was empty
     - Do not create the frames Output directory before `vhs`. VHS renames its temp directory onto that path and ignores a failure
 
+## 2026-10-09 - BUILD - COMPLETE
+
+* Work completed
+    - Removed the `mkdir` of `/tmp/vhs-frames` from the container command
+    - `npm test` passed: format, lint, typecheck, and 169 tests
+* Decisions made
+    - Leave the host frames directory as the `docker cp` destination. Only the in-container Output path must be absent
+* Insights
+    - Local vhs v0.10.0 wrote `frame-text-*.png` when the Output directory did not exist, and left a precreated directory empty
+
+

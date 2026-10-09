@@ -279,8 +279,9 @@ describe('buildDockerRunArgs', () => {
     expect(args).not.toContain('--rm');
     expect(args).toContain('--name');
     expect(args).toContain('vhs-scratch-basic');
+    expect(args.join('\n')).not.toContain('mkdir');
     expect(args).toContain(
-      'mkdir -p /tmp/vhs-frames && vhs "$1" && chmod -R a+rX /tmp/vhs-frames',
+      'vhs "$1"; status=$?; if [ -d /tmp/vhs-frames ]; then chmod -R a+rX /tmp/vhs-frames; fi; exit $status',
     );
   });
 });

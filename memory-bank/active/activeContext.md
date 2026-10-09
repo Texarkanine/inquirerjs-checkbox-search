@@ -1,13 +1,14 @@
 # Active Context
 
 ## Current Task: issue-190
-**Phase:** COMPLEXITY-ANALYSIS - COMPLETE
+**Phase:** BUILD - COMPLETE
 
 ## What Was Done
 
-- Classified the empty-frames failure as Level 1
-- The container command creates `/tmp/vhs-frames` before VHS, and that precreated directory makes the frame rename fail
+- Stopped creating `/tmp/vhs-frames` before `vhs`
+- `npm test` passed: format, lint, typecheck, and 169 tests
+- Local vhs v0.10.0 wrote `frame-text-*.png` when that directory did not already exist
 
 ## Next Step
 
-- Load the Level 1 workflow and build
+- Run QA

@@ -189,11 +189,12 @@ export function withFingerprintOutputs(
 /**
  * Frames directory inside the container. VHS v0.10 writes frames under
  * its temp dir (`/tmp`) and `os.Rename`s that directory onto this path.
- * A bind-mounted destination is a different filesystem, so the rename
- * fails and the frames are deleted. This path stays on the container's
- * own `/tmp`. The process temp dir is left alone: Chromium's profile
- * lives there, and pointing `TMPDIR` at the scratch mount hung the
- * recording.
+ * The path must not exist yet. A directory created beforehand makes the
+ * rename fail; VHS ignores that error and deletes the frames, so the
+ * precreated directory stays empty. This path stays on the container's
+ * own `/tmp`, not on the scratch bind mount. The process temp dir is
+ * left alone: Chromium's profile lives there, and pointing `TMPDIR` at
+ * the scratch mount hung the recording.
  */
 export const containerFramesDir = '/tmp/vhs-frames';
 
@@ -204,7 +205,8 @@ export const containerFramesDir = '/tmp/vhs-frames';
  *
  * The container is not removed. The caller copies the frames out and
  * then removes it. VHS writes frame PNGs as mode 0600, so the command
- * makes them readable before the copy.
+ * makes them readable before the copy. `vhs` keeps its own exit status
+ * when the frames directory is absent.
  */
 export function buildDockerRunArgs(options: DockerRunOptions): string[] {
   return [
@@ -217,7 +219,7 @@ export function buildDockerRunArgs(options: DockerRunOptions): string[] {
     'bash',
     options.image,
     '-c',
-    `mkdir -p ${containerFramesDir} && vhs "$1" && chmod -R a+rX ${containerFramesDir}`,
+    `vhs "$1"; status=$?; if [ -d ${containerFramesDir} ]; then chmod -R a+rX ${containerFramesDir}; fi; exit $status`,
     'bash',
     options.containerTapePath,
   ];
