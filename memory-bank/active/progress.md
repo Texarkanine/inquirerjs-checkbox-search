@@ -135,5 +135,13 @@ Keep the checkbox-search frame height stable when choice descriptions wrap: word
 * Insights
     - `makeTheme` guarantees `theme.style.description` is always a function, so the styled-measure call needs no undefined guard
 
+## 2026-10-08 - PRE-ARCHIVE - COMPLETE
+
+* Work completed
+    - Operator asked to archive the whole undertaking: the Level 2 stable description frame, including the Level 1 rework that followed QA
+* Decisions made
+    - Archive as an enhancement. The reflection for `stable-description-frame` is the record of the feature. The rework is inlined with it
+* Insights
+    - The progress header says Level 1 because the rework reclassified the open task. The undertaking being archived is the frame change plus that rework
 
 
