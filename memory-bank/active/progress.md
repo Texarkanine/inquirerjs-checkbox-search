@@ -168,3 +168,15 @@ The rework makes the shadow step on pull request #191 exit 0 with a visible verd
     - Do not change the verdict rule
 * Insights
     - Docker is not installed here, so the rename itself is unverified until the next Generate job
+
+## 2026-10-08 - QA - COMPLETE
+
+* Work completed
+    - Reviewed the rework against the project brief and the task notes
+    - `npm test` passed: format, lint, typecheck, and 167 tests
+    - Wrote PASS to `memory-bank/active/.qa-validation-status`
+* Decisions made
+    - PASS with two advisories: the rename fix is unverified until CI, and a structural CLI error still fails the step with a visible message
+* Insights
+    - `TMPDIR` on the scratch mount keeps VHS's temp directory and the frames path on one filesystem
+    - `.vhs-tmp` sits beside the demo directories and the fingerprint reader ignores it

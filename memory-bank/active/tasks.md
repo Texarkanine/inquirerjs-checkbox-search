@@ -21,3 +21,7 @@ VHS v0.10 writes frames in its temp directory and `os.Rename`s that directory on
 - `scripts/demo-fingerprint.ts`
 - `scripts/demo-fingerprint.test.ts`
 - `scripts/generate-demo.js`
+
+### QA
+
+PASS. The change is limited to the three planned files. Each behavior has a unit test: the `TMPDIR` argument, the host temp path, and stderr routing of a structural error. `npm test` passed with 167 tests. Advisories: the rename fix is unverified until the next Generate job, and a structural CLI error still fails the shadow step, now with a visible message.
