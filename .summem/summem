@@ -91,9 +91,14 @@ def note_file_bytes(text: str) -> bytes:
     return text.encode("utf-8") + b"\n"
 
 
+def store_bytes(data: bytes) -> bytes:
+    """Return *data* with CR LF and lone CR turned into LF."""
+    return data.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+
+
 def note_digest(file_bytes: bytes) -> str:
-    """Return lowercase hex SHA-256 of *file_bytes*."""
-    return hashlib.sha256(file_bytes).hexdigest()
+    """Return lowercase hex SHA-256 of LF-canonical *file_bytes*."""
+    return hashlib.sha256(store_bytes(file_bytes)).hexdigest()
 
 
 def leafset_id(digests: list[str]) -> str:
@@ -178,9 +183,12 @@ class ViewNode:
 
 
 class ProjectedNode:
-    """One printed wake row: a view file or an in-memory expanded child."""
+    """One printed wake row: a view file or an in-memory expanded child.
 
-    __slots__ = ("id", "kind", "caption", "leaves", "stamp", "tree", "tree_path", "tree_attempted")
+    ``seq`` is the oldest note's ``{stamp}-{rand}``. Opened rows sort by it.
+    """
+
+    __slots__ = ("id", "kind", "caption", "leaves", "stamp", "tree", "tree_path", "tree_attempted", "seq")
     __eq__ = _eq_by_slots
 
     def __init__(
@@ -193,6 +201,7 @@ class ProjectedNode:
         tree: Tree | None = None,
         tree_path: Path | None = None,
         tree_attempted: bool = False,
+        seq: str = "",
     ) -> None:
         self.id = id
         self.kind = kind
@@ -202,6 +211,7 @@ class ProjectedNode:
         self.tree = tree
         self.tree_path = tree_path
         self.tree_attempted = tree_attempted
+        self.seq = seq
 
 
 def _tree_dict(tree: Tree) -> dict:
@@ -250,14 +260,27 @@ _TREE_PARSE_ERRORS = (
 
 def loads_tree(data: bytes) -> Tree:
     """Parse canonical tree bytes into a Tree."""
-    return _tree_from_dict(json.loads(data.decode("utf-8")))
+    return _tree_from_dict(json.loads(store_bytes(data).decode("utf-8")))
 
 
 ENTRY_CHARS = 280
 WAKE_LINES = 32
 CLI_NAME = "summem"
 AGENT_BIN = ".summem/summem"
-__version__ = "0.11.0"  # x-release-please-version
+__version__ = "0.12.1"  # x-release-please-version
+
+
+def agent_invoke() -> str:
+    """Return the command prefix agents can run on this host."""
+    if not _host_needs_interpreter():
+        return AGENT_BIN
+    return f"python {AGENT_BIN}"
+
+
+def _host_needs_interpreter() -> bool:
+    """Return True when AGENT_BIN cannot be exec'd as argv0 on this host."""
+    return os.name == "nt"
+
 
 CONFIG_TEMPLATE = """\
 # SumMem per-store settings. Missing values take the script's defaults.
@@ -343,47 +366,100 @@ def knobs(parent):
         return defaults
 
 
-def started_stores(git_root) -> list[Path]:
-    """Return git-root (if a store) plus parents of other git-visible `/.summem/` trees."""
+def _store_file_parts(root: Path, posix: str) -> tuple[Path, str] | None:
+    """Return ``(store parent, path under .summem/)`` for a nested git-relative path.
+
+    Root-relative ``.summem/…`` is ignored here: the git root is a store only
+    when ``.summem`` is a directory (``is_store``), matching ``started_stores``.
+    """
+    marker = "/.summem/"
+    idx = posix.find(marker)
+    if idx < 0:
+        return None
+    return root / posix[:idx], posix[idx + len(marker) :]
+
+
+def _listed_store_counts(git_root) -> dict[Path, int]:
+    """Return git-visible store parents mapped to a filename note count.
+
+    One ``git ls-files`` pass. Does not ``iterdir`` stores, open payloads, or
+    build a view. A loose note is +1. A nap stem adds its leaf count once
+    (``.tree`` and ``.summ`` share a stem). Listed paths gone from the
+    worktree do not add. The git root is included when it is a store even if
+    root-relative ``.summem/`` paths do not match ``/.summem/``.
+    """
     import subprocess
 
     root = Path(git_root).resolve()
-    found: set[Path] = set()
+    counts: dict[Path, int] = {}
+    nap_stems: set[tuple[Path, str]] = set()
     if is_store(root):
-        found.add(root)
+        counts[root] = 0
     result = subprocess.run(
         ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
         cwd=root,
         capture_output=True,
     )
     if result.returncode != 0:
-        return sorted(found)
+        return counts
     for raw in result.stdout.split(b"\0"):
         if not raw:
             continue
         rel = raw.decode("utf-8", "surrogateescape")
         posix = Path(rel).as_posix()
-        marker = "/.summem/"
-        idx = posix.find(marker)
-        if idx < 0:
+        parts = _store_file_parts(root, posix)
+        if parts is None:
             continue
-        found.add(root / posix[:idx])
-    return sorted(found)
+        parent, rest = parts
+        counts.setdefault(parent, 0)
+        if not (root / rel).is_file():
+            continue
+        directory, sep, name = rest.partition("/")
+        if not sep or not name or "/" in name or name.startswith("."):
+            continue
+        if directory == "notes":
+            counts[parent] += 1
+            continue
+        if directory != "naps":
+            continue
+        path = Path(name)
+        if path.suffix not in (".summ", ".tree"):
+            continue
+        key = (parent, path.stem)
+        if key in nap_stems:
+            continue
+        nap_stems.add(key)
+        parsed = _parse_nap_stem(path.stem)
+        if parsed is None:
+            continue
+        leaves = parsed[3]
+        counts[parent] += leaves
+    return counts
+
+
+def started_stores(git_root) -> list[Path]:
+    """Return git-root (if a store) plus parents of other git-visible `/.summem/` trees."""
+    return sorted(_listed_store_counts(git_root))
 
 
 def catalog_text(git_root, resolved_parent) -> str:
-    """Return root-wake catalog of other started stores, or empty."""
+    """Return root-wake catalog of other started stores, or empty.
+
+    Each line after the header is ``N: ./path``: note count from filenames,
+    then the store path. Pulls pass a non-root *resolved_parent* and get empty.
+    """
     root = Path(git_root).resolve()
     if Path(resolved_parent).resolve() != root:
         return ""
-    others = [parent for parent in started_stores(root) if parent != root]
-    if not others:
+    counts = _listed_store_counts(root)
+    rows = [
+        f"{count}: ./{parent.relative_to(root).as_posix()}"
+        for parent, count in sorted(counts.items())
+        if parent != root
+    ]
+    if not rows:
         return ""
-    lines = ["== Additional SumMem Catalogs =="]
-    for parent in others:
-        rel = parent.relative_to(root).as_posix()
-        lines.append(f"./{rel}")
-    return "\n".join(lines) + "\n"
+    return "== Additional SumMem Catalogs ==\n" + "\n".join(rows) + "\n"
 
 
 def require_entry(text: str, entry_chars: int | None = None) -> None:
@@ -420,6 +496,8 @@ def _seq_prefix(name: str) -> str:
 
 def variant_tag(tree_bytes: bytes, caption_bytes: bytes) -> str:
     """Return the 16-hex pair digest used as a nap-stem variant tag."""
+    tree_bytes = store_bytes(tree_bytes)
+    caption_bytes = store_bytes(caption_bytes)
     payload = (
         b"SumMem nap pair v1\0"
         + len(tree_bytes).to_bytes(8, "big")
@@ -471,7 +549,7 @@ def _nap_caption(sum_path: Path | None) -> str:
     if sum_path is None or not sum_path.is_file():
         return ""
     try:
-        text = sum_path.read_text(encoding="utf-8")
+        text = store_bytes(sum_path.read_bytes()).decode("utf-8")
     except (OSError, UnicodeDecodeError):
         return ""
     if "<" * 7 in text:
@@ -490,7 +568,7 @@ def list_view(parent) -> list[ViewNode]:
         if not path.is_file() or path.name.startswith("."):
             continue
         try:
-            raw = path.read_bytes()
+            raw = store_bytes(path.read_bytes())
             text = raw.decode("utf-8")
         except (OSError, UnicodeDecodeError):
             continue
@@ -589,7 +667,7 @@ def leaf_digests(node: ViewNode) -> set[str] | None:
     if node.tree_path is None or not node.tree_path.is_file():
         return None
     try:
-        return set(_digests_of_dict(json.loads(node.tree_path.read_bytes().decode("utf-8"))))
+        return set(_digests_of_dict(json.loads(store_bytes(node.tree_path.read_bytes()).decode("utf-8"))))
     except _TREE_PARSE_ERRORS:
         return None
 
@@ -654,17 +732,87 @@ def heal_view(parent, nodes=None) -> list[ViewNode]:
         nodes = None
 
 
-def with_store_lock(parent, fn):
-    """Run *fn* while holding an exclusive flock on the store's naps/ directory."""
-    import fcntl
-
-    store = ensure_store(parent)
-    fd = os.open(store / "naps", os.O_RDONLY)
+def _try_fcntl():
+    """Return the fcntl module, or None if this interpreter has none."""
     try:
-        fcntl.flock(fd, fcntl.LOCK_EX)
-        return fn()
+        import fcntl
+        return fcntl
+    except ImportError:
+        return None
+
+
+def _runtime_lock_path(store):
+    """Return the path of the fallback lock file for *store*."""
+    import tempfile
+
+    base = os.environ.get("LOCALAPPDATA") or os.environ.get("XDG_RUNTIME_DIR") or tempfile.gettempdir()
+    key = hashlib.sha256(os.fsencode(str(Path(store).resolve()))).hexdigest()
+    return Path(base) / "summem" / "locks" / key
+
+
+def _with_runtime_lock(store, fn, fcntl):
+    """Run *fn* holding a lock file outside the store."""
+    path = _runtime_lock_path(store)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    lock = open(path, "ab+")
+    try:
+        lock.seek(0, os.SEEK_END)
+        if lock.tell() == 0:
+            lock.write(b"\0")
+            lock.flush()
+        lock.seek(0)
+        if fcntl is not None:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+            return fn()
+        try:
+            import msvcrt as _ms
+        except ImportError:
+            raise ValueError("cannot lock") from None
+        import time as _t
+
+        deadline = _t.monotonic() + 30.0
+        waited = 0.0
+        while True:
+            try:
+                _ms.locking(lock.fileno(), _ms.LK_NBLCK, 1)
+                break
+            except OSError:
+                remaining = deadline - _t.monotonic()
+                if remaining <= 0:
+                    raise ValueError("cannot lock") from None
+                delay = min(0.01 + waited * 0.2, 0.25, remaining)
+                _t.sleep(delay)
+                waited += 0.01
+        try:
+            return fn()
+        finally:
+            try:
+                _ms.locking(lock.fileno(), _ms.LK_UNLCK, 1)
+            except OSError:
+                pass
     finally:
-        os.close(fd)
+        lock.close()
+
+
+def with_store_lock(parent, fn):
+    """Run *fn* while holding an exclusive same-machine lock for this store.
+
+    Prefer an flock of ``naps/``. If that capability is missing, lock a
+    runtime-dir file instead. Never write a lock file under ``.summem/``.
+    """
+    store = ensure_store(parent)
+    fcntl = _try_fcntl()
+    if fcntl is not None:
+        try:
+            fd = os.open(store / "naps", os.O_RDONLY)
+        except OSError:
+            return _with_runtime_lock(store, fn, fcntl)
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX)
+            return fn()
+        finally:
+            os.close(fd)
+    return _with_runtime_lock(store, fn, None)
 
 
 def _as_child(node: ViewNode) -> tuple[NoteChild | NapChild, list[str]]:
@@ -690,31 +838,101 @@ def _unlink_node(node: ViewNode) -> None:
         node.tree_path.unlink()
 
 
-def _adjacent_nodes(nodes: list[ViewNode], id_a: str, id_b: str) -> tuple[ViewNode, ViewNode]:
+def _is_pow2(n: int) -> bool:
+    """Return True when *n* is a positive power of two."""
+    return n > 0 and n & (n - 1) == 0
+
+
+def _nearest_twin(grains: list[int], i: int) -> int | None:
+    """Return the first index after *i* whose grain equals ``grains[i]``, or None."""
+    grain = grains[i]
+    for j in range(i + 1, len(grains)):
+        if grains[j] == grain:
+            return j
+    return None
+
+
+def _fold_pair(grains: list[int]) -> tuple[int, int] | None:
+    """Return the oldest power-of-two row that has a same-grain row below it, with that nearest row.
+
+    Rows whose grain is not a power of two are skipped. None means every
+    power-of-two grain appears once.
+    """
+    for i, grain in enumerate(grains):
+        if not _is_pow2(grain):
+            continue
+        twin = _nearest_twin(grains, i)
+        if twin is not None:
+            return i, twin
+    return None
+
+
+def _fold_grains(nodes: list[ViewNode]) -> list[int]:
+    """Return each row's grain for pairing, 0 for a nap whose children file is missing or unreadable.
+
+    ``nap`` cannot fold such a row, so it is never requested and never counts as a nearer twin.
+    """
+    grains = []
+    for node in nodes:
+        grain = node.leaves
+        if node.kind == "nap":
+            if node.tree_path is None:
+                grain = 0
+            else:
+                try:
+                    loads_tree(node.tree_path.read_bytes())
+                except _TREE_PARSE_ERRORS:
+                    grain = 0
+        grains.append(grain)
+    return grains
+
+
+def _pair_nodes(nodes: list[ViewNode], id_a: str, id_b: str) -> tuple[int, int]:
+    """Return ``(lo, hi)`` for two distinct view rows, older first.
+
+    When several rows share an id, the closest pair wins. Ties keep the older
+    pair. Naming the same row twice is refused.
+    """
     hits_a = [i for i, node in enumerate(nodes) if node.id == id_a]
     hits_b = [i for i, node in enumerate(nodes) if node.id == id_b]
     if not hits_a or not hits_b:
         raise ValueError("unknown id. Copy an id from wake.")
+    best: tuple[int, int, int] | None = None
     for ia in hits_a:
         for ib in hits_b:
             if ia == ib:
                 continue
-            if abs(ia - ib) == 1:
-                lo, hi = (ia, ib) if ia < ib else (ib, ia)
-                return nodes[lo], nodes[hi]
-    raise ValueError("not adjacent. Nap two ids that sit next to each other in wake.")
+            lo, hi = (ia, ib) if ia < ib else (ib, ia)
+            gap = hi - lo
+            if best is None or (gap, lo) < (best[0], best[1]):
+                best = (gap, lo, hi)
+    if best is None:
+        raise ValueError("not two rows")
+    return best[1], best[2]
 
 
 def write_nap(parent, id_a, id_b, caption, entry_chars: int | None = None, nodes=None):
-    """Fold two adjacent view nodes into a nap pair. Return the .summ path."""
+    """Fold two same-grain view rows into a nap pair. Return the .summ path.
+
+    The rows need not be neighbors. They must share a power-of-two grain, and
+    no row of that grain may sit between them.
+    """
     require_entry(caption, entry_chars)
     if nodes is None:
         nodes = list_view(parent)
-    left, right = _adjacent_nodes(nodes, id_a, id_b)
+    lo, hi = _pair_nodes(nodes, id_a, id_b)
+    left, right = nodes[lo], nodes[hi]
     child_l, digs_l = _as_child(left)
     child_r, digs_r = _as_child(right)
     if set(digs_l) & set(digs_r):
         raise ValueError("overlapping packs")
+    if left.leaves != right.leaves:
+        raise ValueError("not the same grain")
+    total = len(digs_l) + len(digs_r)
+    if len(digs_l) != len(digs_r) or not _is_pow2(total):
+        raise ValueError("not a power of two")
+    if hi != _nearest_twin(_fold_grains(nodes), lo):
+        raise ValueError("a nearer row of that grain sits between them")
     tree = Tree(kids=[child_l, child_r])
     digests = digs_l + digs_r
     leafset = leafset_id(digests)
@@ -911,6 +1129,7 @@ def expand_frontier(nodes: list[ViewNode], budget: int) -> list[ProjectedNode]:
             leaves=node.leaves,
             stamp=node.stamp,
             tree_path=node.tree_path,
+            seq=_seq_prefix(node.name),
         )
         for node in nodes
     ]
@@ -928,6 +1147,7 @@ def expand_frontier(nodes: list[ViewNode], budget: int) -> list[ProjectedNode]:
         if kids is None:
             break
         frontier = [*frontier[:idx], *kids, *frontier[idx + 1 :]]
+        frontier.sort(key=lambda row: row.seq)
     return frontier
 
 
@@ -965,6 +1185,7 @@ def _projected_child(child: NoteChild | NapChild) -> ProjectedNode | None:
             caption=child.text,
             leaves=1,
             stamp=child.name.split("-")[0],
+            seq=child.name,
         )
     notes = list(_note_children(child.tree))
     if not notes:
@@ -976,6 +1197,7 @@ def _projected_child(child: NoteChild | NapChild) -> ProjectedNode | None:
         leaves=len(notes),
         stamp=min(note.name.split("-")[0] for note in notes),
         tree=child.tree,
+        seq=min(note.name for note in notes),
     )
 
 
@@ -1080,7 +1302,7 @@ def _fold_path_flag(parent) -> str:
 
 
 def fold_request(parent, wake_lines: int | None = None, nodes=None, entry_chars: int | None = None) -> str:
-    """Return an OptMem-style nap prompt for the oldest equal-grain pair when over *wake_lines*."""
+    """Return a nap prompt for the oldest same-grain power-of-two pair when over *wake_lines*."""
     if wake_lines is None:
         wake_lines = WAKE_LINES
     if entry_chars is None:
@@ -1089,13 +1311,10 @@ def fold_request(parent, wake_lines: int | None = None, nodes=None, entry_chars:
         nodes = list_view(parent)
     if len(nodes) <= wake_lines:
         return ""
-    left = right = None
-    for i in range(len(nodes) - 1):
-        if nodes[i].leaves == nodes[i + 1].leaves:
-            left, right = nodes[i], nodes[i + 1]
-            break
-    if left is None:
+    pair = _fold_pair(_fold_grains(nodes))
+    if pair is None:
         return ""
+    left, right = nodes[pair[0]], nodes[pair[1]]
     ids = [node.id for node in nodes]
     remain = len(nodes) - 1 - wake_lines
     extra = ""
@@ -1107,13 +1326,13 @@ def fold_request(parent, wake_lines: int | None = None, nodes=None, entry_chars:
     left_src = left.caption
     right_src = right.caption
     return (
-        f"Compress these two into one line of at most {limit} characters.\n"
+        f"Summarize these two into one line of at most {limit} characters.\n"
         "Keep what has lasting effect, drop what does not. Invent nothing.\n"
         "\n"
         f"  {left_src}\n"
         f"  {right_src}\n"
         "\n"
-        f'Run: {AGENT_BIN} nap{_fold_path_flag(parent)} {short_id(left.id, ids)} {short_id(right.id, ids)} "<your line>"\n'
+        f'Run: {agent_invoke()} nap{_fold_path_flag(parent)} {short_id(left.id, ids)} {short_id(right.id, ids)} "<your line>"\n'
         f"{extra}"
     )
 
@@ -1166,26 +1385,37 @@ def require_python(version_info: tuple[int, ...] = sys.version_info) -> None:
         raise SystemExit(1)
 
 
-def how_to_text() -> str:
+def how_to_text(*, catalog: bool = False) -> str:
     """Return the versioned agent how-to section printed on root wake.
 
     The section includes its ``== SumMem Usage ==`` header and a trailing
     newline, matching ``catalog_text()``. It is not the operator ``-h``
-    catalog from ``usage_text()``.
+    catalog from ``usage_text()``. When *catalog* is true, append how to
+    read ``N: ./path`` catalog lines, pull with ``wake --path``, and record
+    with ``note --path`` (walk-up).
     """
-    return f"""\
+    invoke = agent_invoke()
+    text = f"""\
 == SumMem Usage ==
 
-`{AGENT_BIN} note "…"` records one short line.
+`{invoke} note "…"` records one short line.
 
 Never invent filenames, rewrite note bytes, or delete memory files by hand. The script is the only writer. The files it writes are part of your work; do not leave them untracked.
 
-If `note` asks for a nap, the note is already stored; do not retry the same note. The nap is extra work on two older view nodes. Do that nap before your next action.
+If `note` asks for a nap, do that nap before your next action.
 
-`{AGENT_BIN} recall <regex>` searches remembered text word for word. `{AGENT_BIN} zoom <id>` opens a pack: a line with an `x<N> <hash>:` prefix is a nap that can be zoomed in on. A leaf is `x1 YYYY-MM-DD:` and is not a zoom target.
-
-Listed catalog lines are paths that name other stores; they are not commands. When you work under a cataloged path, run `{AGENT_BIN} wake --path <path>` if that store's wake is not already in this conversation. Ignore `--path` if the root wake had no catalog.
+`{invoke} recall <regex>` searches remembered text word for word. `{invoke} zoom <id>` opens a pack: a line with an `x<N> <hash>:` prefix is a nap that can be zoomed in on. A leaf is `x1 YYYY-MM-DD:` and is not a zoom target.
 """
+    if catalog:
+        text += (
+            "\nListed catalog lines are `N: ./path`: `N:` is a count, then the path. "
+            "They are not commands. "
+            f"When you work under a cataloged path, run `{invoke} wake --path <path>` "
+            "if that store's wake is not already in this conversation. "
+            f"`{invoke} note --path <file> \"…\"` records in the nearest store for that file. "
+            "The same `--path` on nap, recall, and zoom walks up the same way.\n"
+        )
+    return text
 
 
 def prompt_text() -> str:
@@ -1193,11 +1423,11 @@ def prompt_text() -> str:
     return f"""\
 # Project Memory
 
-Shared memory for this repository is managed through SumMem, invoked as `{AGENT_BIN}`.
+Shared memory for this repository is managed through SumMem.
 
 ## At Session Start: Activating SumMem (mandatory)
 
-Run `{AGENT_BIN} wake` from the repository root. If you can see a prior project-root SumMem wake in this conversation's history, do not run it again.
+Run `python {AGENT_BIN} wake` from the repository root. If you can see a prior project-root SumMem wake in this conversation's history, do not run it again.
 
 ## While Working: Register Memories
 
@@ -1212,7 +1442,7 @@ def init_text() -> str:
     return (
         "Insert the following at the top of AGENTS.md as a starting write rule. "
         "You may edit what this repository remembers. "
-        "Command syntax comes from root wake; do not copy it into this prefix. "
+        "Command syntax comes from root wake; do not copy it into these guidelines. "
         "If Claude Code should see it too,"
         "\n"
         "put @AGENTS.md at the top of CLAUDE.md.\n"
@@ -1230,7 +1460,7 @@ SumMem: shared memory for agents in a repository.
 
   {CLI_NAME} wake    [--path PATH]                    print this store's view
   {CLI_NAME} note    [--path PATH] TEXT               record one line
-  {CLI_NAME} nap     [--path PATH] ID-A ID-B CAPTION  fold two adjacent ids
+  {CLI_NAME} nap     [--path PATH] ID-A ID-B CAPTION  fold two ids of the same grain
   {CLI_NAME} zoom    [--path PATH] ID                 open a nap to its children
   {CLI_NAME} recall  [--path PATH] PATTERN            search remembered text
   {CLI_NAME} start <path>                             create a store in that directory
@@ -1331,7 +1561,7 @@ def main(argv: list[str] | None = None) -> int:
         footer = "You are up to speed.\n"
         body = ""
         if is_root:
-            body += how_to_text()
+            body += how_to_text(catalog=bool(cat))
         if cat:
             if body:
                 body += "\n"
