@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.0.1](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v3.0.0...v3.0.1) (2026-10-30)
+
+
+### Bug Fixes
+
+* **deps-dev:** bump vite from 8.2.2 to 8.3.5 ([#192](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/192)) ([b58fad4](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/b58fad46979ee90ab631ec0511a51359a9e79866))
+* **deps:** bump fast-uri from 3.1.7 to 3.1.9 ([#194](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/194)) ([5f39262](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/5f3926259bf70f928b378971db224cfb2f494d87))
+
 ## [3.0.0](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v2.1.4...v3.0.0) (2026-10-09)
 
 
