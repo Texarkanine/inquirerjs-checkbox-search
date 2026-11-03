@@ -160,6 +160,8 @@ The preflight advisory to move the whole pipeline into one `runDemoPipeline` is 
 
 ### 2. Text diff — executable
 
+- [x] Done
+
 - Files: `scripts/demo-comment.ts`, `scripts/demo-comment.test.ts`
 
 1. Stub tests: empty cases for equal records and for the one-character validation pair.
