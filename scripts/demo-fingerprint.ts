@@ -210,6 +210,29 @@ export function assessFingerprints(input: AssessmentInput): Assessment {
 }
 
 /**
+ * Verdict for one demo, plus whether a CHANGED result is frames only.
+ *
+ * `stylingOnly` is true only when the verdict is CHANGED and the first
+ * attempt has equal text and unequal frames. Text mismatches and every
+ * other verdict are false.
+ */
+export function describeVerdict(input: AssessmentInput): {
+  assessment: Assessment;
+  stylingOnly: boolean;
+} {
+  const assessment = assessFingerprints(input);
+  const base = input.attempts[0]?.base ?? null;
+  const head = input.attempts[0]?.head ?? null;
+  const stylingOnly =
+    assessment === 'CHANGED' &&
+    base !== null &&
+    head !== null &&
+    base.text === head.text &&
+    base.frames !== head.frames;
+  return { assessment, stylingOnly };
+}
+
+/**
  * One comment line naming every demo verdict. Shadow mode prints this
  * and does not use it to expand or collapse the demo blocks.
  */

@@ -6,6 +6,7 @@ import {
   assertSafeDemoName,
   assessFingerprints,
   assessScratch,
+  describeVerdict,
   buildDockerRunArgs,
   formatCliStdout,
   formatShadowLine,
@@ -246,6 +247,75 @@ describe('assessFingerprints', () => {
         ]),
       ),
     ).toBe('CHANGED');
+  });
+});
+
+describe('describeVerdict', () => {
+  it('reports CHANGED and not styling-only when the first attempt text differs', () => {
+    expect(
+      describeVerdict(
+        both([
+          { base: side('alpha', 'frame-a'), head: side('beta', 'frame-b') },
+        ]),
+      ),
+    ).toEqual({ assessment: 'CHANGED', stylingOnly: false });
+  });
+
+  it('reports CHANGED and styling-only when text matches, frames differ, and the retry repeats that', () => {
+    expect(
+      describeVerdict(
+        both([
+          { base: side('same', 'left'), head: side('same', 'right') },
+          { base: side('same', 'left'), head: side('same', 'right') },
+        ]),
+      ),
+    ).toEqual({ assessment: 'CHANGED', stylingOnly: true });
+  });
+
+  it('reports styling-only false for SAME, NEW, REMOVED, UNSTABLE, NOISY, and NEED_FRAME_RETRY', () => {
+    expect(
+      describeVerdict(
+        both([{ base: side('same', 'frame'), head: side('same', 'frame') }]),
+      ),
+    ).toEqual({ assessment: 'SAME', stylingOnly: false });
+    expect(
+      describeVerdict({
+        baseTapeExists: false,
+        headTapeExists: true,
+        attempts: [],
+      }),
+    ).toEqual({ assessment: 'NEW', stylingOnly: false });
+    expect(
+      describeVerdict({
+        baseTapeExists: true,
+        headTapeExists: false,
+        attempts: [],
+      }),
+    ).toEqual({ assessment: 'REMOVED', stylingOnly: false });
+    expect(
+      describeVerdict(
+        both([
+          { base: side('same', 'left'), head: side('same', 'right') },
+          { base: side('drifted', 'agreed'), head: side('same', 'agreed') },
+        ]),
+      ),
+    ).toEqual({ assessment: 'UNSTABLE', stylingOnly: false });
+    expect(
+      describeVerdict(
+        both([
+          { base: side('same', 'left'), head: side('same', 'right') },
+          {
+            base: side('same', 'still-left'),
+            head: side('same', 'still-right'),
+          },
+        ]),
+      ),
+    ).toEqual({ assessment: 'NOISY', stylingOnly: false });
+    expect(
+      describeVerdict(
+        both([{ base: side('same', 'left'), head: side('same', 'right') }]),
+      ),
+    ).toEqual({ assessment: 'NEED_FRAME_RETRY', stylingOnly: false });
   });
 });
 

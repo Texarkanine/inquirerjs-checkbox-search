@@ -148,6 +148,8 @@ The preflight advisory to move the whole pipeline into one `runDemoPipeline` is 
 
 ### 1. Styling-only flag — executable
 
+- [x] Done
+
 - Files: `scripts/demo-fingerprint.ts`, `scripts/demo-fingerprint.test.ts`
 - Creative ref: `memory-bank/active/creative/creative-unspecified-verdicts.md`
 
