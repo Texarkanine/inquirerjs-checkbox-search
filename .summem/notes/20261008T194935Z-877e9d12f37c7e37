@@ -1,0 +1,1 @@
+Description padding: last row is a single space because ScreenManager appends a newline when the final line length is 0. wrapAnsi uses wordWrap and hard. getScreen() trims trailing blanks; padding tests use the raw frame.

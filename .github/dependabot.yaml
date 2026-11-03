@@ -26,6 +26,10 @@ updates:
       - dependency-name: '@types/node'
         update-types:
           - 'version-update:semver-major'
+      # TS 7 is a major compiler rewrite; breaks existing tsconfig/tooling until deliberate migration.
+      - dependency-name: 'typescript'
+        versions:
+          - '>=7.0.0'
     assignees:
       - 'Texarkanine'
     commit-message:

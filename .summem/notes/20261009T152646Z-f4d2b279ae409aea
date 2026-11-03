@@ -1,0 +1,1 @@
+VHS v0.10 rename onto a precreated frames dir fails silently and Cleanup deletes the PNGs. Do not mkdir the frames Output path before vhs.

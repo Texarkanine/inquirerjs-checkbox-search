@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { stripVTControlCharacters } from 'node:util';
 import { render } from '@inquirer/testing';
 import checkboxSearch from '../index.js';
 import { expectAnswerPending } from './helpers/expect-answer-pending.js';
@@ -173,5 +174,69 @@ describe('Async behavior', () => {
     await vi.waitFor(() => {
       expect(getScreen()).toContain('Result 1');
     });
+  });
+
+  it('should keep the description region when a later source result is shorter', async () => {
+    const originalColumns = process.stdout.columns;
+    Object.defineProperty(process.stdout, 'columns', {
+      configurable: true,
+      value: 80,
+    });
+
+    try {
+      const threeLongWords = [
+        'W'.repeat(50),
+        'W'.repeat(50),
+        'W'.repeat(50),
+      ].join(' ');
+      const source = async (term?: string) => {
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        if (!term) {
+          return [{ value: 'long', name: 'Long', description: threeLongWords }];
+        }
+        return [{ value: 'short', name: 'Short', description: 'Short' }];
+      };
+
+      const { events, getScreen } = await render(checkboxSearch, {
+        message: 'Search items',
+        pageSize: { autoBufferDescriptions: true },
+        source,
+      });
+
+      vi.advanceTimersByTime(20);
+      await vi.runAllTimersAsync();
+
+      const region = () => {
+        const lines = stripVTControlCharacters(getScreen({ raw: true })).split(
+          '\n',
+        );
+        let lastChoice = -1;
+        for (let i = 0; i < lines.length; i++) {
+          if (
+            lines[i].includes('◯') ||
+            lines[i].includes('◉') ||
+            lines[i].includes('❯')
+          ) {
+            lastChoice = i;
+          }
+        }
+        return lines.slice(lastChoice + 1);
+      };
+
+      expect(region()).toHaveLength(3);
+
+      await events.type('a');
+      vi.advanceTimersByTime(20);
+      await vi.runAllTimersAsync();
+
+      const shortRegion = region();
+      expect(shortRegion).toHaveLength(3);
+      expect(shortRegion.some((line) => line.trim() === '')).toBe(true);
+    } finally {
+      Object.defineProperty(process.stdout, 'columns', {
+        configurable: true,
+        value: originalColumns,
+      });
+    }
   });
 });

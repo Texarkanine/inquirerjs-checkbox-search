@@ -1,6 +1,48 @@
 import { describe, it, expect } from 'vitest';
+import { stripVTControlCharacters } from 'node:util';
 import { render } from '@inquirer/testing';
 import checkboxSearch from '../index.js';
+
+const threeLongWords = ['W'.repeat(50), 'W'.repeat(50), 'W'.repeat(50)].join(
+  ' ',
+);
+
+function withColumns<T>(columns: number, run: () => Promise<T>): Promise<T> {
+  const originalColumns = process.stdout.columns;
+  Object.defineProperty(process.stdout, 'columns', {
+    configurable: true,
+    value: columns,
+  });
+  return run().finally(() => {
+    Object.defineProperty(process.stdout, 'columns', {
+      configurable: true,
+      value: originalColumns,
+    });
+  });
+}
+
+/**
+ * `getScreen()` trims trailing blank lines, which is the padding under test.
+ * The raw chunk keeps those lines after ANSI codes are removed.
+ */
+function frame(getScreen: (options?: { raw?: boolean }) => string): string {
+  return stripVTControlCharacters(getScreen({ raw: true }));
+}
+
+function descriptionRegion(screen: string): string[] {
+  const lines = screen.split('\n');
+  let lastChoice = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (
+      lines[i].includes('◯') ||
+      lines[i].includes('◉') ||
+      lines[i].includes('❯')
+    ) {
+      lastChoice = i;
+    }
+  }
+  return lines.slice(lastChoice + 1);
+}
 
 describe('Description display', () => {
   it('should display description of active item at bottom, not inline', async () => {
@@ -162,5 +204,105 @@ describe('Description display', () => {
       .find((line: string) => line.includes('Apple') && line.includes('◯'));
     expect(appleChoiceLine).toBeDefined();
     expect(appleChoiceLine).not.toContain('**Red fruit**');
+  });
+
+  it('should keep the description region height when the active description is shorter', async () => {
+    await withColumns(80, async () => {
+      const { events, getScreen } = await render(checkboxSearch, {
+        message: 'Select items',
+        pageSize: { autoBufferDescriptions: true },
+        choices: [
+          { value: 'long', name: 'Long', description: threeLongWords },
+          { value: 'short', name: 'Short', description: 'Short' },
+        ],
+      });
+
+      const longRegion = descriptionRegion(frame(getScreen));
+      expect(longRegion).toHaveLength(3);
+
+      await events.keypress('down');
+
+      const shortRegion = descriptionRegion(frame(getScreen));
+      expect(shortRegion).toHaveLength(3);
+      expect(shortRegion[0]).toContain('Short');
+      expect(shortRegion.some((line) => line.trim() === '')).toBe(true);
+    });
+  });
+
+  it('should keep the description region height when the active item has no description', async () => {
+    await withColumns(80, async () => {
+      const { events, getScreen } = await render(checkboxSearch, {
+        message: 'Select items',
+        pageSize: { autoBufferDescriptions: true },
+        choices: [
+          { value: 'long', name: 'Long', description: threeLongWords },
+          { value: 'plain', name: 'Plain' },
+        ],
+      });
+
+      expect(descriptionRegion(frame(getScreen))).toHaveLength(3);
+
+      await events.keypress('down');
+
+      const plainRegion = descriptionRegion(frame(getScreen));
+      expect(plainRegion).toHaveLength(3);
+      expect(plainRegion.every((line) => line.trim() === '')).toBe(true);
+    });
+  });
+
+  it('should reserve a row when the description style adds visible width', async () => {
+    await withColumns(80, async () => {
+      const wide = 'a'.repeat(77);
+      const { events, getScreen } = await render(checkboxSearch, {
+        message: 'Select items',
+        pageSize: { autoBufferDescriptions: true },
+        choices: [
+          { value: 'wide', name: 'Wide', description: wide },
+          { value: 'short', name: 'Short', description: 'Short' },
+        ],
+        theme: {
+          style: {
+            description: (text: string) => `>>>${text}`,
+          },
+        },
+      });
+
+      const wideRegion = descriptionRegion(frame(getScreen));
+      expect(wideRegion).toHaveLength(2);
+      expect(wideRegion.join('')).toContain(wide);
+
+      await events.keypress('down');
+
+      const shortRegion = descriptionRegion(frame(getScreen));
+      expect(shortRegion).toHaveLength(2);
+      expect(shortRegion[0]).toContain('>>>Short');
+      expect(shortRegion.some((line) => line.trim() === '')).toBe(true);
+    });
+  });
+
+  it('should not word-wrap the description when width counting is off', async () => {
+    await withColumns(80, async () => {
+      const { events, getScreen } = await render(checkboxSearch, {
+        message: 'Select items',
+        pageSize: {
+          autoBufferDescriptions: true,
+          autoBufferCountsLineWidth: false,
+        },
+        choices: [
+          { value: 'long', name: 'Long', description: threeLongWords },
+          { value: 'short', name: 'Short', description: 'Short' },
+        ],
+      });
+
+      const longRegion = descriptionRegion(frame(getScreen));
+      expect(longRegion).toHaveLength(1);
+      expect(longRegion[0]).toContain(threeLongWords);
+
+      await events.keypress('down');
+
+      const shortRegion = descriptionRegion(frame(getScreen));
+      expect(shortRegion).toHaveLength(1);
+      expect(shortRegion[0]).toContain('Short');
+    });
   });
 });

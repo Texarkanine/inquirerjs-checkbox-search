@@ -1,0 +1,1 @@
+Peak measures theme.style.description. padDescription only pads. Word-wrap the painted block only when autoBufferCountsLineWidth is not false.

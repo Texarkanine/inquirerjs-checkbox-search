@@ -1,6 +1,6 @@
 {
   "name": "inquirerjs-checkbox-search",
-  "version": "2.1.3",
+  "version": "3.0.0",
   "description": "A multi-select prompt with text filtering for inquirer.js",
   "keywords": [
     "answer",
@@ -79,7 +79,7 @@
     "test:mutate": "stryker run",
     "test:mutate:dry": "stryker run --dryRunOnly",
     "test:ui": "vitest --ui",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.scripts.json",
     "attw": "attw --pack",
     "pkg:inspect": "rimraf package-inspect *.tgz && npm run build && npm pack && mkdir package-inspect && tar -xzf *.tgz -C package-inspect && echo '\\n📦 Package extracted to package-inspect/ for inspection'",
     "prepublishOnly": "npm run clean && npm run build && npm run test:ci && npm run attw",
@@ -96,26 +96,27 @@
     "@inquirer/figures": "^2.0.8",
     "@inquirer/type": "^4.1.0",
     "ansi-escapes": "^7.0.0",
+    "fast-wrap-ansi": "^0.2.2",
     "yoctocolors-cjs": "^2.1.2"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.1",
     "@eslint/js": "^10.0.0",
-    "@inquirer/testing": "^3.3.11",
-    "@stryker-mutator/core": "^10.0.0",
-    "@stryker-mutator/vitest-runner": "^10.0.0",
-    "@types/node": "^22.0.0",
-    "@typescript-eslint/eslint-plugin": "^8.68.0",
-    "@typescript-eslint/parser": "^8.68.0",
-    "@vitest/coverage-v8": "^5.0.2",
-    "@vitest/ui": "^5.0.2",
-    "eslint": "^10.9.1",
+    "@inquirer/testing": "^3.3.16",
+    "@stryker-mutator/core": "^10.1.1",
+    "@stryker-mutator/vitest-runner": "^10.1.1",
+    "@types/node": "^22.20.5",
+    "@typescript-eslint/eslint-plugin": "^8.72.1",
+    "@typescript-eslint/parser": "^8.72.1",
+    "@vitest/coverage-v8": "^5.1.0",
+    "@vitest/ui": "^5.1.0",
+    "eslint": "^10.13.0",
     "eslint-config-prettier": "^10.1.8",
-    "prettier": "^3.0.0",
+    "prettier": "^3.9.10",
     "rimraf": "^6.0.0",
     "tshy": "^4.1.1",
     "typescript": "^6.0.0",
-    "vitest": "^5.0.2"
+    "vitest": "^5.1.0"
   },
   "engines": {
     "node": ">=22"

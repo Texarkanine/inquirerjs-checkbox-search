@@ -83,8 +83,8 @@ type PageSizeConfig = {
   max?: number; // Maximum page size (absolute constraint)
   min?: number; // Minimum page size (absolute constraint, defaults to 1)
   buffer?: number; // Fixed buffer lines to subtract from page size
-  autoBufferDescriptions?: boolean; // Auto-reserve space for descriptions
-  autoBufferCountsLineWidth?: boolean; // Consider terminal width when counting description lines
+  autoBufferDescriptions?: boolean; // Auto-reserve space for descriptions and pad the description block
+  autoBufferCountsLineWidth?: boolean; // Count terminal word wrap. Defaults to true when autoBufferDescriptions is true. Set false to count newlines only.
   minBuffer?: number; // Minimum buffer lines (applied after auto/manual buffer)
 };
 ```
@@ -93,12 +93,26 @@ type PageSizeConfig = {
 
 1. Start with base page size (from `base` or auto-calculated)
 2. Calculate buffer:
-   - If `autoBufferDescriptions` is true: Add lines needed for largest description
+   - If `autoBufferDescriptions` is true: add the lines needed for the longest description. Counting uses terminal word wrap unless `autoBufferCountsLineWidth` is `false`. The reserved height is the largest description seen during the prompt, and it does not shrink if a later list is shorter.
    - Add `buffer` value (if specified)
    - Ensure buffer is at least `minBuffer` (if specified)
 3. Subtract buffer from base page size
 4. Apply `min`/`max` constraints
 5. Ensure final result is at least 1
+
+The description drawn under the list is padded out to that reserved height. A shorter description leaves blank lines, so the choice list does not grow or squeeze as the highlight moves.
+
+For choices with long descriptions:
+
+```typescript
+const selected = await checkboxSearch({
+  message: 'Select something:',
+  choices,
+  pageSize: {
+    autoBufferDescriptions: true,
+  },
+});
+```
 
 ### Theme Options
 

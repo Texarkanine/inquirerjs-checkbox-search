@@ -1,0 +1,1 @@
+Demo GIFs: npm demo scripts only run via Docker. CI generate-demos.yaml runs demo:generate:all on every PR and posts URLs from the demo-images orphan branch. Feature PRs do not commit the GIF.

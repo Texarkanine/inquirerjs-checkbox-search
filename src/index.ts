@@ -18,6 +18,7 @@ import type { PartialDeep } from '@inquirer/type';
 import colors from 'yoctocolors-cjs';
 import figures from '@inquirer/figures';
 import ansiEscapes from 'ansi-escapes';
+import { wrapAnsi } from 'fast-wrap-ansi';
 
 /** Reused across keypresses; constructing a Segmenter is not cheap. */
 const graphemeSegmenter = new Intl.Segmenter(undefined, {
@@ -284,6 +285,92 @@ export function validatePageSizeConfig(config: PageSizeConfig): void {
 }
 
 /**
+ * Options for description wrapping.
+ *
+ * `wordWrap` breaks on spaces, which uses more rows than character-ceil on prose.
+ * `hard` also splits a token that is wider than the column, matching the
+ * hard wrap `@inquirer/core` applies when it paints the prompt.
+ */
+const DESCRIPTION_WRAP_OPTIONS = {
+  trim: false,
+  wordWrap: true,
+  hard: true,
+} as const;
+
+/**
+ * Column width used when measuring and padding descriptions.
+ *
+ * One less than the terminal width so `@inquirer/core`'s later hard wrap
+ * does not reflow a line we already wrapped. Clamped to at least 1.
+ *
+ * @returns Width in columns
+ */
+function descriptionWrapWidth(): number {
+  const columns = process.stdout.columns || 80;
+  return Math.max(1, columns - 1);
+}
+
+/**
+ * Wrap a description the way the bottom block will occupy rows.
+ *
+ * @param text - Description text, possibly already styled
+ * @returns The text with wrap newlines inserted
+ */
+function wrapDescription(text: string): string {
+  const width = descriptionWrapWidth();
+  return text
+    .split('\n')
+    .map((line) => wrapAnsi(line, width, DESCRIPTION_WRAP_OPTIONS))
+    .join('\n');
+}
+
+/**
+ * Copy items with each description passed through the theme style.
+ *
+ * The peak must measure the text the pad will paint. A style that adds
+ * visible columns can wrap onto a row the raw description did not need.
+ *
+ * @param items - Choices and separators to measure
+ * @param style - Theme description style
+ * @returns Items whose descriptions are the styled strings
+ */
+function withStyledDescriptions<Value>(
+  items: readonly Item<Value>[],
+  style: (text: string) => string,
+): readonly Item<Value>[] {
+  return items.map((item) => {
+    if (Separator.isSeparator(item) || !item.description) {
+      return item;
+    }
+    return { ...item, description: style(item.description) };
+  });
+}
+
+/**
+ * Extend a description block with blank lines up to a reserved height.
+ *
+ * The caller wraps first when width counting is on. When width counting is
+ * off, the text stays on its newline rows and this function only pads.
+ *
+ * @param text - Description text, possibly already styled and wrapped. Empty when the active item has none.
+ * @param reservedLines - Session peak line count to hold the block at
+ * @returns The block, padded with empty lines
+ */
+function padDescription(text: string, reservedLines: number): string {
+  const lines = text.split('\n');
+  while (lines.length < reservedLines) {
+    lines.push('');
+  }
+  // ScreenManager treats a final empty line (length 0) as "cursor at end of
+  // line" and appends another newline. A single space keeps the reserved
+  // height; breakLines trimEnd makes that row look blank.
+  if (lines.length > 0 && lines[lines.length - 1] === '') {
+    lines[lines.length - 1] = ' ';
+  }
+  return lines.join('\n');
+}
+
+/**
  * Calculate the maximum number of lines needed for descriptions across all items
  * @param items - Array of items to analyze
  * @param countLineWidth - Whether to consider terminal width for line wrapping
@@ -300,18 +387,9 @@ export function calculateDescriptionLines<Value>(
       continue;
     }
 
-    let lines: number;
-    if (countLineWidth) {
-      // Consider terminal width for wrapping
-      const terminalWidth = process.stdout.columns || 80;
-      const descriptionLines = item.description.split('\n');
-      lines = descriptionLines.reduce((total, line) => {
-        return total + (Math.ceil(line.length / terminalWidth) || 1);
-      }, 0);
-    } else {
-      // Simple newline counting
-      lines = item.description.split('\n').length;
-    }
+    const lines = countLineWidth
+      ? wrapDescription(item.description).split('\n').length
+      : item.description.split('\n').length;
 
     maxLines = Math.max(maxLines, lines);
   }
@@ -323,11 +401,13 @@ export function calculateDescriptionLines<Value>(
  * Resolve PageSize configuration to a final numeric page size
  * @param pageSize - PageSize configuration (number or PageSizeConfig)
  * @param items - Current items to consider for auto-buffering
+ * @param descriptionLineFloor - Minimum description rows to reserve when auto-buffering. The prompt uses this to keep a session peak. Ignored unless `autoBufferDescriptions` is on.
  * @returns Final resolved page size
  */
 export function resolvePageSize<Value>(
   pageSize: PageSize,
   items: readonly Item<Value>[],
+  descriptionLineFloor = 0,
 ): number {
   // Handle simple number case (backward compatibility)
   if (typeof pageSize === 'number') {
@@ -351,11 +431,13 @@ export function resolvePageSize<Value>(
 
   // 2a: Start at 0 ✓
 
-  // 2b: If autoBufferDescriptions, add max description lines
+  // 2b: If autoBufferDescriptions, add max description lines.
+  // Width counting is on unless the caller sets autoBufferCountsLineWidth: false.
   if (pageSize.autoBufferDescriptions) {
-    buffer += calculateDescriptionLines(
-      items,
-      pageSize.autoBufferCountsLineWidth || false,
+    const countLineWidth = pageSize.autoBufferCountsLineWidth !== false;
+    buffer += Math.max(
+      calculateDescriptionLines(items, countLineWidth),
+      descriptionLineFloor,
     );
   }
 
@@ -468,6 +550,7 @@ export default createPrompt(
     const [searchError, setSearchError] = useState<string>();
 
     const allItemsRef = useRef<ReadonlyArray<Item<Value>>>([]);
+    const descriptionPeakRef = useRef(0);
 
     // Initialize choices directly like the original checkbox prompt
     const [allItems, setAllItems] = useState<ReadonlyArray<Item<Value>>>(() => {
@@ -487,16 +570,36 @@ export default createPrompt(
     // Calculate effective page size (memoized with terminal size tracking)
     // Use new resolvePageSize function to handle both number and PageSizeConfig
     const terminalHeight = process.stdout.rows; // Track terminal size for memoization
+    const terminalWidth = process.stdout.columns;
     const pageSize = useMemo(
       () => {
+        const autoBuffer =
+          typeof configPageSize === 'object' &&
+          configPageSize.autoBufferDescriptions === true;
+        if (autoBuffer) {
+          const countLineWidth =
+            configPageSize.autoBufferCountsLineWidth !== false;
+          const lines = calculateDescriptionLines(
+            withStyledDescriptions(allItems, theme.style.description),
+            countLineWidth,
+          );
+          if (lines > descriptionPeakRef.current) {
+            descriptionPeakRef.current = lines;
+          }
+        }
+
         if (configPageSize !== undefined) {
-          return resolvePageSize(configPageSize, allItems);
+          return resolvePageSize(
+            configPageSize,
+            allItems,
+            descriptionPeakRef.current,
+          );
         } else {
           // Default behavior - auto-calculate
           return calculateDynamicPageSize(7);
         }
       },
-      [configPageSize, terminalHeight, allItems], // Recalculate when config, terminal, OR items change
+      [configPageSize, terminalHeight, terminalWidth, allItems], // Recalculate when config, terminal size, OR items change
     );
 
     // Store the active item value instead of active index
@@ -937,9 +1040,23 @@ export default createPrompt(
       content = `\n${page}`;
     }
 
-    // Add description of active item at the bottom (like original inquirer.js)
+    // Add description of active item at the bottom (like original inquirer.js).
+    // When auto-buffering, pad to the session peak so a shorter description
+    // does not give rows back to the frame.
     let descriptionLine = '';
-    if (activeDescription) {
+    const autoBufferDescriptions =
+      typeof configPageSize === 'object' &&
+      configPageSize.autoBufferDescriptions === true;
+    if (autoBufferDescriptions && descriptionPeakRef.current > 0) {
+      const styled = activeDescription
+        ? theme.style.description(activeDescription)
+        : '';
+      const countLineWidth =
+        typeof configPageSize === 'object' &&
+        configPageSize.autoBufferCountsLineWidth !== false;
+      const block = countLineWidth ? wrapDescription(styled) : styled;
+      descriptionLine = `\n${padDescription(block, descriptionPeakRef.current)}`;
+    } else if (activeDescription) {
       descriptionLine = `\n${theme.style.description(activeDescription)}`;
     }
 

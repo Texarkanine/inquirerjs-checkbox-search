@@ -1,0 +1,1 @@
+Scratch demo generation is serial and dynamic-imports scripts/demo-fingerprint.ts. The GIF-only path must not import that module.

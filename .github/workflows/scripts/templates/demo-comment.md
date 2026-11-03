@@ -2,6 +2,8 @@
 
 ${CHANGE_STATUS_MESSAGE}
 
+${SHADOW_VERDICTS}
+
 ${DEMO_LIST}
 
 ## 📋 Commit Information

@@ -1,0 +1,1 @@
+Shadow frames: locally basic base/head tapes give identical frame-text sequences (4/4, also on 2 busy cores). assessFingerprints calls a retry CHANGED when base!=head again; it never checks each side reproduced itself.
