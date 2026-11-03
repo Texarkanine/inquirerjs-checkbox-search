@@ -178,6 +178,80 @@ export function formatAmendList(selection: {
 }
 
 /**
+ * Parse the upload script's `name:url` pairs.
+ *
+ * Splits each pair on the first colon. An empty string is no images.
+ * The upload-failure sentinel throws. A name must be one safe path
+ * segment, and a URL must be `https://` and end in `.gif`.
+ */
+const UPLOAD_FAILURE = '❌ Failed to upload demo images';
+const GIF_URL = /^https:\/\/.*\.gif$/;
+
+export function parseDemoImageList(raw: string): Record<string, string> {
+  if (raw.includes(UPLOAD_FAILURE)) {
+    throw new Error(`upload failed: ${UPLOAD_FAILURE}`);
+  }
+  const images: Record<string, string> = {};
+  for (const token of raw.split(/\s+/)) {
+    if (token.length === 0) {
+      continue;
+    }
+    const colon = token.indexOf(':');
+    if (colon <= 0) {
+      throw new Error(`image pair is missing a name: ${token}`);
+    }
+    const name = token.slice(0, colon);
+    const url = token.slice(colon + 1);
+    assertSafeDemoName(name);
+    if (!GIF_URL.test(url)) {
+      throw new Error(`URL must be https and end in .gif: ${url}`);
+    }
+    images[name] = url;
+  }
+  return images;
+}
+
+/**
+ * Replace the known comment tokens.
+ *
+ * The replacement is a function, so `$` in a value stays literal.
+ * A template that omits a known token throws. Any other `${...}` token
+ * is left unchanged.
+ */
+const COMMENT_TOKENS = [
+  'CHANGE_STATUS_MESSAGE',
+  'DEMO_LIST',
+  'PULL_NOTICE',
+  'GITHUB_REPOSITORY',
+  'GITHUB_SHA',
+  'USER_COMMIT_SHA',
+] as const;
+
+export function fillCommentTemplate(
+  template: string,
+  tokens: {
+    CHANGE_STATUS_MESSAGE: string;
+    DEMO_LIST: string;
+    PULL_NOTICE: string;
+    GITHUB_REPOSITORY: string;
+    GITHUB_SHA: string;
+    USER_COMMIT_SHA: string;
+  },
+): string {
+  for (const name of COMMENT_TOKENS) {
+    if (!template.includes(`\${${name}}`)) {
+      throw new Error(`missing token ${name}`);
+    }
+  }
+  return template.replace(/\$\{([A-Za-z0-9_]+)\}/g, (match, name: string) => {
+    if (Object.hasOwn(tokens, name)) {
+      return tokens[name as keyof typeof tokens];
+    }
+    return match;
+  });
+}
+
+/**
  * Attempt-0 GIF paths to copy into `docs/img/` for upload.
  *
  * A demo that still exists is the head recording. A removed demo is the

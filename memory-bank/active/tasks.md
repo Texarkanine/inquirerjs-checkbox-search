@@ -239,6 +239,8 @@ The preflight advisory to move the whole pipeline into one `runDemoPipeline` is 
 
 ### 9. Image list and template fill — executable
 
+- [x] Done
+
 - Files: `scripts/demo-comment.ts`, `scripts/demo-comment.test.ts`, `.github/workflows/scripts/templates/demo-comment.md`
 
 1. Stub tests: empty cases for a pair list, the upload-failure sentinel, a non-https URL, an equal template fill, and a `DEMO_LIST` value that contains `$&`.

@@ -3,9 +3,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
+  fillCommentTemplate,
   formatAmendList,
   formatTextDiff,
   loadCommentEntries,
+  parseDemoImageList,
   planDocsImgCopies,
   renderDemoComment,
   selectReleaseAmend,
@@ -389,6 +391,73 @@ function writeRecording(
   }
 }
 
+describe('parseDemoImageList', () => {
+  it('returns an empty map for an empty string and splits pairs on the first colon', () => {
+    expect(parseDemoImageList('')).toEqual({});
+    expect(parseDemoImageList('   ')).toEqual({});
+    expect(
+      parseDemoImageList(
+        'basic:https://example.com/basic-demo.gif other:https://example.com/other-demo.gif',
+      ),
+    ).toEqual({
+      basic: 'https://example.com/basic-demo.gif',
+      other: 'https://example.com/other-demo.gif',
+    });
+  });
+
+  it('throws on the upload-failure sentinel, a non-https URL, and an unsafe name', () => {
+    expect(() => parseDemoImageList('❌ Failed to upload demo images')).toThrow(
+      /upload/,
+    );
+    expect(() =>
+      parseDemoImageList('basic:http://example.com/basic-demo.gif'),
+    ).toThrow(/https/);
+    expect(() =>
+      parseDemoImageList('../basic:https://example.com/basic-demo.gif'),
+    ).toThrow(/demo name/);
+  });
+});
+
+describe('fillCommentTemplate', () => {
+  const tokens = {
+    CHANGE_STATUS_MESSAGE: 'status',
+    DEMO_LIST: 'price $& and group $1',
+    PULL_NOTICE: '',
+    GITHUB_REPOSITORY: 'owner/repo',
+    GITHUB_SHA: 'abc',
+    USER_COMMIT_SHA: 'def',
+  };
+
+  it('replaces known tokens and leaves $& and $1 literal', () => {
+    const filled = fillCommentTemplate(
+      [
+        '${CHANGE_STATUS_MESSAGE}',
+        '${DEMO_LIST}',
+        '${PULL_NOTICE}',
+        '${GITHUB_REPOSITORY}',
+        '${GITHUB_SHA}',
+        '${USER_COMMIT_SHA}',
+        '${NOT_A_TOKEN}',
+      ].join('\n'),
+      tokens,
+    );
+
+    expect(filled).toContain('price $& and group $1');
+    expect(filled).toContain('owner/repo');
+    expect(filled).toContain('abc');
+    expect(filled).toContain('def');
+    expect(filled).toContain('status');
+    expect(filled).not.toContain('${DEMO_LIST}');
+    expect(filled).toContain('${NOT_A_TOKEN}');
+  });
+
+  it('throws when a known token is missing from the template', () => {
+    expect(() => fillCommentTemplate('${DEMO_LIST}', tokens)).toThrow(
+      /CHANGE_STATUS_MESSAGE/,
+    );
+  });
+});
+
 describe('planDocsImgCopies', () => {
   it('maps a live demo to the attempt-0 head GIF and a removed demo to the before GIF', () => {
     const copies = planDocsImgCopies({
@@ -401,23 +470,11 @@ describe('planDocsImgCopies', () => {
 
     expect(copies).toEqual([
       {
-        from: join(
-          '/scratch',
-          'attempt-0',
-          'head',
-          'basic',
-          'basic-demo.gif',
-        ),
+        from: join('/scratch', 'attempt-0', 'head', 'basic', 'basic-demo.gif'),
         to: 'docs/img/basic-demo.gif',
       },
       {
-        from: join(
-          '/scratch',
-          'attempt-0',
-          'base',
-          'gone',
-          'gone-demo.gif',
-        ),
+        from: join('/scratch', 'attempt-0', 'base', 'gone', 'gone-demo.gif'),
         to: 'docs/img/gone-before-demo.gif',
       },
     ]);
