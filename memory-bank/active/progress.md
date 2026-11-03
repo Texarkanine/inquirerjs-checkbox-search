@@ -46,3 +46,29 @@ Switch the pull-request demo comment and the release-please GIF amend from the G
     - The gif-commit recording is its own step and is skipped when that commit is already the merge-base
 * Insights
     - The upload script names a demo from every `*-demo.gif`, so the comment list has to come from the tapes rather than from the upload output
+
+## 2026-11-03 - CREATIVE - COMPLETE
+
+* Work completed
+    - Read the `main` ruleset, the `Generate` requirement, and the 2026 bot-loop commits
+    - Compared a release-time GIF update, a commit on the pull request, a push to `main`, and a merge queue
+* Decisions made
+    - Add one commit to a pull request that changes a demo, so squash or rebase lands those GIFs on `main`
+    - Leave the strict up-to-date checkbox off
+    - Keep the release amend as a repair when `docs/img/` is still wrong
+* Insights
+    - The false blame on a later pull request comes from comparing GIF bytes with the file on `main`. The fingerprint compares two recordings of code
+    - The demo app cannot push to `main`. The ruleset requires a pull request and the app is not a bypass actor
+
+## 2026-11-03 - PREFLIGHT - COMPLETE (PASS WITH ADVISORY)
+
+* Work completed
+    - Validated implementation plan against codebase reality, Level 3 prerequisites, and creative phase outputs
+    - Verified strict TDD step ordering across units 1-7, change-detector avoidance for workflow wiring in unit 8, and prose classification for unit 9
+    - Evaluated radical innovation for single-pass HEAD tape generation and selective release baseline recording
+* Decisions made
+    - Plan passes preflight validation with advisory on single-pass tape generation optimization
+    - Proceed to Build phase using the verified plan in `tasks.md`
+* Insights
+    - Eliminating duplicate VHS generation between `demo:generate:all` and scratch head recording can cut CI runtimes substantially without affecting verdict accuracy
+
