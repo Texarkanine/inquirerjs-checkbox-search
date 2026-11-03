@@ -72,3 +72,15 @@ Switch the pull-request demo comment and the release-please GIF amend from the G
 * Insights
     - Eliminating duplicate VHS generation between `demo:generate:all` and scratch head recording can cut CI runtimes substantially without affecting verdict accuracy
 
+## 2026-11-03 - PLAN - COMPLETE
+
+* Work completed
+    - Wrote the accepted GIF-commit decision into the project brief and the implementation plan
+    - Removed the preflight status that passed the previous plan
+* Decisions made
+    - A demo-changing pull request adds one commit from a single head recording
+    - The operator will require branches to be up to date with `main`. The ruleset edit is theirs
+    - The release amend repairs `docs/img/` only when it is still wrong
+* Insights
+    - `/niko-build` preflights again because the plan it would have trusted forbade this commit
+

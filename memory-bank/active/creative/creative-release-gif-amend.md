@@ -1,5 +1,7 @@
 # Architecture Decision: Release GIF Amend Base
 
+Superseded in part on 2026-11-03. The operator accepted `creative-commit-demos-on-merge.md`: a pull request that changes a demo adds one GIF commit. The release-base decision below still stands. "A feature pull request gets no bot commit" does not.
+
 ## Requirements & Constraints
 
 Ranked quality attributes:

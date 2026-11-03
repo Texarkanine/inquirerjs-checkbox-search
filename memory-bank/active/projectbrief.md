@@ -16,7 +16,7 @@ A pull request that changes the visible text or color in one demo expands that d
 
 ### Use-Case 3
 
-A release pull request amends the README GIFs only when a demo is CHANGED. A feature pull request gets no bot commits.
+A pull request that changes a demo adds one commit with the updated GIFs. Squash or rebase brings that commit onto `main`. A pull request that changes no demo adds nothing. A release pull request amends GIFs only when `docs/img/` is still wrong.
 
 ## Requirements
 
@@ -28,8 +28,8 @@ Authoritative spec: [issue #190](https://github.com/Texarkanine/inquirerjs-check
 4. A NEW demo is open and shows the after image only.
 5. A pull request that cannot affect demos shows every demo collapsed.
 6. Re-running the workflow on the same commit gives the same verdicts.
-7. Feature pull requests get no bot commits.
-8. A release pull request amends the README GIFs only when a demo is CHANGED. If a committed reference is required, commit text fingerprints. Never commit frame hashes.
+7. A pull request whose verdict is CHANGED, NEW, or REMOVED adds one commit to its branch with the GIFs from a single recording of the head. That commit is not an amend and not a force-push. SAME, NOISY, and UNSTABLE do not push. The comment tells the author to pull before the next push. See `memory-bank/active/creative/creative-commit-demos-on-merge.md`.
+8. A release pull request amends the README GIFs only when `docs/img/` is still wrong compared with the commit that last touched it. Never commit frame hashes. No committed text fingerprint is required.
 
 ## Constraints
 
@@ -38,10 +38,11 @@ Authoritative spec: [issue #190](https://github.com/Texarkanine/inquirerjs-check
 3. UNSTABLE and NOISY are verdicts added after issue #190 was written. During shadow they exit 0 so the required check stays green. The issue does not define how the comment presents them, or how a REMOVED demo is shown.
 4. VHS stays the version `demos/Dockerfile` pins. Do not point the container `TMPDIR` at the scratch mount. Do not create the frames directory before `vhs` runs.
 5. Durations are not compared. Demos show only what the tapes exercise.
+6. The operator turns on the ruleset checkbox that requires a pull request branch to be up to date with `main` before merge. This work does not edit that ruleset. The job name stays `Generate`, the workflow keeps running on every pull request to `main`, and it has no path filter.
 
 ## Acceptance Criteria
 
 1. A pull request that cannot affect demos shows every demo collapsed and indicated as the same.
 2. A pull request that changes visible text or color in one demo expands that demo and only that demo, with before and after.
 3. Re-running the workflow on the same commit gives the same verdicts.
-4. Feature pull requests get no bot commits. Release pull requests get GIF commits only when a demo is CHANGED.
+4. A demo-changing pull request cannot merge while its head lacks the updated GIFs. `Generate` stays the required check name. A pull request that changes no demo gets no GIF commit. A release gets GIF commits only when `docs/img/` is still wrong.
