@@ -1,7 +1,7 @@
 # Active Context
 
 ## Current Task: Promote demo verdicts out of shadow
-**Phase:** QA - COMPLETE (FAIL)
+**Phase:** BUILD - COMPLETE
 
 ## What Was Done
 - Confirmed intent against [issue #190](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/190): fingerprint verdicts drive the demo comment.
@@ -19,6 +19,7 @@
 - The release amend copies CHANGED and NEW GIFs from the repair scratch after `git restore` of `docs/img/`. It does not restore them from a backup of `docs/img/`, because the upload script can replace that directory and the scratch recording is already under `RUNNER_TEMP`.
 - The repair recording retries `NEED_FRAME_RETRY`, so a frame-only difference against an older GIF commit can still become CHANGED.
 - `src/index.ts` typecheck errors and the navigation/selection test failures are present on this branch without these changes. This task does not touch the prompt.
+- QA failed on three fixable findings. The rebuild resolves every GIF path in `buildDockerFfmpegStackArgs` before the Docker mount, fences a CHANGED text diff as a `diff` block, and puts the detached doc comments back on their functions. The comment-size, duplicated CLI, and unused `--flag=value` advisories were left as written.
 
 ## Next Step
-- Rerun Build to fix the blocking QA findings in `memory-bank/active/.qa-validation-status`.
+- QA review of the rebuild.

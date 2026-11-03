@@ -26,13 +26,6 @@ export interface DemoCommentEntry {
   stackedUrl?: string;
 }
 
-/**
- * Render the comment banner, the per-demo blocks, and the pull notice.
- *
- * SAME, NOISY, and UNSTABLE are collapsed and name their verdict.
- * CHANGED, NEW, and REMOVED are open. `pullNotice` is the pull sentence
- * only when `gifCommitAdded` is true.
- */
 const STABLE_BANNER =
   '✅ **Demos are stable** - No changes detected in demo output.';
 const CHANGES_BANNER =
@@ -107,7 +100,7 @@ function renderDemoBlock(entry: DemoCommentEntry): string {
       const image = `![${entry.name}-before-after](${requiredUrl(entry.stackedUrl, 'stacked URL')})`;
       const diff =
         !entry.stylingOnly && entry.textDiff.length > 0
-          ? `\n\n${detailsBlock(false, 'Text diff', entry.textDiff)}`
+          ? `\n\n${detailsBlock(false, 'Text diff', `\`\`\`diff\n${entry.textDiff}\n\`\`\``)}`
           : '';
       return detailsBlock(true, summary, `${image}${diff}`);
     }
@@ -118,6 +111,14 @@ function renderDemoBlock(entry: DemoCommentEntry): string {
   }
 }
 
+/**
+ * Render the comment banner, the per-demo blocks, and the pull notice.
+ *
+ * SAME, NOISY, and UNSTABLE are collapsed and name their verdict.
+ * CHANGED, NEW, and REMOVED are open. A text diff is a fenced `diff`
+ * block. `pullNotice` is the pull sentence only when `gifCommitAdded`
+ * is true.
+ */
 export function renderDemoComment(
   entries: readonly DemoCommentEntry[],
   options?: { gifCommitAdded?: boolean },
@@ -179,6 +180,9 @@ export function formatAmendList(selection: {
   return [...stageLines, ...removeLines].join('\n');
 }
 
+const UPLOAD_FAILURE = '❌ Failed to upload demo images';
+const GIF_URL = /^https:\/\/.*\.gif$/;
+
 /**
  * Parse the upload script's `name:url` pairs.
  *
@@ -186,9 +190,6 @@ export function formatAmendList(selection: {
  * The upload-failure sentinel throws. A name must be one safe path
  * segment, and a URL must be `https://` and end in `.gif`.
  */
-const UPLOAD_FAILURE = '❌ Failed to upload demo images';
-const GIF_URL = /^https:\/\/.*\.gif$/;
-
 export function parseDemoImageList(raw: string): Record<string, string> {
   if (raw.includes(UPLOAD_FAILURE)) {
     throw new Error(`upload failed: ${UPLOAD_FAILURE}`);
@@ -213,13 +214,6 @@ export function parseDemoImageList(raw: string): Record<string, string> {
   return images;
 }
 
-/**
- * Replace the known comment tokens.
- *
- * The replacement is a function, so `$` in a value stays literal.
- * A template that omits a known token throws. Any other `${...}` token
- * is left unchanged.
- */
 const COMMENT_TOKENS = [
   'CHANGE_STATUS_MESSAGE',
   'DEMO_LIST',
@@ -229,6 +223,13 @@ const COMMENT_TOKENS = [
   'USER_COMMIT_SHA',
 ] as const;
 
+/**
+ * Replace the known comment tokens.
+ *
+ * The replacement is a function, so `$` in a value stays literal.
+ * A template that omits a known token throws. Any other `${...}` token
+ * is left unchanged.
+ */
 export function fillCommentTemplate(
   template: string,
   tokens: {

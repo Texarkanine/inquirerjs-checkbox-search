@@ -1,0 +1,1 @@
+buildDockerFfmpegStackArgs resolves GIF paths before the Docker mount. A relative docs/img output is a bind mount. CHANGED text diffs in the comment are fenced as a diff block.

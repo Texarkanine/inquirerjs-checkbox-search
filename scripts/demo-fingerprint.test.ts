@@ -1,6 +1,6 @@
 import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   assertSafeDemoName,
@@ -381,6 +381,21 @@ describe('buildDockerFfmpegStackArgs', () => {
       '[0][1]vstack=inputs=2,split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=none',
     );
     expect(args.join('\n')).not.toContain('TMPDIR');
+  });
+
+  it('resolves a relative output path so Docker bind-mounts it', () => {
+    const args = buildDockerFfmpegStackArgs({
+      image: 'vhs-node-demo:head',
+      beforeGif: '/tmp/before/basic-demo.gif',
+      afterGif: '/tmp/after/basic-demo.gif',
+      outputGif: 'docs/img/basic-before-after-demo.gif',
+    });
+    const outputDir = resolve('docs/img');
+    const outputGif = resolve('docs/img/basic-before-after-demo.gif');
+
+    expect(args).toContain(`${outputDir}:${outputDir}`);
+    expect(args).toContain(outputGif);
+    expect(args).not.toContain('docs/img:docs/img');
   });
 });
 

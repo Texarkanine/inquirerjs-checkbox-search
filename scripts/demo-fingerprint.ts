@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { basename, dirname, join } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 /** VHS separates screens in a `.txt` record with this line. */
@@ -312,21 +312,12 @@ export function withFingerprintOutputs(
 export const containerFramesDir = '/tmp/vhs-frames';
 
 /**
- * Docker arguments for one scratch recording. The host scratch directory
- * is mounted at `/workspace/scratch`. The gif is an Output line in the
- * tape, so these arguments do not pass `--output`.
- *
- * The container is not removed. The caller copies the frames out and
- * then removes it. VHS writes frame PNGs as mode 0600, so the command
- * makes them readable before the copy. `vhs` keeps its own exit status
- * when the frames directory is absent.
- */
-/**
  * Docker arguments that stack a before GIF above an after GIF.
  *
- * The output directory is mounted writable. The two input directories
- * are read-only. The process temp dir is not redirected. This function
- * does not run Docker.
+ * Paths are resolved so a relative path is a bind mount, not a named
+ * volume. The output directory is mounted writable. The two input
+ * directories are read-only. The process temp dir is not redirected.
+ * This function does not run Docker.
  */
 export function buildDockerFfmpegStackArgs(options: {
   image: string;
@@ -334,9 +325,12 @@ export function buildDockerFfmpegStackArgs(options: {
   afterGif: string;
   outputGif: string;
 }): string[] {
-  const beforeDir = dirname(options.beforeGif);
-  const afterDir = dirname(options.afterGif);
-  const outputDir = dirname(options.outputGif);
+  const beforeGif = resolve(options.beforeGif);
+  const afterGif = resolve(options.afterGif);
+  const outputGif = resolve(options.outputGif);
+  const beforeDir = dirname(beforeGif);
+  const afterDir = dirname(afterGif);
+  const outputDir = dirname(outputGif);
   return [
     'run',
     '--rm',
@@ -350,15 +344,25 @@ export function buildDockerFfmpegStackArgs(options: {
     'ffmpeg',
     options.image,
     '-i',
-    options.beforeGif,
+    beforeGif,
     '-i',
-    options.afterGif,
+    afterGif,
     '-filter_complex',
     '[0][1]vstack=inputs=2,split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=none',
-    options.outputGif,
+    outputGif,
   ];
 }
 
+/**
+ * Docker arguments for one scratch recording. The host scratch directory
+ * is mounted at `/workspace/scratch`. The gif is an Output line in the
+ * tape, so these arguments do not pass `--output`.
+ *
+ * The container is not removed. The caller copies the frames out and
+ * then removes it. VHS writes frame PNGs as mode 0600, so the command
+ * makes them readable before the copy. `vhs` keeps its own exit status
+ * when the frames directory is absent.
+ */
 export function buildDockerRunArgs(options: DockerRunOptions): string[] {
   return [
     'run',

@@ -129,10 +129,8 @@ describe('renderDemoComment', () => {
     expect(result.demoList).toContain(
       '![validation-before-after](https://example.com/validation-before-after.gif)',
     );
-    expect(result.demoList).toContain('<summary>Text diff</summary>');
-    expect(result.demoList).toContain('-old line\n+new line');
     expect(result.demoList).toContain(
-      '<details>\n<summary>Text diff</summary>',
+      '<details>\n<summary>Text diff</summary>\n\n```diff\n-old line\n+new line\n```\n</details>',
     );
   });
 

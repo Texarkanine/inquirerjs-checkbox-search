@@ -155,3 +155,15 @@ Switch the pull-request demo comment and the release-please GIF amend from the G
     - The plan does not need revision
 * Insights
     - The stack-argument test used absolute paths only, so it could not see the workflow's relative `docs/img/...` output
+
+## 2026-11-03 - BUILD - COMPLETE
+
+* Work completed
+    - Resolved GIF paths inside `buildDockerFfmpegStackArgs` and covered a relative `docs/img/` output with a test
+    - Fenced the CHANGED text diff as a `diff` block and asserted that fence
+    - Moved the detached doc comments onto `buildDockerRunArgs`, `renderDemoComment`, `parseDemoImageList`, and `fillCommentTemplate`
+* Decisions made
+    - The function resolves paths. The workflow still passes the relative `docs/img/` output
+    - The comment-size, duplicated CLI, and unused `--flag=value` advisories stay as written
+* Insights
+    - Docker treats a non-absolute `-v` source as a named volume, so the mount string has to be absolute on both sides
