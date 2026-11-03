@@ -16,4 +16,4 @@
 - The revised plan preflighted as `PASS WITH ADVISORY`. No change to `tasks.md`. Build notes: call `buildDockerFfmpegStackArgs` from `node` when wiring the stack step, and reset `docs/img/` before applying `selectReleaseAmend` paths so preview GIFs left by the upload script are not committed. The advisory to teach `formatAmendList` the scratch source path was not adopted.
 
 ## Next Step
-- Units 1–7 are green. Continue at unit 8, `formatShadowLine`.
+- Units 1–8 are green. Continue at unit 9, image list and template fill.

@@ -228,6 +228,8 @@ The preflight advisory to move the whole pipeline into one `runDemoPipeline` is 
 
 ### 8. Shadow line — executable
 
+- [x] Done
+
 - Files: `scripts/demo-fingerprint.ts`, `scripts/demo-fingerprint.test.ts`
 
 1. Stub tests: the existing `formatShadowLine` case is the test. Change its expected sentence in the write-tests step, not before.

@@ -328,8 +328,9 @@ describe('formatShadowLine', () => {
     ]);
 
     expect(line).toBe(
-      'Shadow verdicts (not used to expand demos): basic SAME, validation NEED_FRAME_RETRY.',
+      'Demo verdicts: basic SAME, validation NEED_FRAME_RETRY.',
     );
+    expect(line).not.toContain('not used');
     expect(line).not.toContain('\n');
   });
 });

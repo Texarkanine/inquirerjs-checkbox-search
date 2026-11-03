@@ -233,8 +233,10 @@ export function describeVerdict(input: AssessmentInput): {
 }
 
 /**
- * One comment line naming every demo verdict. Shadow mode prints this
- * and does not use it to expand or collapse the demo blocks.
+ * One job-summary line naming every demo verdict.
+ *
+ * The comment does not include this line. The per-demo summary is the
+ * verdict a reviewer sees.
  */
 export function formatShadowLine(
   entries: readonly { name: string; assessment: Assessment }[],
@@ -244,7 +246,7 @@ export function formatShadowLine(
     .map((entry) => `${entry.name} ${entry.assessment}`)
     .join(', ');
   const body = summary.length === 0 ? 'none' : summary;
-  return `Shadow verdicts (not used to expand demos): ${body}.`;
+  return `Demo verdicts: ${body}.`;
 }
 
 export interface GenerateArgs {
