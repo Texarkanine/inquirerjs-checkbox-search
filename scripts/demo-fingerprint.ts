@@ -319,6 +319,44 @@ export const containerFramesDir = '/tmp/vhs-frames';
  * makes them readable before the copy. `vhs` keeps its own exit status
  * when the frames directory is absent.
  */
+/**
+ * Docker arguments that stack a before GIF above an after GIF.
+ *
+ * The output directory is mounted writable. The two input directories
+ * are read-only. The process temp dir is not redirected. This function
+ * does not run Docker.
+ */
+export function buildDockerFfmpegStackArgs(options: {
+  image: string;
+  beforeGif: string;
+  afterGif: string;
+  outputGif: string;
+}): string[] {
+  const beforeDir = dirname(options.beforeGif);
+  const afterDir = dirname(options.afterGif);
+  const outputDir = dirname(options.outputGif);
+  return [
+    'run',
+    '--rm',
+    '-v',
+    `${beforeDir}:${beforeDir}:ro`,
+    '-v',
+    `${afterDir}:${afterDir}:ro`,
+    '-v',
+    `${outputDir}:${outputDir}`,
+    '--entrypoint',
+    'ffmpeg',
+    options.image,
+    '-i',
+    options.beforeGif,
+    '-i',
+    options.afterGif,
+    '-filter_complex',
+    '[0][1]vstack=inputs=2,split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=none',
+    options.outputGif,
+  ];
+}
+
 export function buildDockerRunArgs(options: DockerRunOptions): string[] {
   return [
     'run',

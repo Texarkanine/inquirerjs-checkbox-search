@@ -217,6 +217,8 @@ The preflight advisory to move the whole pipeline into one `runDemoPipeline` is 
 
 ### 7. FFmpeg stack arguments — executable
 
+- [x] Done
+
 - Files: `scripts/demo-fingerprint.ts`, `scripts/demo-fingerprint.test.ts`
 
 1. Stub tests: an empty case for the stack arguments.

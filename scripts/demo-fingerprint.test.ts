@@ -7,6 +7,7 @@ import {
   assessFingerprints,
   assessScratch,
   describeVerdict,
+  buildDockerFfmpegStackArgs,
   buildDockerRunArgs,
   formatCliStdout,
   formatShadowLine,
@@ -355,6 +356,30 @@ describe('withFingerprintOutputs', () => {
 
     expect(result).toContain('Output "/workspace/scratch/basic/frames/"');
     expect(result).not.toContain('Output "/workspace/scratch/basic/frames"\n');
+  });
+});
+
+describe('buildDockerFfmpegStackArgs', () => {
+  it('mounts the three parent directories and stacks the GIFs without setting TMPDIR', () => {
+    const args = buildDockerFfmpegStackArgs({
+      image: 'vhs-node-demo:head',
+      beforeGif: '/tmp/before/basic-demo.gif',
+      afterGif: '/tmp/after/basic-demo.gif',
+      outputGif: '/tmp/out/basic-before-after-demo.gif',
+    });
+
+    expect(args).toContain('vhs-node-demo:head');
+    expect(args).toContain('/tmp/before:/tmp/before:ro');
+    expect(args).toContain('/tmp/after:/tmp/after:ro');
+    expect(args).toContain('/tmp/out:/tmp/out');
+    expect(args).not.toContain('/tmp/out:/tmp/out:ro');
+    expect(args).toContain('--rm');
+    expect(args).toContain('--entrypoint');
+    expect(args).toContain('ffmpeg');
+    expect(args).toContain(
+      '[0][1]vstack=inputs=2,split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=none',
+    );
+    expect(args.join('\n')).not.toContain('TMPDIR');
   });
 });
 
