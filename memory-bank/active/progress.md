@@ -84,3 +84,12 @@ Switch the pull-request demo comment and the release-please GIF amend from the G
 * Insights
     - `/niko-build` preflights again because the plan it would have trusted forbade this commit
 
+## 2026-11-03 - PLAN - COMPLETE
+
+* Work completed
+    - Recorded the operator's acceptance of a GIF commit on a later human push that does not itself change the picture
+* Decisions made
+    - Ship the comparison against `main`. Do not add a comparison against the GIFs already on the branch
+* Insights
+    - A README-only commit after a demo change still reads CHANGED against `main`, and that extra GIF commit is accepted
+

@@ -55,7 +55,7 @@ graph TD
 
 - `assessFingerprints` keeps the pinned retry rule.
 - A frame comparison's two sides are recorded in the same job. Frame hashes are not committed.
-- A feature pull request adds one commit, and only when a verdict is CHANGED, NEW, or REMOVED. SAME, NOISY, and UNSTABLE do not push. The following run, whose actor is the demo app, exits green and does not record again.
+- A feature pull request adds one commit, and only when a verdict against `main` is CHANGED, NEW, or REMOVED. SAME, NOISY, and UNSTABLE do not push. The following run, whose actor is the demo app, exits green and does not record again. A later human commit is judged against `main` again, so a README-only commit can add another GIF commit. The operator accepted that on 2026-11-03 and said not to add machinery that compares the new head with the GIFs already on the branch.
 - UNSTABLE and NOISY still exit 0. `NEED_FRAME_RETRY` is internal: after the workflow's retry, a comment entry with that verdict is a failed job, not a SAME block.
 - The GIF-only generator does not import the TypeScript modules.
 - Do not point container `TMPDIR` at the scratch mount. Do not create `/tmp/vhs-frames` before `vhs`.
@@ -214,7 +214,7 @@ No new technology - validation not required. FFmpeg stays the binary already in 
 - `git checkout` of the release branch can drop the generated GIFs: copy them to `$RUNNER_TEMP` before checkout and copy back only the staged names.
 - A text diff run through `envsubst` would lose `$`: the comment is filled by replacing known tokens.
 - A third full recording can blow the 20 minute cap: the release repair recording is a separate step, and it is skipped when that commit is already the merge-base. The head is recorded once.
-- Pushing again because the branch still differs from `main` loops: the code change is still on the branch after the GIF commit. The demo app's own run is the stop. A later human commit may push again.
+- Pushing again because the branch still differs from `main` loops: the code change is still on the branch after the GIF commit. The demo app's own run is the stop. A later human commit may push again, including a README-only commit. The operator accepted that and rejected extra machinery to suppress it.
 - A feature amend or force-push rewrites the author's commit: feature updates add a commit. Only the release repair may amend.
 - The uploader treats every `*-demo.gif` as a demo: the comment list comes from `loadCommentEntries`, and the amend list is the explicit path list.
 - `generate-demo.js` importing the new module would put type stripping on the GIF-only path: the workflow starts `node` on the TypeScript files itself, and the GIF script stays untouched.
