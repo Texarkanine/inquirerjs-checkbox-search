@@ -261,6 +261,8 @@ The preflight advisory to move the whole pipeline into one `runDemoPipeline` is 
 
 ### 11. Wire the workflow — executable
 
+- [x] Done
+
 - Files: `.github/workflows/generate-demos.yaml`, `.github/workflows/scripts/generate-demo-comment.sh`, `.github/workflows/scripts/detect-demo-changes.sh`, `.github/workflows/scripts/templates/demo-comment.md`
 - Creative ref: `memory-bank/active/creative/creative-commit-demos-on-merge.md` and the two earlier creative documents
 - Behavior tests: steps 1–10. No test locks a YAML or shell string.
@@ -282,6 +284,8 @@ The preflight advisory to move the whole pipeline into one `runDemoPipeline` is 
     11. Delete `generate-demo-comment.sh` and `detect-demo-changes.sh` after nothing in the workflow calls them.
 
 ### 12. Tech context — prose/policy
+
+- [x] Done
 
 - Files: `memory-bank/techContext.md`
 - No tests: prose/policy artifact
@@ -327,6 +331,6 @@ No new technology - validation not required. FFmpeg stays the binary already in 
 - [x] Implementation plan complete
 - [x] Technology validation complete
 - [x] Pre-Mortem complete
-- [ ] Preflight
-- [ ] Build
+- [x] Preflight
+- [x] Build
 - [ ] QA

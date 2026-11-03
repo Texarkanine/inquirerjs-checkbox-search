@@ -107,121 +107,9 @@ jobs:
             echo "🔍 Regular PR detected: $PR_HEAD_REF"
           fi
 
-      - name: Generate all demo GIFs
+      - name: Record merge-base and head
         if: steps.check_demo_bot.outputs.is_demo_bot != 'true'
-        run: |
-          # Set deterministic timestamp for consistent builds
-          export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
-
-          # Generate all demos
-          echo "🎬 Generating all demos..."
-          npm run demo:generate:all
-
-      - name: Upload demo artifacts (always upload regardless of changes)
-        if: steps.check_demo_bot.outputs.is_demo_bot != 'true'
-        uses: actions/upload-artifact@v7
-        with:
-          name: demo-gifs-${{ github.run_id }}
-          path: docs/img/*.gif
-          retention-days: 30
-
-      - name: Upload all demos to orphan branch and prepare preview
-        if: steps.check_demo_bot.outputs.is_demo_bot != 'true' && steps.context.outputs.is_pr == 'true'
-        id: demo_preview
-        env:
-          PR_HEAD_REF: ${{ github.head_ref || github.ref_name }}
-        run: |
-          # For PRs, use the actual PR head commit, not the merge commit
-          PR_HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-
-          # Debug: Show SHA values being used
-          echo "🔍 SHA Debug Information:"
-          echo "  - github.sha (merge commit): ${{ github.sha }}"
-          echo "  - PR head SHA (user commit): $PR_HEAD_SHA"
-          echo "  - Are they different? $([ "${{ github.sha }}" != "$PR_HEAD_SHA" ] && echo "YES ✅" || echo "NO ❌")"
-
-          # Call upload script and capture structured output
-          UPLOAD_OUTPUT=$(.github/workflows/scripts/upload-demo-images.sh \
-            --pr-number="${{ github.event.pull_request.number }}" \
-            --commit-sha="$PR_HEAD_SHA" \
-            --repository="${{ github.repository }}" \
-            --head-ref="$PR_HEAD_REF")
-
-          # Parse structured output
-          USER_COMMIT_SHA=$(echo "$UPLOAD_OUTPUT" | grep "^USER_COMMIT_SHA=" | cut -d'=' -f2)
-          DEMO_IMAGES=$(echo "$UPLOAD_OUTPUT" | grep "^DEMO_IMAGES=" | cut -d'=' -f2-)
-
-          # Store outputs for downstream steps
-          echo "demo_images<<EOF" >> $GITHUB_OUTPUT
-          echo "$DEMO_IMAGES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-          echo "user_commit_sha=$USER_COMMIT_SHA" >> $GITHUB_OUTPUT
-
-      - name: Check which demos changed (using git)
-        if: steps.check_demo_bot.outputs.is_demo_bot != 'true'
-        id: check_changes
-        env:
-          IS_RELEASE_PLEASE: ${{ steps.context.outputs.is_release_please }}
-        run: |
-          # Ensure we have the latest main branch for comparison
-          git fetch origin main:main || true
-
-          # For release-please PRs, compare to previous commit; for feature branches, compare to main
-          if [ "$IS_RELEASE_PLEASE" = "true" ]; then
-            echo "🔍 Release-please PR: comparing to previous commit (HEAD~1)"
-            DETECTION_OUTPUT=$(.github/workflows/scripts/detect-demo-changes.sh --compare-to=HEAD~1)
-          else
-            echo "🔍 Feature branch PR: comparing to main branch"
-            DETECTION_OUTPUT=$(.github/workflows/scripts/detect-demo-changes.sh)
-          fi
-
-          # Extract values from the output
-          CHANGED_DEMOS=$(echo "$DETECTION_OUTPUT" | grep "CHANGED_DEMOS=" | cut -d"'" -f2)
-          NEW_DEMOS=$(echo "$DETECTION_OUTPUT" | grep "NEW_DEMOS=" | cut -d"'" -f2)
-
-          # Compute demo_changed from the lists (true if either list is non-empty)
-          if [ -n "$CHANGED_DEMOS" ] || [ -n "$NEW_DEMOS" ]; then
-            DEMO_CHANGED="true"
-          else
-            DEMO_CHANGED="false"
-          fi
-
-          # Set GitHub Action outputs
-          echo "changed_demos=$CHANGED_DEMOS" >> $GITHUB_OUTPUT
-          echo "new_demos=$NEW_DEMOS" >> $GITHUB_OUTPUT
-          echo "demo_changed=$DEMO_CHANGED" >> $GITHUB_OUTPUT
-
-      - name: Amend release-please PR with demo changes
-        if: steps.check_demo_bot.outputs.is_demo_bot != 'true' && steps.context.outputs.is_release_please == 'true' && steps.context.outputs.is_pr == 'true' && steps.check_changes.outputs.demo_changed == 'true'
-        env:
-          PR_HEAD_REF: ${{ github.head_ref || github.ref_name }}
-          GITHUB_TOKEN: ${{ steps.generate-demo-token.outputs.token }}
-        run: |
-          echo "🔄 Amending release-please PR with updated demo GIFs..."
-
-          # Configure git with demo-generation-doggo bot identity for loop detection
-          # Use --local to override any global/system config that might interfere
-          git config --local user.name "demo-generation-doggo[bot]"
-          git config --local user.email "demo-generation-doggo[bot]@users.noreply.github.com"
-
-          # Switch to the PR branch
-          git checkout "$PR_HEAD_REF"
-
-          # Add the demo files
-          git add docs/img/*.gif
-
-          # Amend the existing commit (this will change the committer for detection)
-          git commit --amend --no-edit --no-gpg-sign
-
-          # Force push using the demo bot token
-          git push --force-with-lease origin "$PR_HEAD_REF"
-
-          echo "✅ Successfully amended release-please PR with demo updates"
-
-      - name: Shadow demo verdicts (not used to expand demos)
-        if: steps.check_demo_bot.outputs.is_demo_bot != 'true'
-        id: shadow
+        id: record
         timeout-minutes: 20
         run: |
           set -euo pipefail
@@ -234,6 +122,7 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             git fetch origin main
             HEAD_SHA="$(git rev-parse HEAD)"
+            BASE_TIP="$(git rev-parse origin/main)"
             BASE_SHA="$(git merge-base HEAD origin/main)"
           else
             HEAD_SHA="${{ github.event.pull_request.head.sha }}"
@@ -286,11 +175,99 @@ jobs:
 
           SHADOW_VERDICTS="$(printf '%s\n' "$CLI_OUT" | sed -n 's/^SHADOW_VERDICTS=//p' | tail -n 1)"
           printf '%s\n' "$SHADOW_VERDICTS" >> "$GITHUB_STEP_SUMMARY"
-          {
-            echo "shadow_verdicts<<EOF"
-            echo "$SHADOW_VERDICTS"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
+          echo "merge_base=$BASE_SHA" >> "$GITHUB_OUTPUT"
+          echo "base_tip=$BASE_TIP" >> "$GITHUB_OUTPUT"
+
+      - name: Copy attempt-0 GIFs and stack changed demos
+        if: steps.check_demo_bot.outputs.is_demo_bot != 'true'
+        run: |
+          set -euo pipefail
+          SHADOW_ROOT="${RUNNER_TEMP}/demo-shadow"
+          BASE_WT="${SHADOW_ROOT}/base"
+          HEAD_WT="${SHADOW_ROOT}/head"
+          SCRATCH="${SHADOW_ROOT}/scratch"
+          mkdir -p docs/img
+
+          COPIES="$(node scripts/demo-comment.ts copies \
+            --scratch "$SCRATCH" \
+            --base-tapes "${BASE_WT}/demos" \
+            --head-tapes "${HEAD_WT}/demos")"
+          while IFS=$'\t' read -r from to; do
+            if [ -z "${from:-}" ] || [ -z "${to:-}" ]; then
+              continue
+            fi
+            mkdir -p "$(dirname "$to")"
+            cp "$from" "$to"
+          done <<< "$COPIES"
+
+          CLI_OUT="$(node scripts/demo-fingerprint.ts \
+            --scratch "$SCRATCH" \
+            --base-tapes "${BASE_WT}/demos" \
+            --head-tapes "${HEAD_WT}/demos")"
+          while IFS= read -r line; do
+            if [[ "$line" =~ ^([a-zA-Z0-9_-]+):\ CHANGED$ ]]; then
+              name="${BASH_REMATCH[1]}"
+              docker_args_text="$(
+                IMAGE=vhs-node-demo:head \
+                  BEFORE="${SCRATCH}/attempt-0/base/${name}/${name}-demo.gif" \
+                  AFTER="${SCRATCH}/attempt-0/head/${name}/${name}-demo.gif" \
+                  OUTPUT="docs/img/${name}-before-after-demo.gif" \
+                  node --input-type=module -e '
+                    import { buildDockerFfmpegStackArgs } from "./scripts/demo-fingerprint.ts";
+                    const args = buildDockerFfmpegStackArgs({
+                      image: process.env.IMAGE,
+                      beforeGif: process.env.BEFORE,
+                      afterGif: process.env.AFTER,
+                      outputGif: process.env.OUTPUT,
+                    });
+                    process.stdout.write(args.join("\n") + "\n");
+                  '
+              )"
+              mapfile -t docker_args <<< "$docker_args_text"
+              docker "${docker_args[@]}"
+            fi
+          done <<< "$CLI_OUT"
+
+      - name: Upload demo artifacts (always upload regardless of changes)
+        if: steps.check_demo_bot.outputs.is_demo_bot != 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: demo-gifs-${{ github.run_id }}
+          path: docs/img/*.gif
+          retention-days: 30
+
+      - name: Upload all demos to orphan branch and prepare preview
+        if: steps.check_demo_bot.outputs.is_demo_bot != 'true' && steps.context.outputs.is_pr == 'true'
+        id: demo_preview
+        env:
+          PR_HEAD_REF: ${{ github.head_ref || github.ref_name }}
+        run: |
+          # For PRs, use the actual PR head commit, not the merge commit
+          PR_HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+
+          # Debug: Show SHA values being used
+          echo "🔍 SHA Debug Information:"
+          echo "  - github.sha (merge commit): ${{ github.sha }}"
+          echo "  - PR head SHA (user commit): $PR_HEAD_SHA"
+          echo "  - Are they different? $([ "${{ github.sha }}" != "$PR_HEAD_SHA" ] && echo "YES ✅" || echo "NO ❌")"
+
+          # Call upload script and capture structured output
+          UPLOAD_OUTPUT=$(.github/workflows/scripts/upload-demo-images.sh \
+            --pr-number="${{ github.event.pull_request.number }}" \
+            --commit-sha="$PR_HEAD_SHA" \
+            --repository="${{ github.repository }}" \
+            --head-ref="$PR_HEAD_REF")
+
+          # Parse structured output
+          USER_COMMIT_SHA=$(echo "$UPLOAD_OUTPUT" | grep "^USER_COMMIT_SHA=" | cut -d'=' -f2)
+          DEMO_IMAGES=$(echo "$UPLOAD_OUTPUT" | grep "^DEMO_IMAGES=" | cut -d'=' -f2-)
+
+          # Store outputs for downstream steps
+          echo "demo_images<<EOF" >> $GITHUB_OUTPUT
+          echo "$DEMO_IMAGES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          echo "user_commit_sha=$USER_COMMIT_SHA" >> $GITHUB_OUTPUT
 
       - name: Find existing demo comment
         if: steps.check_demo_bot.outputs.is_demo_bot != 'true' && steps.context.outputs.is_pr == 'true'
@@ -305,22 +282,39 @@ jobs:
         if: steps.check_demo_bot.outputs.is_demo_bot != 'true' && steps.context.outputs.is_pr == 'true'
         id: generate_comment
         env:
-          SHADOW_VERDICTS: ${{ steps.shadow.outputs.shadow_verdicts }}
+          DEMO_IMAGES: ${{ steps.demo_preview.outputs.demo_images }}
+          IS_RELEASE_PLEASE: ${{ steps.context.outputs.is_release_please }}
+          USER_COMMIT_SHA: ${{ steps.demo_preview.outputs.user_commit_sha }}
         run: |
-          # Generate comment using template with flags
-          COMMENT_BODY=$(.github/workflows/scripts/generate-demo-comment.sh \
-            --template-file=.github/workflows/scripts/templates/demo-comment.md \
-            --github-repository="${{ github.repository }}" \
-            --github-sha="${{ github.sha }}" \
-            --user-commit-sha="${{ steps.demo_preview.outputs.user_commit_sha }}" \
-            --demo-images="${{ steps.demo_preview.outputs.demo_images }}" \
-            --changed-demos="${{ steps.check_changes.outputs.changed_demos }}" \
-            --new-demos="${{ steps.check_changes.outputs.new_demos }}")
-
-          # Save comment body to output using heredoc
-          echo "comment_body<<EOF" >> $GITHUB_OUTPUT
-          echo "$COMMENT_BODY" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          set -euo pipefail
+          SHADOW_ROOT="${RUNNER_TEMP}/demo-shadow"
+          BASE_WT="${SHADOW_ROOT}/base"
+          HEAD_WT="${SHADOW_ROOT}/head"
+          SCRATCH="${SHADOW_ROOT}/scratch"
+          AMEND_OUT="$(node scripts/demo-comment.ts amend \
+            --scratch "$SCRATCH" \
+            --base-tapes "${BASE_WT}/demos" \
+            --head-tapes "${HEAD_WT}/demos")"
+          comment_args=(
+            node scripts/demo-comment.ts comment
+            --scratch "$SCRATCH"
+            --base-tapes "${BASE_WT}/demos"
+            --head-tapes "${HEAD_WT}/demos"
+            --images "$DEMO_IMAGES"
+            --template .github/workflows/scripts/templates/demo-comment.md
+            --repository "${{ github.repository }}"
+            --github-sha "${{ github.sha }}"
+            --user-commit-sha "$USER_COMMIT_SHA"
+          )
+          if [ -n "$AMEND_OUT" ] && [ "$IS_RELEASE_PLEASE" != "true" ]; then
+            comment_args+=(--gif-commit-added)
+          fi
+          COMMENT_BODY="$("${comment_args[@]}")"
+          {
+            echo "comment_body<<COMMENT_BODY_EOF"
+            echo "$COMMENT_BODY"
+            echo "COMMENT_BODY_EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Post/update demo preview comment
         if: steps.check_demo_bot.outputs.is_demo_bot != 'true' && steps.context.outputs.is_pr == 'true'
@@ -332,11 +326,175 @@ jobs:
           body: ${{ steps.generate_comment.outputs.comment_body }}
           token: ${{ steps.generate-demo-token.outputs.token }}
 
+      - name: Commit changed demo GIFs
+        if: steps.check_demo_bot.outputs.is_demo_bot != 'true' && steps.context.outputs.is_release_please != 'true' && steps.context.outputs.is_pr == 'true'
+        env:
+          PR_HEAD_REF: ${{ github.head_ref || github.ref_name }}
+        run: |
+          set -euo pipefail
+          SHADOW_ROOT="${RUNNER_TEMP}/demo-shadow"
+          BASE_WT="${SHADOW_ROOT}/base"
+          HEAD_WT="${SHADOW_ROOT}/head"
+          SCRATCH="${SHADOW_ROOT}/scratch"
+          AMEND_OUT="$(node scripts/demo-comment.ts amend \
+            --scratch "$SCRATCH" \
+            --base-tapes "${BASE_WT}/demos" \
+            --head-tapes "${HEAD_WT}/demos")"
+          if [ -z "$AMEND_OUT" ]; then
+            echo "No CHANGED, NEW, or REMOVED demos. Not committing."
+            exit 0
+          fi
+          git config --local user.name "demo-generation-doggo[bot]"
+          git config --local user.email "demo-generation-doggo[bot]@users.noreply.github.com"
+          git restore --source=HEAD --staged --worktree -- docs/img
+          git clean -fd -- docs/img
+          git checkout "$PR_HEAD_REF"
+          git restore --source=HEAD --staged --worktree -- docs/img
+          git clean -fd -- docs/img
+          while IFS= read -r line; do
+            if [ -z "$line" ]; then
+              continue
+            fi
+            action="${line%% *}"
+            path="${line#* }"
+            if [ "$action" = "stage" ]; then
+              base="$(basename "$path")"
+              name="${base%-demo.gif}"
+              mkdir -p "$(dirname "$path")"
+              cp "${SCRATCH}/attempt-0/head/${name}/${name}-demo.gif" "$path"
+              git add -- "$path"
+            elif [ "$action" = "remove" ]; then
+              git rm -f --ignore-unmatch -- "$path"
+            fi
+          done <<< "$AMEND_OUT"
+          git commit -m "chore: update demo GIFs" --no-gpg-sign
+          git push origin "$PR_HEAD_REF"
+
+      - name: Record release GIF base
+        if: steps.check_demo_bot.outputs.is_demo_bot != 'true' && steps.context.outputs.is_release_please == 'true'
+        id: repair
+        timeout-minutes: 20
+        run: |
+          set -euo pipefail
+          SHADOW_ROOT="${RUNNER_TEMP}/demo-shadow"
+          BASE_WT="${SHADOW_ROOT}/base"
+          HEAD_WT="${SHADOW_ROOT}/head"
+          SCRATCH="${SHADOW_ROOT}/scratch"
+          MERGE_BASE="${{ steps.record.outputs.merge_base }}"
+          BASE_TIP="${{ steps.record.outputs.base_tip }}"
+          GIF_SHA="$(git log -1 --format=%H "$BASE_TIP" -- docs/img)"
+          if [ -z "$GIF_SHA" ]; then
+            echo "docs/img has no commit on the pull request base" >&2
+            exit 1
+          fi
+          if [ "$GIF_SHA" = "$MERGE_BASE" ]; then
+            echo "GIF commit is the merge-base. Reusing the comment verdicts."
+            echo "repair_scratch=$SCRATCH" >> "$GITHUB_OUTPUT"
+            echo "repair_base_tapes=${BASE_WT}/demos" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          REPAIR_ROOT="${RUNNER_TEMP}/demo-repair"
+          REPAIR_WT="${REPAIR_ROOT}/base"
+          REPAIR_SCRATCH="${REPAIR_ROOT}/scratch"
+          mkdir -p "$REPAIR_SCRATCH/attempt-0"
+          ln -s "$SCRATCH/attempt-0/head" "$REPAIR_SCRATCH/attempt-0/head"
+          if [ -d "$SCRATCH/attempt-1/head" ]; then
+            mkdir -p "$REPAIR_SCRATCH/attempt-1"
+            ln -s "$SCRATCH/attempt-1/head" "$REPAIR_SCRATCH/attempt-1/head"
+          fi
+          git worktree add --detach "$REPAIR_WT" "$GIF_SHA"
+          node scripts/generate-demo.js all \
+            --image=vhs-node-demo:repair \
+            --scratch="${REPAIR_SCRATCH}/attempt-0/base" \
+            --demos-dir="${REPAIR_WT}/demos" \
+            --build-context="$REPAIR_WT"
+
+          run_cli() {
+            node scripts/demo-fingerprint.ts \
+              --scratch "$REPAIR_SCRATCH" \
+              --base-tapes "${REPAIR_WT}/demos" \
+              --head-tapes "${HEAD_WT}/demos"
+          }
+
+          CLI_OUT="$(run_cli)"
+          printf '%s\n' "$CLI_OUT"
+          mapfile -t RETRIES < <(printf '%s\n' "$CLI_OUT" | awk -F': ' '$2 == "NEED_FRAME_RETRY" { print $1 }')
+          if [ "${#RETRIES[@]}" -gt 0 ]; then
+            for demo in "${RETRIES[@]}"; do
+              if [ -z "$demo" ]; then
+                continue
+              fi
+              node scripts/generate-demo.js "$demo" \
+                --image=vhs-node-demo:repair \
+                --scratch="${REPAIR_SCRATCH}/attempt-1/base" \
+                --demos-dir="${REPAIR_WT}/demos" \
+                --build-context="$REPAIR_WT"
+              if [ ! -d "${REPAIR_SCRATCH}/attempt-1/head/${demo}" ]; then
+                node scripts/generate-demo.js "$demo" \
+                  --image=vhs-node-demo:head \
+                  --scratch="${REPAIR_SCRATCH}/attempt-1/head" \
+                  --demos-dir="${HEAD_WT}/demos" \
+                  --build-context="$HEAD_WT"
+              fi
+            done
+            CLI_OUT="$(run_cli)"
+            printf '%s\n' "$CLI_OUT"
+          fi
+          echo "repair_scratch=$REPAIR_SCRATCH" >> "$GITHUB_OUTPUT"
+          echo "repair_base_tapes=${REPAIR_WT}/demos" >> "$GITHUB_OUTPUT"
+
+      - name: Amend release GIFs when docs/img is still wrong
+        if: steps.check_demo_bot.outputs.is_demo_bot != 'true' && steps.context.outputs.is_release_please == 'true' && steps.context.outputs.is_pr == 'true'
+        env:
+          PR_HEAD_REF: ${{ github.head_ref || github.ref_name }}
+          GITHUB_TOKEN: ${{ steps.generate-demo-token.outputs.token }}
+          REPAIR_SCRATCH: ${{ steps.repair.outputs.repair_scratch }}
+          REPAIR_BASE_TAPES: ${{ steps.repair.outputs.repair_base_tapes }}
+        run: |
+          set -euo pipefail
+          HEAD_TAPES="${RUNNER_TEMP}/demo-shadow/head/demos"
+          AMEND_OUT="$(node scripts/demo-comment.ts amend \
+            --scratch "$REPAIR_SCRATCH" \
+            --base-tapes "$REPAIR_BASE_TAPES" \
+            --head-tapes "$HEAD_TAPES")"
+          if [ -z "$AMEND_OUT" ]; then
+            echo "docs/img matches the release head. Not amending."
+            exit 0
+          fi
+          git config --local user.name "demo-generation-doggo[bot]"
+          git config --local user.email "demo-generation-doggo[bot]@users.noreply.github.com"
+          git restore --source=HEAD --staged --worktree -- docs/img
+          git clean -fd -- docs/img
+          git checkout "$PR_HEAD_REF"
+          git restore --source=HEAD --staged --worktree -- docs/img
+          git clean -fd -- docs/img
+          while IFS= read -r line; do
+            if [ -z "$line" ]; then
+              continue
+            fi
+            action="${line%% *}"
+            path="${line#* }"
+            if [ "$action" = "stage" ]; then
+              base="$(basename "$path")"
+              name="${base%-demo.gif}"
+              mkdir -p "$(dirname "$path")"
+              cp "${REPAIR_SCRATCH}/attempt-0/head/${name}/${name}-demo.gif" "$path"
+              git add -- "$path"
+            elif [ "$action" = "remove" ]; then
+              git rm -f --ignore-unmatch -- "$path"
+            fi
+          done <<< "$AMEND_OUT"
+          if git diff --cached --quiet; then
+            echo "Amend list produced no staged change."
+            exit 0
+          fi
+          git commit --amend --no-edit --no-gpg-sign
+          git push --force-with-lease origin "$PR_HEAD_REF"
+
       - name: Summary
         if: steps.check_demo_bot.outputs.is_demo_bot != 'true'
         run: |
           echo "## 📊 Demo Generation Summary"
           echo "- Event: ${{ github.event_name }}"
-          echo "- Demo changed: ${{ steps.check_changes.outputs.demo_changed }}"
           echo "- Is PR: ${{ steps.context.outputs.is_pr }}"
           echo "- Is release-please: ${{ steps.context.outputs.is_release_please }}"

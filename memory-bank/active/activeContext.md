@@ -1,7 +1,7 @@
 # Active Context
 
 ## Current Task: Promote demo verdicts out of shadow
-**Phase:** BUILD - IN-PROGRESS
+**Phase:** BUILD - COMPLETE
 
 ## What Was Done
 - Confirmed intent against [issue #190](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/190): fingerprint verdicts drive the demo comment.
@@ -14,6 +14,11 @@
 - Preflight of the previous plan returned `FAIL (fixable)`. The plan now gives the template fill, the image-list parse, and the CLI their own tested units. `pullNotice` is a `renderDemoComment` return. Attempt 0 is the only GIF that is copied. The comment posts before the push. The feature commit step excludes release-please branches.
 - The preflight advisory to collapse the pipeline into one `runDemoPipeline` is declined. The operator already accepted the workflow shape, and the blocking gaps are local.
 - The revised plan preflighted as `PASS WITH ADVISORY`. No change to `tasks.md`. Build notes: call `buildDockerFfmpegStackArgs` from `node` when wiring the stack step, and reset `docs/img/` before applying `selectReleaseAmend` paths so preview GIFs left by the upload script are not committed. The advisory to teach `formatAmendList` the scratch source path was not adopted.
+- Build implemented units 1–12. `describeVerdict`, the comment renderer, the amend list, the attempt-0 copy plan, the image-list parser, the template fill, and the comment CLI are tested. The Generate workflow records the merge-base and the head once, posts the comment, then adds one GIF commit on a feature pull request or amends a release when `docs/img/` is still wrong.
+- `loadCommentEntries` takes optional `requireImageUrls` (default true) so `copies` and `amend` can load verdicts without upload URLs.
+- The release amend copies CHANGED and NEW GIFs from the repair scratch after `git restore` of `docs/img/`. It does not restore them from a backup of `docs/img/`, because the upload script can replace that directory and the scratch recording is already under `RUNNER_TEMP`.
+- The repair recording retries `NEED_FRAME_RETRY`, so a frame-only difference against an older GIF commit can still become CHANGED.
+- `src/index.ts` typecheck errors and the navigation/selection test failures are present on this branch without these changes. This task does not touch the prompt.
 
 ## Next Step
-- Units 1–10 are green. Continue at unit 11, the Generate workflow.
+- QA review of the build.

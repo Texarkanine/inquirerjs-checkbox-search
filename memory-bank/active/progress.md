@@ -132,3 +132,15 @@ Switch the pull-request demo comment and the release-please GIF amend from the G
 * Insights
     - Because `${SCRATCH}/attempt-0/head` already lives under `$RUNNER_TEMP` and is symlinked into the release-repair scratch root, release repairs can copy `CHANGED` and `NEW` GIFs directly from scratch after `git checkout` rather than backing up `docs/img/*.gif` beforehand
 
+## 2026-11-03 - BUILD - COMPLETE
+
+* Work completed
+    - Implemented the twelve plan units: styling-only verdicts, text diff, comment body, amend selection, scratch loading, attempt-0 copy plan, ffmpeg stack arguments, shadow line, image-list parse, template fill, comment CLI, Generate workflow, and the tech-context sentence
+    - Comment and fingerprint unit tests for the new behavior pass. Format and lint pass
+* Decisions made
+    - `loadCommentEntries` checks stacked and before URLs only when `requireImageUrls` is not false, so copies and amend do not need an upload map
+    - The release amend copies CHANGED and NEW GIFs from the repair scratch after restoring `docs/img/` from HEAD. A backup of `docs/img/` is not the source, because the upload script can replace those bytes
+    - The repair recording uses the same retry rule as the comment recording
+* Insights
+    - `src/index.ts` fails typecheck on three `setActiveItemValue` calls, and 32 prompt tests fail, on this branch with the demo changes stashed. Those failures are outside this task
+
