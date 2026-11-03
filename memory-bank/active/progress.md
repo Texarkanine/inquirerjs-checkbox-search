@@ -34,3 +34,15 @@ Switch the pull-request demo comment and the release-please GIF amend from the G
     - Open CHANGED, NEW, and REMOVED
 * Insights
     - Collapsed without a verdict word still fails the operator's request, because SAME has to be stated
+
+## 2026-11-03 - PLAN - COMPLETE
+
+* Work completed
+    - Mapped the comment, the fingerprint module, the byte-diff scripts, and the release amend
+    - Wrote nine implementation steps, with the new behavior in Vitest and the workflow as a caller
+* Decisions made
+    - No new dependency. FFmpeg stays the binary in the VHS image
+    - `envsubst` does not render the comment
+    - The gif-commit recording is its own step and is skipped when that commit is already the merge-base
+* Insights
+    - The upload script names a demo from every `*-demo.gif`, so the comment list has to come from the tapes rather than from the upload output
