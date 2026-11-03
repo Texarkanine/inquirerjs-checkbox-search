@@ -119,3 +119,16 @@ Switch the pull-request demo comment and the release-please GIF amend from the G
 * Insights
     - A JS string `.replace` of a template token would reinterpret `$&` in a text diff, the same hazard `envsubst` had
     - The upload script reads only `docs/img/*-demo.gif`, so dropping `demo:generate:all` needs an explicit copy from the scratch head recording
+
+## 2026-11-03 - PREFLIGHT - COMPLETE (PASS WITH ADVISORY)
+
+* Work completed
+    - Validated the revised 12-unit plan in `memory-bank/active/tasks.md` against codebase reality and prior preflight findings
+    - Verified all five prior blocking findings are resolved: `parseDemoImageList`, `fillCommentTemplate`, `planDocsImgCopies`, `parseCommentArgs`, and `runCommentCli` have dedicated TDD units; `pullNotice` is returned by `renderDemoComment` and placed via `${PULL_NOTICE}`; attempt-0 GIFs copy to `docs/img/` before upload and re-copy before commit; the comment posts before the feature push; and the feature commit step gates out release-please branches
+    - Wrote `memory-bank/active/.preflight-status` with first line `PASS WITH ADVISORY`
+* Decisions made
+    - Plan is approved for Build with non-blocking execution notes and an advisory on staging both feature and release-repair commits directly from `${SCRATCH}/attempt-0/head`
+    - No in-phase edits were required on `memory-bank/active/tasks.md`
+* Insights
+    - Because `${SCRATCH}/attempt-0/head` already lives under `$RUNNER_TEMP` and is symlinked into the release-repair scratch root, release repairs can copy `CHANGED` and `NEW` GIFs directly from scratch after `git checkout` rather than backing up `docs/img/*.gif` beforehand
+
