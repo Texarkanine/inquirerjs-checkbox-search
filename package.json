@@ -108,15 +108,15 @@
     "@types/node": "^22.20.5",
     "@typescript-eslint/eslint-plugin": "^8.72.1",
     "@typescript-eslint/parser": "^8.72.1",
-    "@vitest/coverage-v8": "^4.1.11",
-    "@vitest/ui": "^4.1.11",
+    "@vitest/coverage-v8": "^5.1.0",
+    "@vitest/ui": "^5.1.0",
     "eslint": "^10.13.0",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.9.10",
     "rimraf": "^6.0.0",
     "tshy": "^4.1.1",
     "typescript": "^6.0.0",
-    "vitest": "^4.1.11"
+    "vitest": "^5.1.0"
   },
   "engines": {
     "node": ">=22"
