@@ -8,6 +8,13 @@ updates:
       day: 'monday'
       time: '09:00'
     groups:
+      # vitest, @vitest/ui, and @vitest/coverage-v8 pin the same version of each
+      # other. A split bump fails npm ci with ERESOLVE. This group matches first,
+      # so those packages move together for every update type, including majors.
+      vitest:
+        patterns:
+          - 'vitest'
+          - '@vitest/*'
       deps-minor-patch:
         dependency-type: 'production'
         update-types:
