@@ -14,3 +14,13 @@ Switch the pull-request demo comment and the release-please GIF amend from the G
     - Level 4 does not apply: the recorder, fingerprints, and retry rule stay as shipped
 * Insights
     - SAME, CHANGED, and NEW have a comment shape in issue #190 section 4. REMOVED, UNSTABLE, and NOISY do not
+
+## 2026-11-03 - CREATIVE - COMPLETE
+
+* Work completed
+    - Compared three amend bases: merge-base, a committed text fingerprint, and the commit that last touched `docs/img/`
+* Decisions made
+    - Release amend records the last `docs/img/` commit against the release head and stages CHANGED, NEW, and REMOVED only
+    - The comment keeps the merge-base comparison on every pull request
+* Insights
+    - A release-please pull request does not contain the feature diff, so one comparison cannot both describe the pull request and refresh stale README GIFs
