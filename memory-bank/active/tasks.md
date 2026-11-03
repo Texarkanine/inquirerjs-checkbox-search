@@ -333,4 +333,14 @@ No new technology - validation not required. FFmpeg stays the binary already in 
 - [x] Pre-Mortem complete
 - [x] Preflight
 - [x] Build
-- [ ] QA
+- [ ] QA (FAIL - see below)
+
+## QA Results
+
+**Result:** FAIL. Build must rerun to fix the blocking findings. The plan itself holds.
+
+- Blocking: the workflow passes a relative `OUTPUT` (`docs/img/<name>-before-after-demo.gif`) to `buildDockerFfmpegStackArgs`, which mounts `dirname` of it as `-v docs/img:docs/img`. Docker rejects that. Resolve to an absolute path (in the function or the workflow) and add a test with a relative `outputGif`.
+- Blocking: `renderDemoComment` emits the text diff unfenced. Issue #190 shows a fenced `diff` block. Fence it and update the tests that assert the raw string.
+- Blocking: doc comments are detached. Restore the `buildDockerRunArgs` doc above that function, and move the `renderDemoComment`, `parseDemoImageList`, and `fillCommentTemplate` doc blocks onto their functions.
+- Advisory: the text diff lists every unchanged line and could exceed the 65536-character comment limit. Duplicate upload-failure and pull-notice logic in `runCommentCli`. `--flag=value` parsing is unused.
+- Verification: `npx vitest run scripts` passes (78). Format and lint are clean. `src/index.ts` typecheck errors and 32 prompt test failures exist without these changes.

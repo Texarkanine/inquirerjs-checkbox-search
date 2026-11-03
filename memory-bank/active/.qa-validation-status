@@ -1,0 +1,14 @@
+FAIL
+
+QA of `issue-190-promote` (Level 3) against `memory-bank/active/tasks.md`. Mechanical checks: `npx vitest run scripts` passes (78 tests); format and lint are clean; `tsc -p tsconfig.scripts.json` passes. `npm run typecheck` fails on three `src/index.ts` errors and `npm run test:unit` has 32 failing prompt tests. This diff does not touch `src/`, and the build notes record the same failures with the demo changes stashed.
+
+## Findings
+- BLOCKING (Completeness/Integrity): `.github/workflows/generate-demos.yaml` passes a relative `OUTPUT="docs/img/<name>-before-after-demo.gif"` to `buildDockerFfmpegStackArgs`. The function mounts `dirname(outputGif)` as `-v docs/img:docs/img` and passes the relative path to ffmpeg. Docker treats `docs/img` as a named volume with a non-absolute container path and refuses to start. Every CHANGED demo would fail the stack step and the job. The unit test only uses absolute paths, so nothing covers the workflow's real input.
+- BLOCKING (Completeness): `renderDemoComment` puts `entry.textDiff` raw inside `<details>`. Issue #190 shows the diff as a fenced `diff` block. Unfenced, lines such as `-> Please select...` render as lists and blockquotes and the diff is unreadable. The tests assert the raw string, so they lock the defect.
+- BLOCKING (Documentation/Regression): doc comments are detached from their code in `scripts/demo-fingerprint.ts` and `scripts/demo-comment.ts`. The `buildDockerRunArgs` doc block now sits above `buildDockerFfmpegStackArgs`, so `buildDockerRunArgs` lost its doc and the stack function has two. The `renderDemoComment`, `parseDemoImageList`, and `fillCommentTemplate` doc blocks are attached to constants declared above the functions.
+
+## Advisories
+- `formatTextDiff` prints every unchanged line of the whole text record. A GitHub comment is capped at 65536 characters, and several CHANGED demos could exceed it. Consider trimming to context around changes.
+- DRY: the upload-failure sentence and the `gifCommitAdded ? PULL_NOTICE : ''` choice are repeated in `runCommentCli` instead of reusing `renderDemoComment`'s output. The `DEMO_LIST` override repeats `demoList`.
+- YAGNI: `parseCommentArgs` accepts `--flag=value`, which neither the plan nor the workflow uses.
+- `src/index.ts` typecheck errors and 32 prompt test failures are outside this task.

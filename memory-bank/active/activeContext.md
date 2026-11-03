@@ -1,7 +1,7 @@
 # Active Context
 
 ## Current Task: Promote demo verdicts out of shadow
-**Phase:** BUILD - COMPLETE
+**Phase:** QA - COMPLETE (FAIL)
 
 ## What Was Done
 - Confirmed intent against [issue #190](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/190): fingerprint verdicts drive the demo comment.
@@ -21,4 +21,4 @@
 - `src/index.ts` typecheck errors and the navigation/selection test failures are present on this branch without these changes. This task does not touch the prompt.
 
 ## Next Step
-- QA review of the build.
+- Rerun Build to fix the blocking QA findings in `memory-bank/active/.qa-validation-status`.

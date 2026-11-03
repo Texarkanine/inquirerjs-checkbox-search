@@ -144,3 +144,14 @@ Switch the pull-request demo comment and the release-please GIF amend from the G
 * Insights
     - `src/index.ts` fails typecheck on three `setActiveItemValue` calls, and 32 prompt tests fail, on this branch with the demo changes stashed. Those failures are outside this task
 
+
+## 2026-11-03 - QA - COMPLETE (FAIL)
+
+* Work completed
+    - Reviewed the twelve build units against `tasks.md`, the project brief, and issue #190 section 4
+    - Wrote `memory-bank/active/.qa-validation-status` with first line `FAIL`
+* Decisions made
+    - Build must rerun for three blocking findings: a relative ffmpeg output path that Docker rejects as a mount, an unfenced text diff in the comment, and doc comments detached from their functions
+    - The plan does not need revision
+* Insights
+    - The stack-argument test used absolute paths only, so it could not see the workflow's relative `docs/img/...` output
