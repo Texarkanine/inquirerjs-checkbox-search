@@ -1,4 +1,4 @@
-import type { Assessment } from './demo-fingerprint.ts';
+import { assertSafeDemoName, type Assessment } from './demo-fingerprint.ts';
 
 /**
  * One demo block in the pull-request comment.
@@ -124,6 +124,50 @@ export function renderDemoComment(
         : entries.map((entry) => renderDemoBlock(entry)).join('\n'),
     pullNotice: options?.gifCommitAdded === true ? PULL_NOTICE : '',
   };
+}
+
+function demoGifPath(name: string): string {
+  assertSafeDemoName(name);
+  return `docs/img/${name}-demo.gif`;
+}
+
+/**
+ * Paths a release amend may change. Preview GIFs are never included.
+ *
+ * CHANGED and NEW are staged. REMOVED is removed. SAME, NOISY, UNSTABLE,
+ * and NEED_FRAME_RETRY are left untouched. Names are sorted.
+ */
+export function selectReleaseAmend(
+  entries: readonly { name: string; assessment: Assessment }[],
+): { stage: string[]; remove: string[] } {
+  const stage: string[] = [];
+  const remove: string[] = [];
+  const sorted = [...entries].sort((left, right) =>
+    left.name.localeCompare(right.name),
+  );
+  for (const entry of sorted) {
+    const path = demoGifPath(entry.name);
+    if (entry.assessment === 'CHANGED' || entry.assessment === 'NEW') {
+      stage.push(path);
+    } else if (entry.assessment === 'REMOVED') {
+      remove.push(path);
+    }
+  }
+  return { stage, remove };
+}
+
+/**
+ * One `stage <path>` or `remove <path>` line per amend path.
+ */
+export function formatAmendList(selection: {
+  stage: string[];
+  remove: string[];
+}): string {
+  const stageLines = [...selection.stage].sort().map((path) => `stage ${path}`);
+  const removeLines = [...selection.remove]
+    .sort()
+    .map((path) => `remove ${path}`);
+  return [...stageLines, ...removeLines].join('\n');
 }
 
 /**

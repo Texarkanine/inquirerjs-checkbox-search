@@ -183,6 +183,8 @@ The preflight advisory to move the whole pipeline into one `runDemoPipeline` is 
 
 ### 4. Release amend selection — executable
 
+- [x] Done
+
 - Files: `scripts/demo-comment.ts`, `scripts/demo-comment.test.ts`
 - Creative ref: `memory-bank/active/creative/creative-release-gif-amend.md`
 

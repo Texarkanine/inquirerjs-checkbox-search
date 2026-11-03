@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  formatAmendList,
   formatTextDiff,
   renderDemoComment,
+  selectReleaseAmend,
   type DemoCommentEntry,
 } from './demo-comment.ts';
 
@@ -312,5 +314,51 @@ describe('renderDemoComment', () => {
 
     expect(result.statusMessage).toBe(stableBanner);
     expect(result.demoList).toBe('No demo images available.');
+  });
+});
+
+describe('selectReleaseAmend', () => {
+  it('stages CHANGED and NEW, removes REMOVED, and ignores the other verdicts', () => {
+    const selection = selectReleaseAmend([
+      { name: 'quiet', assessment: 'SAME' },
+      { name: 'basic', assessment: 'CHANGED' },
+      { name: 'retry', assessment: 'NEED_FRAME_RETRY' },
+      { name: 'gone', assessment: 'REMOVED' },
+      { name: 'added', assessment: 'NEW' },
+      { name: 'noisy', assessment: 'NOISY' },
+      { name: 'unstable', assessment: 'UNSTABLE' },
+    ]);
+
+    expect(selection.stage).toEqual([
+      'docs/img/added-demo.gif',
+      'docs/img/basic-demo.gif',
+    ]);
+    expect(selection.remove).toEqual(['docs/img/gone-demo.gif']);
+    expect([...selection.stage, ...selection.remove].join('\n')).not.toMatch(
+      /before/,
+    );
+  });
+
+  it('throws when a demo name is not a single safe path segment', () => {
+    expect(() =>
+      selectReleaseAmend([{ name: '../basic', assessment: 'CHANGED' }]),
+    ).toThrow(/demo name/);
+  });
+});
+
+describe('formatAmendList', () => {
+  it('prints one stage or remove line per path in stable order', () => {
+    expect(
+      formatAmendList({
+        stage: ['docs/img/basic-demo.gif', 'docs/img/added-demo.gif'],
+        remove: ['docs/img/gone-demo.gif'],
+      }),
+    ).toBe(
+      [
+        'stage docs/img/added-demo.gif',
+        'stage docs/img/basic-demo.gif',
+        'remove docs/img/gone-demo.gif',
+      ].join('\n'),
+    );
   });
 });
