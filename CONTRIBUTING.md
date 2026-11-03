@@ -101,7 +101,9 @@ The project follows these standards:
 
 ### Demo Generation
 
-Demo GIFs in the README are automatically generated in CI; when you open a PR you'll get a comment on the PR with previews of any demos that changed as a result of your PR.
+Demo GIFs in the README are automatically generated in CI. When you open a PR you'll get a comment with previews of any demos that changed.
+
+If a demo changed, the demo bot adds one commit, `chore: update demo GIFs`, to your branch after that comment. Pull before you push again. The workflow run started by that push exits immediately; that second run is expected.
 
 ## Releases
 

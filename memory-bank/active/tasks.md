@@ -345,8 +345,8 @@ No new technology - validation not required. FFmpeg stays the binary already in 
 - Advisories left in place: full-file text diffs, duplicated upload-failure and pull-notice logic in `runCommentCli`, and unused `--flag=value` parsing.
 - Verification after the rebuild: `npx vitest run scripts` passes (79). Format, lint, and `tsc -p tsconfig.scripts.json` are clean. `src/index.ts` typecheck errors and the prompt test failures are unchanged and outside this task.
 
-**Second review:** FAIL. The plan held. The three first-review blockers are resolved and verified: `npx vitest run scripts` passes (79), format, lint, and `tsc -p tsconfig.scripts.json` are clean. One finding blocks, so Build must rerun.
+**Second review:** FAIL. The plan held. The three first-review blockers stayed fixed. One documentation finding blocked.
 
-- BLOCKING (Documentation): `CONTRIBUTING.md` "Demo Generation" does not say the demo app now adds one `chore: update demo GIFs` commit to a contributor's branch when a demo changes, or that the contributor must pull before pushing again. Add that. `README.md` needs no change.
-- Advisories: full-file text diffs can approach the 65536-character comment cap, `runCommentCli` duplicates the upload-failure and pull-notice logic, `parseCommentArgs` accepts an unused `--flag=value` form, and an `❌ No valid demo files found` upload output makes the comment step exit 1.
+- `CONTRIBUTING.md` "Demo Generation" now says the demo bot adds one `chore: update demo GIFs` commit when a demo changes, that the contributor pulls before the next push, and that the workflow run started by that push exits immediately. `README.md` was left unchanged.
+- Advisories left in place: full-file text diffs, duplicated upload-failure and pull-notice logic, unused `--flag=value` parsing, and the empty-upload comment failure.
 - `src/index.ts` typecheck errors and 32 prompt test failures are unchanged and outside this task.

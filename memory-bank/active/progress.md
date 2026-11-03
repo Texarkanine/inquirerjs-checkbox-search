@@ -179,3 +179,12 @@ Switch the pull-request demo comment and the release-please GIF amend from the G
     - The plan does not need revision
 * Insights
     - The plan's only prose unit targeted `techContext.md`, so the contributor-facing doc was missed
+
+## 2026-11-03 - BUILD - COMPLETE
+
+* Work completed
+    - Added the demo-commit, pull-before-push, and expected follow-up run to `CONTRIBUTING.md` "Demo Generation"
+* Decisions made
+    - `README.md` stays as it is. No test locks the contributor prose
+* Insights
+    - The bot push starts a workflow run that exits because the actor is `demo-generation-doggo[bot]`
