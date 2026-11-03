@@ -7,7 +7,9 @@ import {
   formatAmendList,
   formatTextDiff,
   loadCommentEntries,
+  parseCommentArgs,
   parseDemoImageList,
+  runCommentCli,
   planDocsImgCopies,
   renderDemoComment,
   selectReleaseAmend,
@@ -571,5 +573,286 @@ describe('formatAmendList', () => {
         'remove docs/img/gone-demo.gif',
       ].join('\n'),
     );
+  });
+});
+
+const commentTemplate = [
+  '${CHANGE_STATUS_MESSAGE}',
+  '${DEMO_LIST}',
+  '${PULL_NOTICE}',
+  '${GITHUB_REPOSITORY}',
+  '${GITHUB_SHA}',
+  '${USER_COMMIT_SHA}',
+].join('\n');
+
+function writeCommentTemplate(): string {
+  const dir = mkdtempSync(join(tmpdir(), 'comment-template-'));
+  const path = join(dir, 'comment.md');
+  writeFileSync(path, commentTemplate);
+  return path;
+}
+
+function capturedIo(): {
+  io: {
+    stdout: { write: (chunk: string) => void };
+    stderr: { write: (chunk: string) => void };
+  };
+  out: () => string;
+  err: () => string;
+} {
+  let stdout = '';
+  let stderr = '';
+  return {
+    io: {
+      stdout: {
+        write(chunk: string) {
+          stdout += chunk;
+        },
+      },
+      stderr: {
+        write(chunk: string) {
+          stderr += chunk;
+        },
+      },
+    },
+    out: () => stdout,
+    err: () => stderr,
+  };
+}
+
+function sameScratch(): {
+  scratchRoot: string;
+  baseTapes: string;
+  headTapes: string;
+} {
+  const tree = scratchFixture();
+  writeTape(tree.baseTapes, 'basic');
+  writeTape(tree.headTapes, 'basic');
+  writeRecording(tree.scratchRoot, 0, 'base', 'basic', 'Search:\n', 1);
+  writeRecording(tree.scratchRoot, 0, 'head', 'basic', 'Search:\n', 1);
+  return tree;
+}
+
+describe('parseCommentArgs', () => {
+  const scratch = [
+    '--scratch',
+    '/scratch',
+    '--base-tapes',
+    '/base',
+    '--head-tapes',
+    '/head',
+  ];
+
+  it('requires every comment flag and sets gif-commit-added', () => {
+    expect(() => parseCommentArgs(['comment', ...scratch])).toThrow(/--images/);
+    expect(
+      parseCommentArgs([
+        'comment',
+        ...scratch,
+        '--images',
+        'basic:https://example.com/basic-demo.gif',
+        '--template',
+        '/template',
+        '--repository',
+        'owner/repo',
+        '--github-sha',
+        'abc',
+        '--user-commit-sha',
+        'def',
+      ]),
+    ).toMatchObject({ mode: 'comment', gifCommitAdded: false });
+    expect(
+      parseCommentArgs([
+        'comment',
+        ...scratch,
+        '--images',
+        'basic:https://example.com/basic-demo.gif',
+        '--template',
+        '/template',
+        '--repository',
+        'owner/repo',
+        '--github-sha',
+        'abc',
+        '--user-commit-sha',
+        'def',
+        '--gif-commit-added',
+      ]),
+    ).toMatchObject({ mode: 'comment', gifCommitAdded: true });
+  });
+
+  it('throws on an unknown flag and accepts copies or amend with the scratch flags', () => {
+    expect(() => parseCommentArgs(['copies', ...scratch, '--nope'])).toThrow(
+      /unknown flag/,
+    );
+    expect(parseCommentArgs(['copies', ...scratch])).toMatchObject({
+      mode: 'copies',
+      scratchRoot: '/scratch',
+    });
+    expect(parseCommentArgs(['amend', ...scratch])).toMatchObject({
+      mode: 'amend',
+    });
+  });
+});
+
+describe('runCommentCli', () => {
+  it('writes the upload-failure sentence and no demo blocks when the image list is the sentinel', () => {
+    const tree = sameScratch();
+    const captured = capturedIo();
+    const code = runCommentCli(
+      [
+        'comment',
+        '--scratch',
+        tree.scratchRoot,
+        '--base-tapes',
+        tree.baseTapes,
+        '--head-tapes',
+        tree.headTapes,
+        '--images',
+        '❌ Failed to upload demo images',
+        '--template',
+        writeCommentTemplate(),
+        '--repository',
+        'owner/repo',
+        '--github-sha',
+        'abc',
+        '--user-commit-sha',
+        'def',
+      ],
+      captured.io,
+    );
+
+    expect(code).toBe(0);
+    expect(captured.out()).toContain(
+      '❌ Failed to upload demo images for preview.',
+    );
+    expect(captured.out()).not.toContain('<details');
+  });
+
+  it('keeps a $& text diff in a CHANGED comment', () => {
+    const tree = scratchFixture();
+    writeTape(tree.baseTapes, 'validation');
+    writeTape(tree.headTapes, 'validation');
+    writeRecording(tree.scratchRoot, 0, 'base', 'validation', 'Search:\n', 1);
+    writeRecording(
+      tree.scratchRoot,
+      0,
+      'head',
+      'validation',
+      'Search:\nprice $&\n',
+      1,
+    );
+    const captured = capturedIo();
+    const code = runCommentCli(
+      [
+        'comment',
+        '--scratch',
+        tree.scratchRoot,
+        '--base-tapes',
+        tree.baseTapes,
+        '--head-tapes',
+        tree.headTapes,
+        '--images',
+        'validation:https://example.com/validation-demo.gif validation-before-after:https://example.com/validation-before-after.gif',
+        '--template',
+        writeCommentTemplate(),
+        '--repository',
+        'owner/repo',
+        '--github-sha',
+        'abc',
+        '--user-commit-sha',
+        'def',
+      ],
+      captured.io,
+    );
+
+    expect(code).toBe(0);
+    expect(captured.out()).toContain('$&');
+    expect(captured.out()).toContain('🔥 demos/validation.gif (CHANGED)');
+  });
+
+  it('prints the attempt-0 head path for copies and not attempt 1', () => {
+    const tree = sameScratch();
+    const captured = capturedIo();
+    const code = runCommentCli(
+      [
+        'copies',
+        '--scratch',
+        tree.scratchRoot,
+        '--base-tapes',
+        tree.baseTapes,
+        '--head-tapes',
+        tree.headTapes,
+      ],
+      captured.io,
+    );
+
+    expect(code).toBe(0);
+    expect(captured.out()).toContain(
+      join('attempt-0', 'head', 'basic', 'basic-demo.gif'),
+    );
+    expect(captured.out()).not.toContain('attempt-1');
+  });
+
+  it('prints a stage line for a CHANGED demo in amend mode', () => {
+    const tree = scratchFixture();
+    writeTape(tree.baseTapes, 'basic');
+    writeTape(tree.headTapes, 'basic');
+    writeRecording(tree.scratchRoot, 0, 'base', 'basic', 'Search:\nold\n', 1);
+    writeRecording(tree.scratchRoot, 0, 'head', 'basic', 'Search:\nnew\n', 1);
+    const captured = capturedIo();
+    const code = runCommentCli(
+      [
+        'amend',
+        '--scratch',
+        tree.scratchRoot,
+        '--base-tapes',
+        tree.baseTapes,
+        '--head-tapes',
+        tree.headTapes,
+      ],
+      captured.io,
+    );
+
+    expect(code).toBe(0);
+    expect(captured.out()).toContain('stage docs/img/basic-demo.gif');
+  });
+
+  it('exits 1 and writes stderr for an unknown flag or a bad image URL', () => {
+    const unknown = capturedIo();
+    expect(
+      runCommentCli(
+        ['copies', '--scratch', '/scratch', '--nope', 'x'],
+        unknown.io,
+      ),
+    ).toBe(1);
+    expect(unknown.err()).toMatch(/unknown flag/);
+
+    const tree = sameScratch();
+    const badUrl = capturedIo();
+    expect(
+      runCommentCli(
+        [
+          'comment',
+          '--scratch',
+          tree.scratchRoot,
+          '--base-tapes',
+          tree.baseTapes,
+          '--head-tapes',
+          tree.headTapes,
+          '--images',
+          'basic:http://example.com/basic-demo.gif',
+          '--template',
+          writeCommentTemplate(),
+          '--repository',
+          'owner/repo',
+          '--github-sha',
+          'abc',
+          '--user-commit-sha',
+          'def',
+        ],
+        badUrl.io,
+      ),
+    ).toBe(1);
+    expect(badUrl.err().length).toBeGreaterThan(0);
   });
 });

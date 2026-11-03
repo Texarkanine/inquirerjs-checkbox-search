@@ -250,6 +250,8 @@ The preflight advisory to move the whole pipeline into one `runDemoPipeline` is 
 
 ### 10. Comment CLI — executable
 
+- [x] Done
+
 - Files: `scripts/demo-comment.ts`, `scripts/demo-comment.test.ts`
 
 1. Stub tests: empty cases for comment-mode flags, a missing flag, copies-mode stdout, amend-mode stdout, the upload-failure comment, and a CHANGED comment whose diff contains `$&`.

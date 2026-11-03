@@ -1,4 +1,6 @@
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import {
   assertSafeDemoName,
   attemptsForDemo,
@@ -251,6 +253,199 @@ export function fillCommentTemplate(
   });
 }
 
+const COMMENT_FLAGS = {
+  '--scratch': 'scratchRoot',
+  '--base-tapes': 'baseTapesDir',
+  '--head-tapes': 'headTapesDir',
+  '--images': 'images',
+  '--template': 'template',
+  '--repository': 'repository',
+  '--github-sha': 'githubSha',
+  '--user-commit-sha': 'userCommitSha',
+} as const;
+
+const COMMENT_ONLY = new Set<string>([
+  '--images',
+  '--template',
+  '--repository',
+  '--github-sha',
+  '--user-commit-sha',
+]);
+
+const COMMENT_REQUIRED = [
+  { field: 'images', flag: '--images' },
+  { field: 'template', flag: '--template' },
+  { field: 'repository', flag: '--repository' },
+  { field: 'githubSha', flag: '--github-sha' },
+  { field: 'userCommitSha', flag: '--user-commit-sha' },
+] as const;
+
+export interface CommentIo {
+  stdout: { write: (chunk: string) => void };
+  stderr: { write: (chunk: string) => void };
+}
+
+/**
+ * Flags for `comment`, `copies`, and `amend`.
+ *
+ * `comment` needs the scratch, the image list, the template, and the
+ * three commit identity values. `copies` and `amend` need the scratch
+ * and the two tape directories. `--gif-commit-added` is a boolean.
+ */
+export function parseCommentArgs(argv: readonly string[]): {
+  mode: 'comment' | 'copies' | 'amend';
+  scratchRoot: string;
+  baseTapesDir: string;
+  headTapesDir: string;
+  images?: string;
+  template?: string;
+  repository?: string;
+  githubSha?: string;
+  userCommitSha?: string;
+  gifCommitAdded: boolean;
+} {
+  const mode = argv[0];
+  if (mode !== 'comment' && mode !== 'copies' && mode !== 'amend') {
+    throw new Error(`unknown mode: ${String(mode)}`);
+  }
+  const values: Partial<
+    Record<
+      | 'scratchRoot'
+      | 'baseTapesDir'
+      | 'headTapesDir'
+      | 'images'
+      | 'template'
+      | 'repository'
+      | 'githubSha'
+      | 'userCommitSha',
+      string
+    >
+  > = {};
+  let gifCommitAdded = false;
+  for (let index = 1; index < argv.length; index += 1) {
+    const arg = argv[index];
+    if (arg === '--gif-commit-added') {
+      if (mode !== 'comment') {
+        throw new Error('unknown flag: --gif-commit-added');
+      }
+      gifCommitAdded = true;
+      continue;
+    }
+    const equals = arg.indexOf('=');
+    const flag = equals === -1 ? arg : arg.slice(0, equals);
+    const field = COMMENT_FLAGS[flag as keyof typeof COMMENT_FLAGS];
+    if (field === undefined || (mode !== 'comment' && COMMENT_ONLY.has(flag))) {
+      throw new Error(`unknown flag: ${flag}`);
+    }
+    const value = equals === -1 ? argv[index + 1] : arg.slice(equals + 1);
+    if (equals === -1) {
+      index += 1;
+    }
+    if (value === undefined || value.startsWith('--')) {
+      throw new Error(`${flag} requires a value`);
+    }
+    values[field] = value;
+  }
+  if (
+    values.scratchRoot === undefined ||
+    values.baseTapesDir === undefined ||
+    values.headTapesDir === undefined
+  ) {
+    throw new Error('requires --scratch, --base-tapes, and --head-tapes');
+  }
+  if (mode === 'comment') {
+    const missing = COMMENT_REQUIRED.find(
+      (item) => values[item.field] === undefined,
+    );
+    if (missing !== undefined) {
+      throw new Error(`requires ${missing.flag}`);
+    }
+  }
+  return {
+    mode,
+    scratchRoot: values.scratchRoot,
+    baseTapesDir: values.baseTapesDir,
+    headTapesDir: values.headTapesDir,
+    images: values.images,
+    template: values.template,
+    repository: values.repository,
+    githubSha: values.githubSha,
+    userCommitSha: values.userCommitSha,
+    gifCommitAdded,
+  };
+}
+
+/**
+ * Run one comment CLI command. Comment mode writes the filled template.
+ * The upload-failure sentinel still exits 0. Copies and amend print
+ * path lines. A bad flag or URL exits 1 on stderr.
+ */
+export function runCommentCli(argv: readonly string[], io: CommentIo): number {
+  try {
+    const args = parseCommentArgs(argv);
+    if (args.mode === 'copies' || args.mode === 'amend') {
+      const entries = loadCommentEntries({
+        scratchRoot: args.scratchRoot,
+        baseTapesDir: args.baseTapesDir,
+        headTapesDir: args.headTapesDir,
+        imageUrls: {},
+        requireImageUrls: false,
+      });
+      const text =
+        args.mode === 'copies'
+          ? planDocsImgCopies({
+              scratchRoot: args.scratchRoot,
+              entries,
+            })
+              .map((copy) => `${copy.from}\t${copy.to}`)
+              .join('\n')
+          : formatAmendList(selectReleaseAmend(entries));
+      io.stdout.write(text.length === 0 ? '' : `${text}\n`);
+      return 0;
+    }
+    const images = args.images ?? '';
+    const uploadFailed = images.includes(UPLOAD_FAILURE);
+    const entries = loadCommentEntries({
+      scratchRoot: args.scratchRoot,
+      baseTapesDir: args.baseTapesDir,
+      headTapesDir: args.headTapesDir,
+      imageUrls: uploadFailed ? {} : parseDemoImageList(images),
+      requireImageUrls: !uploadFailed,
+    });
+    if (entries.some((entry) => entry.assessment === 'NEED_FRAME_RETRY')) {
+      throw new Error('NEED_FRAME_RETRY is not a comment verdict');
+    }
+    const rendered = uploadFailed
+      ? {
+          statusMessage: commentStatus(entries),
+          demoList: '❌ Failed to upload demo images for preview.',
+          pullNotice: args.gifCommitAdded ? PULL_NOTICE : '',
+        }
+      : renderDemoComment(entries, {
+          gifCommitAdded: args.gifCommitAdded,
+        });
+    const body = fillCommentTemplate(
+      readFileSync(args.template ?? '', 'utf8'),
+      {
+        CHANGE_STATUS_MESSAGE: rendered.statusMessage,
+        DEMO_LIST: uploadFailed
+          ? '❌ Failed to upload demo images for preview.'
+          : rendered.demoList,
+        PULL_NOTICE: rendered.pullNotice,
+        GITHUB_REPOSITORY: args.repository ?? '',
+        GITHUB_SHA: args.githubSha ?? '',
+        USER_COMMIT_SHA: args.userCommitSha ?? '',
+      },
+    );
+    io.stdout.write(body);
+    return 0;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    io.stderr.write(`${message}\n`);
+    return 1;
+  }
+}
+
 /**
  * Attempt-0 GIF paths to copy into `docs/img/` for upload.
  *
@@ -301,7 +496,10 @@ export function loadCommentEntries(options: {
   baseTapesDir: string;
   headTapesDir: string;
   imageUrls: Readonly<Record<string, string>>;
+  /** Comment mode checks stacked and before URLs. Copies and amend do not. */
+  requireImageUrls?: boolean;
 }): DemoCommentEntry[] {
+  const requireImageUrls = options.requireImageUrls !== false;
   const baseNames = tapeNames(options.baseTapesDir);
   const headNames = tapeNames(options.headTapesDir);
   for (const name of [...baseNames, ...headNames]) {
@@ -336,12 +534,14 @@ export function loadCommentEntries(options: {
     const stackedUrl = options.imageUrls[`${name}-before-after`];
     const beforeUrl = options.imageUrls[`${name}-before`];
     if (
+      requireImageUrls &&
       verdict.assessment === 'CHANGED' &&
       (stackedUrl === undefined || stackedUrl.length === 0)
     ) {
       throw new Error(`missing stacked URL for ${name}`);
     }
     if (
+      requireImageUrls &&
       verdict.assessment === 'REMOVED' &&
       (beforeUrl === undefined || beforeUrl.length === 0)
     ) {
@@ -414,4 +614,24 @@ export function formatTextDiff(baseText: string, headText: string): string {
     headIndex += 1;
   }
   return lines.join('\n');
+}
+
+const isDirectRun =
+  process.argv[1] !== undefined &&
+  import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (isDirectRun) {
+  const code = runCommentCli(process.argv.slice(2), {
+    stdout: {
+      write(chunk: string) {
+        process.stdout.write(chunk);
+      },
+    },
+    stderr: {
+      write(chunk: string) {
+        process.stderr.write(chunk);
+      },
+    },
+  });
+  process.exit(code);
 }
