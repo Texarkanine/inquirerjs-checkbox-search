@@ -1,3 +1,4 @@
+import { join } from 'node:path';
 import {
   assertSafeDemoName,
   attemptsForDemo,
@@ -174,6 +175,45 @@ export function formatAmendList(selection: {
     .sort()
     .map((path) => `remove ${path}`);
   return [...stageLines, ...removeLines].join('\n');
+}
+
+/**
+ * Attempt-0 GIF paths to copy into `docs/img/` for upload.
+ *
+ * A demo that still exists is the head recording. A removed demo is the
+ * base recording, under the before name. Attempt 1 is never a source.
+ * This does not copy files or read the scratch tree.
+ */
+export function planDocsImgCopies(options: {
+  scratchRoot: string;
+  entries: readonly { name: string; assessment: Assessment }[];
+}): { from: string; to: string }[] {
+  const copies = options.entries.map((entry) => {
+    assertSafeDemoName(entry.name);
+    if (entry.assessment === 'REMOVED') {
+      return {
+        from: join(
+          options.scratchRoot,
+          'attempt-0',
+          'base',
+          entry.name,
+          `${entry.name}-demo.gif`,
+        ),
+        to: `docs/img/${entry.name}-before-demo.gif`,
+      };
+    }
+    return {
+      from: join(
+        options.scratchRoot,
+        'attempt-0',
+        'head',
+        entry.name,
+        `${entry.name}-demo.gif`,
+      ),
+      to: `docs/img/${entry.name}-demo.gif`,
+    };
+  });
+  return copies.sort((left, right) => left.to.localeCompare(right.to));
 }
 
 /**

@@ -6,6 +6,7 @@ import {
   formatAmendList,
   formatTextDiff,
   loadCommentEntries,
+  planDocsImgCopies,
   renderDemoComment,
   selectReleaseAmend,
   type DemoCommentEntry,
@@ -387,6 +388,52 @@ function writeRecording(
     );
   }
 }
+
+describe('planDocsImgCopies', () => {
+  it('maps a live demo to the attempt-0 head GIF and a removed demo to the before GIF', () => {
+    const copies = planDocsImgCopies({
+      scratchRoot: '/scratch',
+      entries: [
+        { name: 'gone', assessment: 'REMOVED' },
+        { name: 'basic', assessment: 'CHANGED' },
+      ],
+    });
+
+    expect(copies).toEqual([
+      {
+        from: join(
+          '/scratch',
+          'attempt-0',
+          'head',
+          'basic',
+          'basic-demo.gif',
+        ),
+        to: 'docs/img/basic-demo.gif',
+      },
+      {
+        from: join(
+          '/scratch',
+          'attempt-0',
+          'base',
+          'gone',
+          'gone-demo.gif',
+        ),
+        to: 'docs/img/gone-before-demo.gif',
+      },
+    ]);
+    expect(JSON.stringify(copies)).not.toContain('attempt-1');
+    expect(JSON.stringify(copies)).not.toContain('docs/img/gone-demo.gif');
+  });
+
+  it('throws when a demo name is not a single safe path segment', () => {
+    expect(() =>
+      planDocsImgCopies({
+        scratchRoot: '/scratch',
+        entries: [{ name: 'has.dot', assessment: 'NEW' }],
+      }),
+    ).toThrow(/demo name/);
+  });
+});
 
 describe('loadCommentEntries', () => {
   it('marks a repeated frame mismatch styling-only and ignores URL keys that are not tapes', () => {

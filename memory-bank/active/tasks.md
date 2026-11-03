@@ -206,6 +206,8 @@ The preflight advisory to move the whole pipeline into one `runDemoPipeline` is 
 
 ### 6. Docs image copy plan — executable
 
+- [x] Done
+
 - Files: `scripts/demo-comment.ts`, `scripts/demo-comment.test.ts`
 
 1. Stub tests: empty cases for a head copy, a REMOVED copy, and an unsafe name.
