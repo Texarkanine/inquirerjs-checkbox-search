@@ -171,6 +171,8 @@ The preflight advisory to move the whole pipeline into one `runDemoPipeline` is 
 
 ### 3. Comment body — executable
 
+- [x] Done
+
 - Files: `scripts/demo-comment.ts`, `scripts/demo-comment.test.ts`, `.github/workflows/scripts/templates/demo-comment.md`
 - Creative ref: `memory-bank/active/creative/creative-unspecified-verdicts.md`
 
