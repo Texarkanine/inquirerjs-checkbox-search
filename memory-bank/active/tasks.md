@@ -195,6 +195,8 @@ The preflight advisory to move the whole pipeline into one `runDemoPipeline` is 
 
 ### 5. Load comment entries from scratch — executable
 
+- [x] Done
+
 - Files: `scripts/demo-comment.ts`, `scripts/demo-comment.test.ts`, `scripts/demo-fingerprint.ts`
 
 1. Stub tests: an empty case for a frame-only scratch fixture, an empty case for a missing stacked URL, and an empty case that the extra `<name>-before-after` URL does not become a demo.

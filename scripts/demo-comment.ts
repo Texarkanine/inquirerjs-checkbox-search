@@ -1,4 +1,10 @@
-import { assertSafeDemoName, type Assessment } from './demo-fingerprint.ts';
+import {
+  assertSafeDemoName,
+  attemptsForDemo,
+  describeVerdict,
+  tapeNames,
+  type Assessment,
+} from './demo-fingerprint.ts';
 
 /**
  * One demo block in the pull-request comment.
@@ -168,6 +174,75 @@ export function formatAmendList(selection: {
     .sort()
     .map((path) => `remove ${path}`);
   return [...stageLines, ...removeLines].join('\n');
+}
+
+/**
+ * Build comment entries from a scratch recording and an upload URL map.
+ *
+ * Demo names come from the tapes. URL keys that are not tape names do
+ * not become demos. A CHANGED demo without its stacked URL throws.
+ */
+export function loadCommentEntries(options: {
+  scratchRoot: string;
+  baseTapesDir: string;
+  headTapesDir: string;
+  imageUrls: Readonly<Record<string, string>>;
+}): DemoCommentEntry[] {
+  const baseNames = tapeNames(options.baseTapesDir);
+  const headNames = tapeNames(options.headTapesDir);
+  for (const name of [...baseNames, ...headNames]) {
+    assertSafeDemoName(name);
+  }
+  const names = [...new Set([...baseNames, ...headNames])].sort((left, right) =>
+    left.localeCompare(right),
+  );
+  return names.map((name) => {
+    const baseTape = baseNames.includes(name);
+    const headTape = headNames.includes(name);
+    const attempts = attemptsForDemo(
+      options.scratchRoot,
+      name,
+      baseTape,
+      headTape,
+    );
+    const verdict = describeVerdict({
+      baseTapeExists: baseTape,
+      headTapeExists: headTape,
+      attempts,
+    });
+    const baseText = attempts[0]?.base?.text;
+    const headText = attempts[0]?.head?.text;
+    const textDiff =
+      verdict.assessment === 'CHANGED' &&
+      !verdict.stylingOnly &&
+      baseText !== undefined &&
+      headText !== undefined
+        ? formatTextDiff(baseText, headText)
+        : '';
+    const stackedUrl = options.imageUrls[`${name}-before-after`];
+    const beforeUrl = options.imageUrls[`${name}-before`];
+    if (
+      verdict.assessment === 'CHANGED' &&
+      (stackedUrl === undefined || stackedUrl.length === 0)
+    ) {
+      throw new Error(`missing stacked URL for ${name}`);
+    }
+    if (
+      verdict.assessment === 'REMOVED' &&
+      (beforeUrl === undefined || beforeUrl.length === 0)
+    ) {
+      throw new Error(`missing before URL for ${name}`);
+    }
+    return {
+      name,
+      assessment: verdict.assessment,
+      stylingOnly: verdict.stylingOnly,
+      textDiff,
+      afterUrl: options.imageUrls[name],
+      beforeUrl,
+      stackedUrl,
+    };
+  });
 }
 
 /**

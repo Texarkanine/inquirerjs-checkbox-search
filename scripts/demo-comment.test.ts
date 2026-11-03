@@ -1,11 +1,16 @@
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   formatAmendList,
   formatTextDiff,
+  loadCommentEntries,
   renderDemoComment,
   selectReleaseAmend,
   type DemoCommentEntry,
 } from './demo-comment.ts';
+import { MIN_SETTLED_FRAMES } from './demo-fingerprint.ts';
 
 const stableBanner =
   '✅ **Demos are stable** - No changes detected in demo output.';
@@ -343,6 +348,108 @@ describe('selectReleaseAmend', () => {
     expect(() =>
       selectReleaseAmend([{ name: '../basic', assessment: 'CHANGED' }]),
     ).toThrow(/demo name/);
+  });
+});
+
+function scratchFixture(): {
+  scratchRoot: string;
+  baseTapes: string;
+  headTapes: string;
+} {
+  const root = mkdtempSync(join(tmpdir(), 'comment-scratch-'));
+  const baseTapes = join(root, 'base-tapes');
+  const headTapes = join(root, 'head-tapes');
+  mkdirSync(baseTapes);
+  mkdirSync(headTapes);
+  return { scratchRoot: join(root, 'scratch'), baseTapes, headTapes };
+}
+
+function writeTape(dir: string, name: string): void {
+  writeFileSync(join(dir, `${name}.tape`), 'Hide\n');
+}
+
+function writeRecording(
+  scratchRoot: string,
+  attempt: number,
+  sideName: 'base' | 'head',
+  demo: string,
+  text: string,
+  frameByte: number,
+): void {
+  const demoDir = join(scratchRoot, `attempt-${attempt}`, sideName, demo);
+  const framesDir = join(demoDir, 'frames');
+  mkdirSync(framesDir, { recursive: true });
+  writeFileSync(join(demoDir, 'record.txt'), text);
+  for (let index = 0; index < MIN_SETTLED_FRAMES; index += 1) {
+    writeFileSync(
+      join(framesDir, `frame-text-${String(index).padStart(5, '0')}.png`),
+      Buffer.from([frameByte]),
+    );
+  }
+}
+
+describe('loadCommentEntries', () => {
+  it('marks a repeated frame mismatch styling-only and ignores URL keys that are not tapes', () => {
+    const tree = scratchFixture();
+    writeTape(tree.baseTapes, 'basic');
+    writeTape(tree.headTapes, 'basic');
+    writeRecording(tree.scratchRoot, 0, 'base', 'basic', 'Search:\n', 1);
+    writeRecording(tree.scratchRoot, 0, 'head', 'basic', 'Search:\n', 2);
+    writeRecording(tree.scratchRoot, 1, 'base', 'basic', 'Search:\n', 1);
+    writeRecording(tree.scratchRoot, 1, 'head', 'basic', 'Search:\n', 2);
+
+    const entries = loadCommentEntries({
+      scratchRoot: tree.scratchRoot,
+      baseTapesDir: tree.baseTapes,
+      headTapesDir: tree.headTapes,
+      imageUrls: {
+        basic: 'https://example.com/basic-demo.gif',
+        'basic-before-after': 'https://example.com/basic-before-after.gif',
+        other: 'https://example.com/other-demo.gif',
+      },
+    });
+
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({
+      name: 'basic',
+      assessment: 'CHANGED',
+      stylingOnly: true,
+      textDiff: '',
+      stackedUrl: 'https://example.com/basic-before-after.gif',
+    });
+  });
+
+  it('throws when a text CHANGED demo has no stacked URL', () => {
+    const tree = scratchFixture();
+    writeTape(tree.baseTapes, 'validation');
+    writeTape(tree.headTapes, 'validation');
+    writeRecording(
+      tree.scratchRoot,
+      0,
+      'base',
+      'validation',
+      '> Please select at least 2 team members\n',
+      1,
+    );
+    writeRecording(
+      tree.scratchRoot,
+      0,
+      'head',
+      'validation',
+      '! Please select at least 2 team members\n',
+      1,
+    );
+
+    expect(() =>
+      loadCommentEntries({
+        scratchRoot: tree.scratchRoot,
+        baseTapesDir: tree.baseTapes,
+        headTapesDir: tree.headTapes,
+        imageUrls: {
+          validation: 'https://example.com/validation-demo.gif',
+        },
+      }),
+    ).toThrow(/stacked/);
   });
 });
 

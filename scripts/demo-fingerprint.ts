@@ -499,7 +499,7 @@ export function assertSafeDemoName(name: string): void {
   }
 }
 
-function tapeNames(directory: string): string[] {
+export function tapeNames(directory: string): string[] {
   if (!existsSync(directory)) {
     return [];
   }
@@ -521,7 +521,7 @@ function attemptNames(scratchRoot: string): string[] {
     );
 }
 
-function attemptsForDemo(
+export function attemptsForDemo(
   scratchRoot: string,
   demo: string,
   baseTape: boolean,
