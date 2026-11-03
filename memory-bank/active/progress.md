@@ -93,3 +93,15 @@ Switch the pull-request demo comment and the release-please GIF amend from the G
 * Insights
     - A README-only commit after a demo change still reads CHANGED against `main`, and that extra GIF commit is accepted
 
+
+## 2026-11-03 - PREFLIGHT - COMPLETE (FAIL (fixable))
+
+* Work completed
+    - Validated the GIF-commit plan against `scripts/demo-fingerprint.ts`, the workflow, the upload script, and `generate-demo-comment.sh`
+    - Wrote `.preflight-status` with first line `FAIL (fixable)`
+* Decisions made
+    - Plan must be revised before build: unit 8 hides untested executable glue (template fill, image-list parsing, CLI), the pull-before-push notice has no implementation home, the head GIF never reaches `docs/img/` for the upload, the push can cancel the comment post, and the GIF commit is not gated off release-please branches
+    - No in-phase edits were made to `tasks.md`
+* Insights
+    - A JS string `.replace` of a template token would reinterpret `$&` in a text diff, the same hazard `envsubst` had
+    - The upload script reads only `docs/img/*-demo.gif`, so dropping `demo:generate:all` needs an explicit copy from the scratch head recording

@@ -1,7 +1,7 @@
 # Active Context
 
 ## Current Task: Promote demo verdicts out of shadow
-**Phase:** PLAN - COMPLETE
+**Phase:** PREFLIGHT - COMPLETE (FAIL (fixable))
 
 ## What Was Done
 - Confirmed intent against [issue #190](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/190): fingerprint verdicts drive the demo comment.
