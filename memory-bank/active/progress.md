@@ -93,6 +93,20 @@ Switch the pull-request demo comment and the release-please GIF amend from the G
 * Insights
     - A README-only commit after a demo change still reads CHANGED against `main`, and that extra GIF commit is accepted
 
+## 2026-11-03 - PLAN - COMPLETE
+
+* Work completed
+    - Revised `memory-bank/active/tasks.md` against the five blocking preflight findings
+    - Added tested units for the image-list parser, the template fill, the attempt-0 copy plan, and the comment CLI
+* Decisions made
+    - `renderDemoComment` returns `pullNotice`. The workflow sets `gifCommitAdded` only on the feature path, and the comment is posted before the push
+    - Attempt 0 is the uploaded and committed GIF. Attempt 1 stays fingerprint-only
+    - The feature GIF commit step requires `is_release_please != 'true'`
+    - Declined the advisory to move the whole pipeline into one injected-exec `run`
+* Insights
+    - `String.prototype.replace` interprets `$&` in the replacement string, so the template fill has to pass a function
+    - The upload script only sees `docs/img/*-demo.gif`, and it checks out another branch, so the commit step copies from scratch again after the upload returns
+
 
 ## 2026-11-03 - PREFLIGHT - COMPLETE (FAIL (fixable))
 
