@@ -24,3 +24,13 @@ Switch the pull-request demo comment and the release-please GIF amend from the G
     - The comment keeps the merge-base comparison on every pull request
 * Insights
     - A release-please pull request does not contain the feature diff, so one comparison cannot both describe the pull request and refresh stale README GIFs
+
+## 2026-11-03 - CREATIVE - COMPLETE
+
+* Work completed
+    - Compared three comment treatments for REMOVED, UNSTABLE, and NOISY
+* Decisions made
+    - Collapse SAME, NOISY, and UNSTABLE with the verdict word in the summary
+    - Open CHANGED, NEW, and REMOVED
+* Insights
+    - Collapsed without a verdict word still fails the operator's request, because SAME has to be stated

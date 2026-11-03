@@ -8,6 +8,7 @@
 - Operator emphasis: a demo that has not meaningfully changed stays collapsed and is indicated as the same.
 - Complexity is Level 3.
 - Release amend base resolved: compare the commit that last touched `docs/img/` with the release head. Comment base stays the merge-base.
+- Comment shape resolved: collapsed SAME, NOISY, and UNSTABLE each name their verdict. Open CHANGED, NEW, and REMOVED.
 
 ## Next Step
-- Creative phase for how the comment presents REMOVED, UNSTABLE, and NOISY. Then finish the plan.
+- Finish the Level 3 plan, then preflight.
