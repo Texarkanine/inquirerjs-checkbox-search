@@ -167,3 +167,15 @@ Switch the pull-request demo comment and the release-please GIF amend from the G
     - The comment-size, duplicated CLI, and unused `--flag=value` advisories stay as written
 * Insights
     - Docker treats a non-absolute `-v` source as a named volume, so the mount string has to be absolute on both sides
+
+## 2026-11-03 - QA - COMPLETE (FAIL)
+
+* Work completed
+    - Re-reviewed the rebuild against `tasks.md`, the project brief, and the workflow. The three first-review blockers are resolved
+    - Ran `npx vitest run scripts` (79 pass), format, lint, and `tsc -p tsconfig.scripts.json`, all clean
+    - Wrote `memory-bank/active/.qa-validation-status` with first line `FAIL`
+* Decisions made
+    - Build must rerun for one blocking finding: `CONTRIBUTING.md` does not describe the demo commit or the pull-before-push step
+    - The plan does not need revision
+* Insights
+    - The plan's only prose unit targeted `techContext.md`, so the contributor-facing doc was missed

@@ -344,3 +344,9 @@ No new technology - validation not required. FFmpeg stays the binary already in 
 - The `buildDockerRunArgs`, `renderDemoComment`, `parseDemoImageList`, and `fillCommentTemplate` doc comments sit on those functions.
 - Advisories left in place: full-file text diffs, duplicated upload-failure and pull-notice logic in `runCommentCli`, and unused `--flag=value` parsing.
 - Verification after the rebuild: `npx vitest run scripts` passes (79). Format, lint, and `tsc -p tsconfig.scripts.json` are clean. `src/index.ts` typecheck errors and the prompt test failures are unchanged and outside this task.
+
+**Second review:** FAIL. The plan held. The three first-review blockers are resolved and verified: `npx vitest run scripts` passes (79), format, lint, and `tsc -p tsconfig.scripts.json` are clean. One finding blocks, so Build must rerun.
+
+- BLOCKING (Documentation): `CONTRIBUTING.md` "Demo Generation" does not say the demo app now adds one `chore: update demo GIFs` commit to a contributor's branch when a demo changes, or that the contributor must pull before pushing again. Add that. `README.md` needs no change.
+- Advisories: full-file text diffs can approach the 65536-character comment cap, `runCommentCli` duplicates the upload-failure and pull-notice logic, `parseCommentArgs` accepts an unused `--flag=value` form, and an `❌ No valid demo files found` upload output makes the comment step exit 1.
+- `src/index.ts` typecheck errors and 32 prompt test failures are unchanged and outside this task.

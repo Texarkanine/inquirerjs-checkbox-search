@@ -1,7 +1,7 @@
 # Active Context
 
 ## Current Task: Promote demo verdicts out of shadow
-**Phase:** BUILD - COMPLETE
+**Phase:** QA - COMPLETE (FAIL)
 
 ## What Was Done
 - Confirmed intent against [issue #190](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/190): fingerprint verdicts drive the demo comment.
@@ -22,4 +22,4 @@
 - QA failed on three fixable findings. The rebuild resolves every GIF path in `buildDockerFfmpegStackArgs` before the Docker mount, fences a CHANGED text diff as a `diff` block, and puts the detached doc comments back on their functions. The comment-size, duplicated CLI, and unused `--flag=value` advisories were left as written.
 
 ## Next Step
-- QA review of the rebuild.
+- Rerun `/niko-build` to add the demo-commit and pull-before-push note to `CONTRIBUTING.md` "Demo Generation", then `/niko-qa` again.
