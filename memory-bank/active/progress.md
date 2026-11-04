@@ -272,3 +272,18 @@ Switch the pull-request demo comment and the release-please GIF amend from the G
 * Insights
     - Unit 7's new test locks an existing throw, so it is green on first run; it is a contract lock on executable behavior, not a change-detector
 
+## 2026-11-04 - QA - COMPLETE (PASS)
+
+* Work completed
+    - Evaluated PR #202 rework implementation against all 9 plan units in `tasks.md` and the reworked project brief
+    - Verified 97 tests pass in `scripts/demo-fingerprint.test.ts` and `scripts/demo-comment.test.ts`
+    - Verified clean status on `npm run format:check`, `npm run lint:check`, and `tsc -p tsconfig.scripts.json`
+    - Validated semantic requirements: tape name suffix guards, NOISY/UNSTABLE commit staging, HEAD-relative commit listing, CommonMark diff fencing, non-scaling width padding, and repair retry ordering
+    - Wrote `memory-bank/active/.qa-validation-status` with first line `PASS`
+* Decisions made
+    - QA passes without blocking findings
+    - Non-blocking advisories recorded for future maintenance: workflow shell duplication of HEAD docs materialization, retained `amend` CLI mode, and inline width probing
+* Insights
+    - Isolating tape name validation (`assertDemoTapeName`) from URL key validation (`assertSafeDemoName`) successfully prevents preview naming collisions without rejecting valid preview upload map keys
+
+

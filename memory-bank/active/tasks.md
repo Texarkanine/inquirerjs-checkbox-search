@@ -177,4 +177,17 @@ No new technology - validation not required. The fence check used the already-in
 - [x] Pre-Mortem complete
 - [x] Preflight
 - [x] Build
-- [ ] QA
+- [x] QA
+
+## QA Results
+
+**Rework review:** PASS. The rework addresses all PR #202 feedback and satisfies the rework requirements in `memory-bank/active/projectbrief.md`.
+
+- Release repair no longer links an incomplete attempt-1 head before the repair base exists.
+- The feature commit and release amend steps use `commit-list` with HEAD comparisons, exiting cleanly on empty indexes or unchanged files.
+- Tape names ending in `-before` or `-before-after` are rejected by `assertDemoTapeName` without breaking preview URL keys.
+- Text diffs dynamically expand fence lengths to avoid CommonMark backtick collisions.
+- Unequal width frames are padded rather than scaled, preserving native resolution and visual fidelity.
+- NOISY and UNSTABLE GIFs are committed alongside CHANGED and NEW; only SAME leaves docs/img untouched.
+- Advisories noted: three duplicated `HEAD_DOCS` materialization loops in workflow YAML, retained `amend` CLI debug mode, and shell-level ffmpeg probing.
+- Verification: 97 script tests pass; format, lint, and scripts typecheck are clean. Pre-existing prompt typecheck errors and test failures in `src/index.ts` are unchanged and outside scope.
