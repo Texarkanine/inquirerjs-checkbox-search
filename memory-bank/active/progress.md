@@ -2,7 +2,7 @@
 
 Switch the pull-request demo comment and the release-please GIF amend from the GIF byte diff to the fingerprint verdicts already recorded in shadow mode, as specified in issue #190. A demo that has not meaningfully changed stays collapsed and is indicated as the same.
 
-**Complexity:** Level 3
+**Complexity:** Level 2
 
 ## 2026-11-03 - COMPLEXITY-ANALYSIS - COMPLETE
 
@@ -224,4 +224,14 @@ Switch the pull-request demo comment and the release-please GIF amend from the G
     - Commit every verdict that is not a guaranteed SAME. NOISY and UNSTABLE GIFs are committed. SAME is not
 * Insights
     - The operator wants a pull-request reply on each dismissed thread explaining the dismissal
+
+## 2026-11-04 - COMPLEXITY-ANALYSIS - COMPLETE
+
+* Work completed
+    - Classified the PR #202 rework
+* Decisions made
+    - Level 2: one subsystem (comment, fingerprint helper, Generate workflow), with the commit policy and the no-scale constraint already decided
+    - The original promote stays Level 3 in its own sections. This field is the rework
+* Insights
+    - Level 3 would stop before build and wait for `/niko-build`. The rework is corrections plus one stated policy, so Level 2 can plan, preflight, and build in this run
 
