@@ -248,3 +248,15 @@ Switch the pull-request demo comment and the release-please GIF amend from the G
 * Insights
     - The attempt-1 throw is already the contract. The repair bug is the symlink that creates an incomplete attempt before the first assessment
 
+## 2026-11-04 - PREFLIGHT - COMPLETE (PASS WITH ADVISORY)
+
+* Work completed
+    - Validated the nine-unit rework plan against `scripts/demo-fingerprint.ts`, `scripts/demo-comment.ts`, their test suites, and `.github/workflows/generate-demos.yaml`
+    - Verified TDD ordering in units 1-7, change-detector avoidance in unit 8, and the prose classification of unit 9; no in-phase plan edits were needed
+    - Confirmed the repair-step symlink bug, the always-commits feature step, the `foo`/`foo-before` filename collision, and the hardcoded three-backtick diff fence against the code
+    - Wrote `memory-bank/active/.preflight-status` with first line `PASS WITH ADVISORY`
+* Decisions made
+    - Plan is approved for Build with four advisories: a supersession line for `creative-release-gif-amend.md`, a tested `stack-args` CLI mode as a radical-innovation candidate, explicit materialize-after-checkout ordering in the commit steps, and a dead-code watch on the `amend` CLI mode
+* Insights
+    - Unit 7's new test locks an existing throw, so it is green on first run; it is a contract lock on executable behavior, not a change-detector
+

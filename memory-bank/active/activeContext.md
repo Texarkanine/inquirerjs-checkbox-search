@@ -1,7 +1,7 @@
 # Active Context
 
 ## Current Task: Rework demo verdict commit and repair
-**Phase:** PLAN - COMPLETE
+**Phase:** PREFLIGHT - COMPLETE (PASS WITH ADVISORY)
 
 ## What Was Done
 - Level 2 plan for the PR #202 rework is in `memory-bank/active/tasks.md`.
