@@ -235,3 +235,16 @@ Switch the pull-request demo comment and the release-please GIF amend from the G
 * Insights
     - Level 3 would stop before build and wait for `/niko-build`. The rework is corrections plus one stated policy, so Level 2 can plan, preflight, and build in this run
 
+## 2026-11-04 - PLAN - COMPLETE
+
+* Work completed
+    - Wrote the nine-step plan in `memory-bank/active/tasks.md`
+    - Rendered a backtick diff with CommonMark 0.31.2. The indented fence closes the block
+    - Confirmed ffmpeg 7.0.2 rejects unequal `vstack` and accepts `pad` without stretching the narrower frame
+* Decisions made
+    - Pad to the wider width. Do not scale
+    - `commit-list` compares scratch bytes with `HEAD`'s `docs/img` files and is what the pull notice and both commit steps use
+    - NOISY and UNSTABLE stay collapsed in the comment and are still committed
+* Insights
+    - The attempt-1 throw is already the contract. The repair bug is the symlink that creates an incomplete attempt before the first assessment
+
