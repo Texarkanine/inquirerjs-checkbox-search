@@ -1,7 +1,7 @@
 # Active Context
 
 ## Current Task: Promote demo verdicts out of shadow
-**Phase:** BUILD - COMPLETE
+**Phase:** QA - COMPLETE (PASS)
 
 ## What Was Done
 - Confirmed intent against [issue #190](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/190): fingerprint verdicts drive the demo comment.
@@ -24,4 +24,4 @@
 - `CONTRIBUTING.md` "Demo Generation" now tells contributors about the `chore: update demo GIFs` commit, the pull before the next push, and the expected follow-up run that exits immediately.
 
 ## Next Step
-- QA review of the contributor-doc fix.
+- Reflect.

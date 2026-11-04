@@ -188,3 +188,15 @@ Switch the pull-request demo comment and the release-please GIF amend from the G
     - `README.md` stays as it is. No test locks the contributor prose
 * Insights
     - The bot push starts a workflow run that exits because the actor is `demo-generation-doggo[bot]`
+
+## 2026-11-03 - QA - COMPLETE (PASS)
+
+* Work completed
+    - Re-reviewed the `CONTRIBUTING.md` fix against `tasks.md`, the workflow commit message, and `README.md`
+    - Ran `npx vitest run scripts` (79 pass), format, lint, and `tsc -p tsconfig.scripts.json`, all clean
+    - Wrote `memory-bank/active/.qa-validation-status` with first line `PASS`
+* Decisions made
+    - No blocking findings. Advisories stay as written
+* Insights
+    - The 32 prompt test failures and three `src/index.ts` typecheck errors are unchanged and outside this task
+

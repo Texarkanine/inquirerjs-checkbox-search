@@ -333,7 +333,7 @@ No new technology - validation not required. FFmpeg stays the binary already in 
 - [x] Pre-Mortem complete
 - [x] Preflight
 - [x] Build
-- [ ] QA
+- [x] QA
 
 ## QA Results
 
@@ -350,3 +350,8 @@ No new technology - validation not required. FFmpeg stays the binary already in 
 - `CONTRIBUTING.md` "Demo Generation" now says the demo bot adds one `chore: update demo GIFs` commit when a demo changes, that the contributor pulls before the next push, and that the workflow run started by that push exits immediately. `README.md` was left unchanged.
 - Advisories left in place: full-file text diffs, duplicated upload-failure and pull-notice logic, unused `--flag=value` parsing, and the empty-upload comment failure.
 - `src/index.ts` typecheck errors and 32 prompt test failures are unchanged and outside this task.
+
+**Third review:** PASS. The plan held and the second-review documentation blocker is fixed. `CONTRIBUTING.md` describes the `chore: update demo GIFs` commit, the pull before the next push, and the expected follow-up run, and the commit message matches the workflow.
+
+- Advisories left in place: full-file text diffs, duplicated upload-failure and pull-notice logic, unused `--flag=value` parsing, and the empty-upload comment failure.
+- Verification: `npx vitest run scripts` passes (79). Format, lint, and `tsc -p tsconfig.scripts.json` are clean. `src/index.ts` typecheck errors and 32 prompt test failures are unchanged and outside this task.
