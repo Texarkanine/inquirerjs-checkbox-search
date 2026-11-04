@@ -1,7 +1,7 @@
 # Active Context
 
 ## Current Task: Rework demo verdict commit and repair
-**Phase:** QA - COMPLETE (PASS)
+**Phase:** REFLECT - COMPLETE
 
 ## What Was Done
 - Release repair no longer links attempt-1 head before the repair base exists.
@@ -30,4 +30,4 @@
 - `src/index.ts` still fails typecheck in three `setActiveItemValue` calls, and 32 prompt tests still fail. This rework does not touch the prompt.
 
 ## Next Step
-- Reflect on the rework (/niko-reflect).
+- Run `/niko-archive` to archive the promote work and this rework.

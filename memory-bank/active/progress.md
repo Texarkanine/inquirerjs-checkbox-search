@@ -286,4 +286,14 @@ Switch the pull-request demo comment and the release-please GIF amend from the G
 * Insights
     - Isolating tape name validation (`assertDemoTapeName`) from URL key validation (`assertSafeDemoName`) successfully prevents preview naming collisions without rejecting valid preview upload map keys
 
+## 2026-11-04 - REFLECT - COMPLETE
+
+* Work completed
+    - Wrote `memory-bank/active/reflection/reflection-issue-190-promote-rework.md`
+    - Left `productContext.md` and `systemPatterns.md` unchanged. `techContext.md` already states that a non-SAME verdict commits the GIF
+* Decisions made
+    - The original promote reflection stays beside the rework reflection
+* Insights
+    - The suffix check cannot live on the same function that accepts preview upload keys
+
 
