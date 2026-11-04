@@ -211,3 +211,17 @@ Switch the pull-request demo comment and the release-please GIF amend from the G
 * Insights
     - A payload assertion stays green when the rendering is wrong. The workflow's real path shape has to be in the unit test, because the workflow itself is not tested
 
+## 2026-11-04 - REWORK - IN-PROGRESS
+
+* Work completed
+    - Operator chose rework of issue-190-promote from the PR #202 review, instead of archive
+* Decisions made
+    - Fix the release-repair abort: do not assess an attempt-1 head that has no repair base
+    - Fix the feature GIF commit: exit 0 when the index is empty, and say a commit was added only when a listed path will change HEAD
+    - Reject tape names ending in `-before` or `-before-after`
+    - Change the text-diff fence only if a backtick run in a diff actually breaks the comment
+    - A width change is a CHANGED demo. Do not scale either GIF to make `vstack` accept them
+    - Commit every verdict that is not a guaranteed SAME. NOISY and UNSTABLE GIFs are committed. SAME is not
+* Insights
+    - The operator wants a pull-request reply on each dismissed thread explaining the dismissal
+

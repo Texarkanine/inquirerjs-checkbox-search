@@ -46,3 +46,15 @@ Authoritative spec: [issue #190](https://github.com/Texarkanine/inquirerjs-check
 2. A pull request that changes visible text or color in one demo expands that demo and only that demo, with before and after.
 3. Re-running the workflow on the same commit gives the same verdicts.
 4. A demo-changing pull request cannot merge while its head lacks the updated GIFs. `Generate` stays the required check name. A pull request that changes no demo gets no GIF commit. A release gets GIF commits only when `docs/img/` is still wrong.
+
+## Rework
+
+PR #202 review. The original brief above still holds except where this section replaces it.
+
+1. Release repair must not run the fingerprint CLI while an attempt-1 head from the comment recording is linked and the matching repair base does not exist yet. That throw happens before the repair retry and stops the amend.
+2. The feature GIF commit exits 0 when `git rm --ignore-unmatch` or an identical stage leaves the index empty. The comment says a demo commit was added only when a listed path will change `HEAD`.
+3. Tape names that end in `-before` or `-before-after` are rejected. Those suffixes are the preview file and URL keys.
+4. A width change is a CHANGED demo. Neither GIF is scaled so `vstack` can run. The stacked preview must still be produced without a failed ffmpeg step.
+5. SAME is the only verdict that leaves `docs/img/` untouched. NOISY and UNSTABLE are committed, the same as CHANGED, NEW, and REMOVED. Err toward updating the GIF.
+6. The text-diff fence changes only if a backtick run in a diff actually closes the fence and breaks the comment.
+7. Dismissed review threads get a reply that states why: the `__proto__` upload key, and the request to assert `-i` order in the stack test. The width thread gets a reply that states the no-scale decision. The duplicate suffix thread is the same fix as item 3 of this rework.
