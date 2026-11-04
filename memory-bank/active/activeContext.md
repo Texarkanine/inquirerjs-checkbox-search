@@ -25,5 +25,7 @@
 
 - Reflection is in `memory-bank/active/reflection/reflection-issue-190-promote.md`. The three creative decisions held. QA's two failures were a relative Docker mount, an unfenced diff, detached doc comments, and a missing `CONTRIBUTING.md` note. The third review passed.
 
+- Draft pull request: https://github.com/Texarkanine/inquirerjs-checkbox-search/pull/202 on `shadow-diff`.
+
 ## Next Step
-- Run `/niko-archive` to create the archive document and finalize the current project.
+- Run `/niko-archive` to create the archive document and finalize the current project. The draft pull request is already open.
