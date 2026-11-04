@@ -1,7 +1,7 @@
 # Active Context
 
 ## Current Task: Promote demo verdicts out of shadow
-**Phase:** QA - COMPLETE (PASS)
+**Phase:** REFLECT - COMPLETE
 
 ## What Was Done
 - Confirmed intent against [issue #190](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/190): fingerprint verdicts drive the demo comment.
@@ -23,5 +23,7 @@
 
 - `CONTRIBUTING.md` "Demo Generation" now tells contributors about the `chore: update demo GIFs` commit, the pull before the next push, and the expected follow-up run that exits immediately.
 
+- Reflection is in `memory-bank/active/reflection/reflection-issue-190-promote.md`. The three creative decisions held. QA's two failures were a relative Docker mount, an unfenced diff, detached doc comments, and a missing `CONTRIBUTING.md` note. The third review passed.
+
 ## Next Step
-- Reflect.
+- Run `/niko-archive` to create the archive document and finalize the current project.

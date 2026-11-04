@@ -192,11 +192,22 @@ Switch the pull-request demo comment and the release-please GIF amend from the G
 ## 2026-11-03 - QA - COMPLETE (PASS)
 
 * Work completed
-    - Re-reviewed the `CONTRIBUTING.md` fix against `tasks.md`, the workflow commit message, and `README.md`
+    - Re-reviewed the contributor-doc fix. `CONTRIBUTING.md` matches the `chore: update demo GIFs` commit and the pull notice
     - Ran `npx vitest run scripts` (79 pass), format, lint, and `tsc -p tsconfig.scripts.json`, all clean
     - Wrote `memory-bank/active/.qa-validation-status` with first line `PASS`
 * Decisions made
-    - No blocking findings. Advisories stay as written
+    - The remaining notes stay advisories: full-file text diffs, duplicated CLI sentences, unused `--flag=value`, and the empty-upload comment failure
 * Insights
-    - The 32 prompt test failures and three `src/index.ts` typecheck errors are unchanged and outside this task
+    - `README.md` did not need a change. The contributor-facing gap was only in `CONTRIBUTING.md`
+
+## 2026-11-03 - REFLECT - COMPLETE
+
+* Work completed
+    - Wrote `memory-bank/active/reflection/reflection-issue-190-promote.md`
+    - Checked `productContext.md`, `systemPatterns.md`, and `techContext.md`. None needed a further edit
+* Decisions made
+    - The brief, not issue #190's old "no bot commits" line, is the contract that was built
+    - Advisories stay unfixed
+* Insights
+    - A payload assertion stays green when the rendering is wrong. The workflow's real path shape has to be in the unit test, because the workflow itself is not tested
 
