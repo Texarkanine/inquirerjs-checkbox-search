@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { basename, dirname, join } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 /** VHS separates screens in a `.txt` record with this line. */
@@ -210,8 +210,33 @@ export function assessFingerprints(input: AssessmentInput): Assessment {
 }
 
 /**
- * One comment line naming every demo verdict. Shadow mode prints this
- * and does not use it to expand or collapse the demo blocks.
+ * Verdict for one demo, plus whether a CHANGED result is frames only.
+ *
+ * `stylingOnly` is true only when the verdict is CHANGED and the first
+ * attempt has equal text and unequal frames. Text mismatches and every
+ * other verdict are false.
+ */
+export function describeVerdict(input: AssessmentInput): {
+  assessment: Assessment;
+  stylingOnly: boolean;
+} {
+  const assessment = assessFingerprints(input);
+  const base = input.attempts[0]?.base ?? null;
+  const head = input.attempts[0]?.head ?? null;
+  const stylingOnly =
+    assessment === 'CHANGED' &&
+    base !== null &&
+    head !== null &&
+    base.text === head.text &&
+    base.frames !== head.frames;
+  return { assessment, stylingOnly };
+}
+
+/**
+ * One job-summary line naming every demo verdict.
+ *
+ * The comment does not include this line. The per-demo summary is the
+ * verdict a reviewer sees.
  */
 export function formatShadowLine(
   entries: readonly { name: string; assessment: Assessment }[],
@@ -221,7 +246,7 @@ export function formatShadowLine(
     .map((entry) => `${entry.name} ${entry.assessment}`)
     .join(', ');
   const body = summary.length === 0 ? 'none' : summary;
-  return `Shadow verdicts (not used to expand demos): ${body}.`;
+  return `Demo verdicts: ${body}.`;
 }
 
 export interface GenerateArgs {
@@ -285,6 +310,86 @@ export function withFingerprintOutputs(
  * the scratch mount hung the recording.
  */
 export const containerFramesDir = '/tmp/vhs-frames';
+
+/**
+ * Docker arguments that stack a before GIF above an after GIF.
+ *
+ * Paths are resolved so a relative path is a bind mount, not a named
+ * volume. The output directory is mounted writable. The two input
+ * directories are read-only. The process temp dir is not redirected.
+ * When the widths differ, each input is padded to the wider width.
+ * Neither GIF is scaled. This function does not run Docker.
+ */
+
+const EQUAL_WIDTH_STACK_FILTER =
+  '[0][1]vstack=inputs=2,split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=none';
+
+function stackFilter(beforeWidth?: number, afterWidth?: number): string {
+  if (
+    beforeWidth === undefined ||
+    afterWidth === undefined ||
+    beforeWidth === afterWidth
+  ) {
+    return EQUAL_WIDTH_STACK_FILTER;
+  }
+  const maxWidth = Math.max(beforeWidth, afterWidth);
+  const pad = `pad=w=${maxWidth}:h=ih:x=(ow-iw)/2:y=0:color=black,setsar=1`;
+  return `[0]${pad}[top];[1]${pad}[bot];[top][bot]vstack=inputs=2,split[a][b];[a]palettegen=stats_mode=diff[pal];[b][pal]paletteuse=dither=none`;
+}
+/**
+ * Read the first `Video:` size from `ffmpeg -i` text.
+ * Throws when no `WIDTHxHEIGHT` size is present.
+ */
+export function parseFfmpegStreamSize(ffmpegText: string): {
+  width: number;
+  height: number;
+} {
+  const match = ffmpegText.match(/Video:.*?(\d+)x(\d+)/);
+  if (match === null) {
+    throw new Error('ffmpeg text has no video size');
+  }
+  return { width: Number(match[1]), height: Number(match[2]) };
+}
+
+export function buildDockerFfmpegStackArgs(options: {
+  image: string;
+  beforeGif: string;
+  afterGif: string;
+  outputGif: string;
+  beforeWidth?: number;
+  afterWidth?: number;
+}): string[] {
+  const { beforeWidth, afterWidth } = options;
+  if ((beforeWidth === undefined) !== (afterWidth === undefined)) {
+    throw new Error('pass both widths or neither');
+  }
+  const beforeGif = resolve(options.beforeGif);
+  const afterGif = resolve(options.afterGif);
+  const outputGif = resolve(options.outputGif);
+  const beforeDir = dirname(beforeGif);
+  const afterDir = dirname(afterGif);
+  const outputDir = dirname(outputGif);
+  return [
+    'run',
+    '--rm',
+    '-v',
+    `${beforeDir}:${beforeDir}:ro`,
+    '-v',
+    `${afterDir}:${afterDir}:ro`,
+    '-v',
+    `${outputDir}:${outputDir}`,
+    '--entrypoint',
+    'ffmpeg',
+    options.image,
+    '-i',
+    beforeGif,
+    '-i',
+    afterGif,
+    '-filter_complex',
+    stackFilter(beforeWidth, afterWidth),
+    outputGif,
+  ];
+}
 
 /**
  * Docker arguments for one scratch recording. The host scratch directory
@@ -476,7 +581,18 @@ export function assertSafeDemoName(name: string): void {
   }
 }
 
-function tapeNames(directory: string): string[] {
+/**
+ * Reject a tape name that collides with a preview file.
+ * Upload keys such as `<name>-before` stay allowed by `assertSafeDemoName`.
+ */
+export function assertDemoTapeName(name: string): void {
+  assertSafeDemoName(name);
+  if (name.endsWith('-before-after') || name.endsWith('-before')) {
+    throw new Error(`demo name is not safe: ${name}`);
+  }
+}
+
+export function tapeNames(directory: string): string[] {
   if (!existsSync(directory)) {
     return [];
   }
@@ -498,7 +614,7 @@ function attemptNames(scratchRoot: string): string[] {
     );
 }
 
-function attemptsForDemo(
+export function attemptsForDemo(
   scratchRoot: string,
   demo: string,
   baseTape: boolean,
@@ -577,7 +693,7 @@ export function assessScratch(options: ScratchOptions): {
     const baseNames = tapeNames(options.baseTapesDir);
     const headNames = tapeNames(options.headTapesDir);
     for (const name of [...baseNames, ...headNames]) {
-      assertSafeDemoName(name);
+      assertDemoTapeName(name);
     }
     const names = [...new Set([...baseNames, ...headNames])].sort((a, b) =>
       a.localeCompare(b),

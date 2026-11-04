@@ -1,0 +1,1 @@
+Demo comments are rendered by scripts/demo-comment.ts. generate-demo-comment.sh and detect-demo-changes.sh are gone. A feature GIF commit is additive and follows the comment; release-please still amends.

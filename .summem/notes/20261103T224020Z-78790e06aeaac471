@@ -1,0 +1,1 @@
+Comment template fill must use a function replacer. String.replace treats $& and $1 in the replacement as patterns, and a demo text diff can contain them.
