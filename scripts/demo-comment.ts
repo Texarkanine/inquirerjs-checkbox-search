@@ -1,7 +1,8 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import {
+  assertDemoTapeName,
   assertSafeDemoName,
   attemptsForDemo,
   describeVerdict,
@@ -38,6 +39,15 @@ function requiredUrl(url: string | undefined, label: string): string {
     throw new Error(`missing ${label}`);
   }
   return url;
+}
+
+function diffFence(text: string): string {
+  const longestRun = Math.max(
+    0,
+    ...(text.match(/`+/g) ?? []).map((run) => run.length),
+  );
+  const fence = '`'.repeat(Math.max(3, longestRun + 1));
+  return `${fence}diff\n${text}\n${fence}`;
 }
 
 function detailsBlock(open: boolean, summary: string, body: string): string {
@@ -100,7 +110,7 @@ function renderDemoBlock(entry: DemoCommentEntry): string {
       const image = `![${entry.name}-before-after](${requiredUrl(entry.stackedUrl, 'stacked URL')})`;
       const diff =
         !entry.stylingOnly && entry.textDiff.length > 0
-          ? `\n\n${detailsBlock(false, 'Text diff', `\`\`\`diff\n${entry.textDiff}\n\`\`\``)}`
+          ? `\n\n${detailsBlock(false, 'Text diff', diffFence(entry.textDiff))}`
           : '';
       return detailsBlock(true, summary, `${image}${diff}`);
     }
@@ -137,15 +147,15 @@ export function renderDemoComment(
 }
 
 function demoGifPath(name: string): string {
-  assertSafeDemoName(name);
+  assertDemoTapeName(name);
   return `docs/img/${name}-demo.gif`;
 }
 
 /**
  * Paths a release amend may change. Preview GIFs are never included.
  *
- * CHANGED and NEW are staged. REMOVED is removed. SAME, NOISY, UNSTABLE,
- * and NEED_FRAME_RETRY are left untouched. Names are sorted.
+ * CHANGED, NEW, NOISY, and UNSTABLE are staged. REMOVED is removed.
+ * SAME and NEED_FRAME_RETRY are left untouched. Names are sorted.
  */
 export function selectReleaseAmend(
   entries: readonly { name: string; assessment: Assessment }[],
@@ -157,7 +167,12 @@ export function selectReleaseAmend(
   );
   for (const entry of sorted) {
     const path = demoGifPath(entry.name);
-    if (entry.assessment === 'CHANGED' || entry.assessment === 'NEW') {
+    if (
+      entry.assessment === 'CHANGED' ||
+      entry.assessment === 'NEW' ||
+      entry.assessment === 'NOISY' ||
+      entry.assessment === 'UNSTABLE'
+    ) {
       stage.push(path);
     } else if (entry.assessment === 'REMOVED') {
       remove.push(path);
@@ -169,6 +184,60 @@ export function selectReleaseAmend(
 /**
  * One `stage <path>` or `remove <path>` line per amend path.
  */
+/**
+ * Drop commit paths that would not change `HEAD`.
+ *
+ * A remove with no head file is dropped. A stage whose bytes match the
+ * attempt-0 head GIF is dropped. Every other listed path is kept. A
+ * stage whose scratch GIF is missing throws.
+ */
+export function commitPathsAgainstHead(options: {
+  selection: { stage: string[]; remove: string[] };
+  headDocsImg: string;
+  scratchRoot: string;
+}): { stage: string[]; remove: string[] } {
+  const stage: string[] = [];
+  const remove: string[] = [];
+  for (const path of options.selection.remove) {
+    const name = demoNameFromGifPath(path);
+    if (existsSync(join(options.headDocsImg, `${name}-demo.gif`))) {
+      remove.push(path);
+    }
+  }
+  for (const path of options.selection.stage) {
+    const name = demoNameFromGifPath(path);
+    const scratchPath = join(
+      options.scratchRoot,
+      'attempt-0',
+      'head',
+      name,
+      `${name}-demo.gif`,
+    );
+    if (!existsSync(scratchPath)) {
+      throw new Error(`missing scratch GIF for ${name}`);
+    }
+    const headPath = join(options.headDocsImg, `${name}-demo.gif`);
+    if (
+      !existsSync(headPath) ||
+      !readFileSync(headPath).equals(readFileSync(scratchPath))
+    ) {
+      stage.push(path);
+    }
+  }
+  return { stage, remove };
+}
+
+function demoNameFromGifPath(path: string): string {
+  const prefix = 'docs/img/';
+  const suffix = '-demo.gif';
+  if (!path.startsWith(prefix) || !path.endsWith(suffix)) {
+    throw new Error(`amend path is not a demo GIF: ${path}`);
+  }
+  const name = path.slice(prefix.length, -suffix.length);
+  assertDemoTapeName(name);
+  return name;
+}
+
 export function formatAmendList(selection: {
   stage: string[];
   remove: string[];
@@ -287,14 +356,15 @@ export interface CommentIo {
 }
 
 /**
- * Flags for `comment`, `copies`, and `amend`.
+ * Flags for `comment`, `copies`, `amend`, and `commit-list`.
  *
  * `comment` needs the scratch, the image list, the template, and the
  * three commit identity values. `copies` and `amend` need the scratch
- * and the two tape directories. `--gif-commit-added` is a boolean.
+ * and the two tape directories. `commit-list` also needs `--head-docs`.
+ * `--gif-commit-added` is a boolean.
  */
 export function parseCommentArgs(argv: readonly string[]): {
-  mode: 'comment' | 'copies' | 'amend';
+  mode: 'comment' | 'copies' | 'amend' | 'commit-list';
   scratchRoot: string;
   baseTapesDir: string;
   headTapesDir: string;
@@ -303,10 +373,16 @@ export function parseCommentArgs(argv: readonly string[]): {
   repository?: string;
   githubSha?: string;
   userCommitSha?: string;
+  headDocsImg?: string;
   gifCommitAdded: boolean;
 } {
   const mode = argv[0];
-  if (mode !== 'comment' && mode !== 'copies' && mode !== 'amend') {
+  if (
+    mode !== 'comment' &&
+    mode !== 'copies' &&
+    mode !== 'amend' &&
+    mode !== 'commit-list'
+  ) {
     throw new Error(`unknown mode: ${String(mode)}`);
   }
   const values: Partial<
@@ -323,6 +399,7 @@ export function parseCommentArgs(argv: readonly string[]): {
     >
   > = {};
   let gifCommitAdded = false;
+  let headDocsImg: string | undefined;
   for (let index = 1; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === '--gif-commit-added') {
@@ -334,6 +411,20 @@ export function parseCommentArgs(argv: readonly string[]): {
     }
     const equals = arg.indexOf('=');
     const flag = equals === -1 ? arg : arg.slice(0, equals);
+    if (flag === '--head-docs') {
+      if (mode !== 'commit-list') {
+        throw new Error(`unknown flag: ${flag}`);
+      }
+      const value = equals === -1 ? argv[index + 1] : arg.slice(equals + 1);
+      if (equals === -1) {
+        index += 1;
+      }
+      if (value === undefined || value.startsWith('--')) {
+        throw new Error(`${flag} requires a value`);
+      }
+      headDocsImg = value;
+      continue;
+    }
     const field = COMMENT_FLAGS[flag as keyof typeof COMMENT_FLAGS];
     if (field === undefined || (mode !== 'comment' && COMMENT_ONLY.has(flag))) {
       throw new Error(`unknown flag: ${flag}`);
@@ -362,6 +453,9 @@ export function parseCommentArgs(argv: readonly string[]): {
       throw new Error(`requires ${missing.flag}`);
     }
   }
+  if (mode === 'commit-list' && headDocsImg === undefined) {
+    throw new Error('requires --head-docs');
+  }
   return {
     mode,
     scratchRoot: values.scratchRoot,
@@ -372,6 +466,7 @@ export function parseCommentArgs(argv: readonly string[]): {
     repository: values.repository,
     githubSha: values.githubSha,
     userCommitSha: values.userCommitSha,
+    headDocsImg,
     gifCommitAdded,
   };
 }
@@ -384,7 +479,11 @@ export function parseCommentArgs(argv: readonly string[]): {
 export function runCommentCli(argv: readonly string[], io: CommentIo): number {
   try {
     const args = parseCommentArgs(argv);
-    if (args.mode === 'copies' || args.mode === 'amend') {
+    if (
+      args.mode === 'copies' ||
+      args.mode === 'amend' ||
+      args.mode === 'commit-list'
+    ) {
       const entries = loadCommentEntries({
         scratchRoot: args.scratchRoot,
         baseTapesDir: args.baseTapesDir,
@@ -400,7 +499,15 @@ export function runCommentCli(argv: readonly string[], io: CommentIo): number {
             })
               .map((copy) => `${copy.from}\t${copy.to}`)
               .join('\n')
-          : formatAmendList(selectReleaseAmend(entries));
+          : formatAmendList(
+              args.mode === 'commit-list'
+                ? commitPathsAgainstHead({
+                    selection: selectReleaseAmend(entries),
+                    headDocsImg: args.headDocsImg ?? '',
+                    scratchRoot: args.scratchRoot,
+                  })
+                : selectReleaseAmend(entries),
+            );
       io.stdout.write(text.length === 0 ? '' : `${text}\n`);
       return 0;
     }
@@ -459,7 +566,7 @@ export function planDocsImgCopies(options: {
   entries: readonly { name: string; assessment: Assessment }[];
 }): { from: string; to: string }[] {
   const copies = options.entries.map((entry) => {
-    assertSafeDemoName(entry.name);
+    assertDemoTapeName(entry.name);
     if (entry.assessment === 'REMOVED') {
       return {
         from: join(
@@ -504,7 +611,7 @@ export function loadCommentEntries(options: {
   const baseNames = tapeNames(options.baseTapesDir);
   const headNames = tapeNames(options.headTapesDir);
   for (const name of [...baseNames, ...headNames]) {
-    assertSafeDemoName(name);
+    assertDemoTapeName(name);
   }
   const names = [...new Set([...baseNames, ...headNames])].sort((left, right) =>
     left.localeCompare(right),

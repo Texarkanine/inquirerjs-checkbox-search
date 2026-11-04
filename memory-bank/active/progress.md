@@ -248,6 +248,18 @@ Switch the pull-request demo comment and the release-please GIF amend from the G
 * Insights
     - The attempt-1 throw is already the contract. The repair bug is the symlink that creates an incomplete attempt before the first assessment
 
+## 2026-11-04 - BUILD - COMPLETE
+
+* Work completed
+    - Implemented the nine plan units. 97 script tests pass. Format and lint are clean. `tsc -p tsconfig.scripts.json` is clean
+    - Replied on the PR #202 threads
+* Decisions made
+    - Tape-name rejection is separate from the upload-key check, because preview keys end in `-before` and `-before-after`
+    - Comment-step head bytes come from the pull-request head SHA. Commit-step head bytes come from `HEAD` after checkout
+* Insights
+    - Putting the suffix check on `assertSafeDemoName` made the CHANGED comment exit 1 on its own stacked URL key
+    - `npm run typecheck` and `npm run test:unit` still fail on the pre-existing `src/index.ts` errors and 32 prompt tests
+
 ## 2026-11-04 - PREFLIGHT - COMPLETE (PASS WITH ADVISORY)
 
 * Work completed

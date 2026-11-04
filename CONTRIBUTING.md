@@ -103,7 +103,7 @@ The project follows these standards:
 
 Demo GIFs in the README are automatically generated in CI. When you open a PR you'll get a comment with previews of any demos that changed.
 
-If a demo changed, the demo bot adds one commit, `chore: update demo GIFs`, to your branch after that comment. Pull before you push again. The workflow run started by that push exits immediately; that second run is expected.
+If a demo's verdict is not SAME, the demo bot adds one commit, `chore: update demo GIFs`, to your branch after that comment. Pull before you push again. The workflow run started by that push exits immediately; that second run is expected. SAME does not add a commit.
 
 ## Releases
 

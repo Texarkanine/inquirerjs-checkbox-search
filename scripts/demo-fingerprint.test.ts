@@ -3,11 +3,13 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
+  assertDemoTapeName,
   assertSafeDemoName,
   assessFingerprints,
   assessScratch,
   describeVerdict,
   buildDockerFfmpegStackArgs,
+  parseFfmpegStreamSize,
   buildDockerRunArgs,
   formatCliStdout,
   formatShadowLine,
@@ -397,6 +399,64 @@ describe('buildDockerFfmpegStackArgs', () => {
     expect(args).toContain(outputGif);
     expect(args).not.toContain('docs/img:docs/img');
   });
+
+  it('keeps the vstack filter when the widths are equal', () => {
+    const args = buildDockerFfmpegStackArgs({
+      image: 'vhs-node-demo:head',
+      beforeGif: '/tmp/before/basic-demo.gif',
+      afterGif: '/tmp/after/basic-demo.gif',
+      outputGif: '/tmp/out/basic-before-after-demo.gif',
+      beforeWidth: 1500,
+      afterWidth: 1500,
+    });
+
+    expect(args).toContain(
+      '[0][1]vstack=inputs=2,split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=none',
+    );
+    expect(args.join('\n')).not.toContain('pad=');
+  });
+
+  it('pads unequal widths and does not scale', () => {
+    const args = buildDockerFfmpegStackArgs({
+      image: 'vhs-node-demo:head',
+      beforeGif: '/tmp/before/basic-demo.gif',
+      afterGif: '/tmp/after/basic-demo.gif',
+      outputGif: '/tmp/out/basic-before-after-demo.gif',
+      beforeWidth: 8,
+      afterWidth: 12,
+    });
+    const filter = args[args.indexOf('-filter_complex') + 1] ?? '';
+
+    expect(filter).toContain('pad=w=12');
+    expect(filter).toContain('vstack');
+    expect(filter).not.toContain('scale');
+  });
+
+  it('throws when only one width is passed', () => {
+    expect(() =>
+      buildDockerFfmpegStackArgs({
+        image: 'vhs-node-demo:head',
+        beforeGif: '/tmp/before/basic-demo.gif',
+        afterGif: '/tmp/after/basic-demo.gif',
+        outputGif: '/tmp/out/basic-before-after-demo.gif',
+        beforeWidth: 8,
+      }),
+    ).toThrow(/width/);
+  });
+});
+
+describe('parseFfmpegStreamSize', () => {
+  it('reads the video size from ffmpeg stream text', () => {
+    expect(
+      parseFfmpegStreamSize(
+        'Stream #0:0: Video: gif, bgra, 1500x800 [SAR 1:1 DAR 15:8], 25 fps',
+      ),
+    ).toEqual({ width: 1500, height: 800 });
+  });
+
+  it('throws when the text has no video size', () => {
+    expect(() => parseFfmpegStreamSize('not a stream')).toThrow(/size/);
+  });
 });
 
 describe('buildDockerRunArgs', () => {
@@ -589,6 +649,20 @@ describe('assertSafeDemoName', () => {
     expect(() => assertSafeDemoName('has.dot')).toThrow(/demo name/);
     expect(() => assertSafeDemoName('../basic')).toThrow(/demo name/);
   });
+
+  it('throws when a tape name ends in a preview suffix', () => {
+    expect(() => assertDemoTapeName('basic-before')).toThrow(/demo name/);
+    expect(() => assertDemoTapeName('basic-before-after')).toThrow(/demo name/);
+  });
+
+  it('accepts before, basic, and a preview upload key', () => {
+    expect(() => assertSafeDemoName('before')).not.toThrow();
+    expect(() => assertSafeDemoName('basic')).not.toThrow();
+    expect(() => assertSafeDemoName('basic-before')).not.toThrow();
+    expect(() => assertSafeDemoName('basic-before-after')).not.toThrow();
+    expect(() => assertDemoTapeName('before')).not.toThrow();
+    expect(() => assertDemoTapeName('basic')).not.toThrow();
+  });
 });
 
 function recordingTree(): {
@@ -684,6 +758,23 @@ describe('assessScratch', () => {
 
     expect(result.exitCode).toBe(0);
     expect(result.lines).toContain('basic: UNSTABLE');
+  });
+
+  it('exits 1 when attempt 1 has a head and no base', () => {
+    const tree = recordingTree();
+    writeTape(tree.baseTapes, 'basic');
+    writeTape(tree.headTapes, 'basic');
+    writeAttempt(tree.scratchRoot, 0, 'base', 'basic', 'Search:\n', 1);
+    writeAttempt(tree.scratchRoot, 0, 'head', 'basic', 'Search:\n', 1);
+    writeAttempt(tree.scratchRoot, 1, 'head', 'basic', 'Search:\n', 1);
+
+    const result = assessScratch({
+      scratchRoot: tree.scratchRoot,
+      baseTapesDir: tree.baseTapes,
+      headTapesDir: tree.headTapes,
+    });
+
+    expect(result.exitCode).toBe(1);
   });
 
   it('returns exit 1 for a bad demo name or a missing recording', () => {

@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   fillCommentTemplate,
+  commitPathsAgainstHead,
   formatAmendList,
   formatTextDiff,
   loadCommentEntries,
@@ -132,6 +133,26 @@ describe('renderDemoComment', () => {
     expect(result.demoList).toContain(
       '<details>\n<summary>Text diff</summary>\n\n```diff\n-old line\n+new line\n```\n</details>',
     );
+  });
+
+  it('uses a fence longer than a backtick run in the text diff', () => {
+    const textDiff = ' unchanged\n ```\n+new';
+    const result = renderDemoComment([
+      commentEntry({
+        name: 'validation',
+        assessment: 'CHANGED',
+        textDiff,
+        stackedUrl: 'https://example.com/validation-before-after.gif',
+      }),
+    ]);
+    const opener = result.demoList.match(/(`+)diff\n/);
+    const fence = opener?.[1] ?? '';
+    const longestRun = Math.max(
+      ...(textDiff.match(/`+/g) ?? []).map((run) => run.length),
+    );
+
+    expect(fence.length).toBeGreaterThan(3);
+    expect(fence.length).toBeGreaterThan(longestRun);
   });
 
   it('opens a styling-only CHANGED demo without a text diff', () => {
@@ -325,8 +346,96 @@ describe('renderDemoComment', () => {
   });
 });
 
+describe('commitPathsAgainstHead', () => {
+  function fixture(): { headDocsImg: string; scratchRoot: string } {
+    const root = mkdtempSync(join(tmpdir(), 'head-docs-'));
+    const headDocsImg = join(root, 'head');
+    mkdirSync(headDocsImg);
+    return { headDocsImg, scratchRoot: join(root, 'scratch') };
+  }
+
+  function writeScratch(
+    scratchRoot: string,
+    name: string,
+    bytes: string,
+  ): void {
+    const dir = join(scratchRoot, 'attempt-0', 'head', name);
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, `${name}-demo.gif`), bytes);
+  }
+
+  it('drops a remove when the head GIF is absent', () => {
+    const result = commitPathsAgainstHead({
+      selection: { stage: [], remove: ['docs/img/gone-demo.gif'] },
+      ...fixture(),
+    });
+
+    expect(result.remove).toEqual([]);
+    expect(result.stage).toEqual([]);
+  });
+
+  it('keeps a remove when the head GIF exists', () => {
+    const paths = fixture();
+    writeFileSync(join(paths.headDocsImg, 'gone-demo.gif'), 'old');
+
+    const result = commitPathsAgainstHead({
+      selection: { stage: [], remove: ['docs/img/gone-demo.gif'] },
+      ...paths,
+    });
+
+    expect(result.remove).toEqual(['docs/img/gone-demo.gif']);
+  });
+
+  it('keeps a stage when the head GIF is absent', () => {
+    const paths = fixture();
+    writeScratch(paths.scratchRoot, 'basic', 'new');
+
+    const result = commitPathsAgainstHead({
+      selection: { stage: ['docs/img/basic-demo.gif'], remove: [] },
+      ...paths,
+    });
+
+    expect(result.stage).toEqual(['docs/img/basic-demo.gif']);
+  });
+
+  it('drops a stage when the head bytes match the scratch GIF', () => {
+    const paths = fixture();
+    writeFileSync(join(paths.headDocsImg, 'basic-demo.gif'), 'same');
+    writeScratch(paths.scratchRoot, 'basic', 'same');
+
+    const result = commitPathsAgainstHead({
+      selection: { stage: ['docs/img/basic-demo.gif'], remove: [] },
+      ...paths,
+    });
+
+    expect(result.stage).toEqual([]);
+  });
+
+  it('keeps a stage when the head bytes differ', () => {
+    const paths = fixture();
+    writeFileSync(join(paths.headDocsImg, 'basic-demo.gif'), 'old');
+    writeScratch(paths.scratchRoot, 'basic', 'new');
+
+    const result = commitPathsAgainstHead({
+      selection: { stage: ['docs/img/basic-demo.gif'], remove: [] },
+      ...paths,
+    });
+
+    expect(result.stage).toEqual(['docs/img/basic-demo.gif']);
+  });
+
+  it('throws when a stage scratch GIF is missing', () => {
+    expect(() =>
+      commitPathsAgainstHead({
+        selection: { stage: ['docs/img/basic-demo.gif'], remove: [] },
+        ...fixture(),
+      }),
+    ).toThrow(/scratch GIF/);
+  });
+});
+
 describe('selectReleaseAmend', () => {
-  it('stages CHANGED and NEW, removes REMOVED, and ignores the other verdicts', () => {
+  it('stages CHANGED, NEW, NOISY, and UNSTABLE, and removes REMOVED', () => {
     const selection = selectReleaseAmend([
       { name: 'quiet', assessment: 'SAME' },
       { name: 'basic', assessment: 'CHANGED' },
@@ -340,6 +449,8 @@ describe('selectReleaseAmend', () => {
     expect(selection.stage).toEqual([
       'docs/img/added-demo.gif',
       'docs/img/basic-demo.gif',
+      'docs/img/noisy-demo.gif',
+      'docs/img/unstable-demo.gif',
     ]);
     expect(selection.remove).toEqual(['docs/img/gone-demo.gif']);
     expect([...selection.stage, ...selection.remove].join('\n')).not.toMatch(
@@ -678,6 +789,19 @@ describe('parseCommentArgs', () => {
     ).toMatchObject({ mode: 'comment', gifCommitAdded: true });
   });
 
+  it('requires --head-docs for commit-list and rejects it on amend', () => {
+    expect(() => parseCommentArgs(['commit-list', ...scratch])).toThrow(
+      /--head-docs/,
+    );
+    expect(() =>
+      parseCommentArgs(['amend', ...scratch, '--head-docs', '/docs']),
+    ).toThrow(/unknown flag/);
+    expect(() => parseCommentArgs(['nope'])).toThrow(/unknown mode/);
+    expect(
+      parseCommentArgs(['commit-list', ...scratch, '--head-docs', '/docs']),
+    ).toMatchObject({ mode: 'commit-list', headDocsImg: '/docs' });
+  });
+
   it('throws on an unknown flag and accepts copies or amend with the scratch flags', () => {
     expect(() => parseCommentArgs(['copies', ...scratch, '--nope'])).toThrow(
       /unknown flag/,
@@ -789,6 +913,63 @@ describe('runCommentCli', () => {
       join('attempt-0', 'head', 'basic', 'basic-demo.gif'),
     );
     expect(captured.out()).not.toContain('attempt-1');
+  });
+
+  it('prints no remove line when a REMOVED head GIF is absent', () => {
+    const tree = scratchFixture();
+    writeTape(tree.baseTapes, 'gone');
+    writeRecording(tree.scratchRoot, 0, 'base', 'gone', 'Search:\n', 1);
+    const headDocs = mkdtempSync(join(tmpdir(), 'head-docs-'));
+    const captured = capturedIo();
+    const code = runCommentCli(
+      [
+        'commit-list',
+        '--scratch',
+        tree.scratchRoot,
+        '--base-tapes',
+        tree.baseTapes,
+        '--head-tapes',
+        tree.headTapes,
+        '--head-docs',
+        headDocs,
+      ],
+      captured.io,
+    );
+
+    expect(code).toBe(0);
+    expect(captured.out()).not.toContain('remove');
+  });
+
+  it('prints a stage line when the scratch GIF differs from the head file', () => {
+    const tree = scratchFixture();
+    writeTape(tree.baseTapes, 'basic');
+    writeTape(tree.headTapes, 'basic');
+    writeRecording(tree.scratchRoot, 0, 'base', 'basic', 'Search:\nold\n', 1);
+    writeRecording(tree.scratchRoot, 0, 'head', 'basic', 'Search:\nnew\n', 1);
+    writeFileSync(
+      join(tree.scratchRoot, 'attempt-0', 'head', 'basic', 'basic-demo.gif'),
+      'new-bytes',
+    );
+    const headDocs = mkdtempSync(join(tmpdir(), 'head-docs-'));
+    writeFileSync(join(headDocs, 'basic-demo.gif'), 'old-bytes');
+    const captured = capturedIo();
+    const code = runCommentCli(
+      [
+        'commit-list',
+        '--scratch',
+        tree.scratchRoot,
+        '--base-tapes',
+        tree.baseTapes,
+        '--head-tapes',
+        tree.headTapes,
+        '--head-docs',
+        headDocs,
+      ],
+      captured.io,
+    );
+
+    expect(code).toBe(0);
+    expect(captured.out()).toContain('stage docs/img/basic-demo.gif');
   });
 
   it('prints a stage line for a CHANGED demo in amend mode', () => {

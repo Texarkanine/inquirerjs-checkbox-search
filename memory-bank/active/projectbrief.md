@@ -28,7 +28,7 @@ Authoritative spec: [issue #190](https://github.com/Texarkanine/inquirerjs-check
 4. A NEW demo is open and shows the after image only.
 5. A pull request that cannot affect demos shows every demo collapsed.
 6. Re-running the workflow on the same commit gives the same verdicts.
-7. A pull request whose verdict is CHANGED, NEW, or REMOVED adds one commit to its branch with the GIFs from a single recording of the head. That commit is not an amend and not a force-push. SAME, NOISY, and UNSTABLE do not push. The comment tells the author to pull before the next push. See `memory-bank/active/creative/creative-commit-demos-on-merge.md`.
+7. A pull request whose verdict is not SAME adds one commit to its branch with the GIFs from a single recording of the head. That includes NOISY and UNSTABLE. That commit is not an amend and not a force-push. SAME does not push. The comment tells the author to pull before the next push. See `memory-bank/active/creative/creative-commit-demos-on-merge.md`.
 8. A release pull request amends the README GIFs only when `docs/img/` is still wrong compared with the commit that last touched it. Never commit frame hashes. No committed text fingerprint is required.
 
 ## Constraints

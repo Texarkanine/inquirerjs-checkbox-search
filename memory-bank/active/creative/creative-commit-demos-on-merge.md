@@ -1,5 +1,7 @@
 # Architecture Decision: Commit Demo GIFs on the Pull Request
 
+Superseded in part on 2026-11-04. NOISY and UNSTABLE are committed with the head GIF. Only SAME skips the GIF commit.
+
 ## Requirements & Constraints
 
 Ranked quality attributes:

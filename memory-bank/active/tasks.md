@@ -32,6 +32,8 @@ Checked against the code at `14a3a3a`. CommonMark 0.31.2 renders a diff line of 
 
 ### 1. Preview-name rejection — executable
 
+- [x] Done
+
 - Files: `scripts/demo-fingerprint.ts`, `scripts/demo-fingerprint.test.ts`
 
 1. Stub tests: in `describe('assertSafeDemoName')`, an empty case for the two suffixes and an empty case for `before` and `basic`.
@@ -40,6 +42,8 @@ Checked against the code at `14a3a3a`. CommonMark 0.31.2 renders a diff line of 
 4. Write code and run green: after the existing character check, reject a name that ends with `-before-after` or `-before`.
 
 ### 2. Commit NOISY and UNSTABLE — executable
+
+- [x] Done
 
 - Files: `scripts/demo-comment.ts`, `scripts/demo-comment.test.ts`
 
@@ -50,6 +54,8 @@ Checked against the code at `14a3a3a`. CommonMark 0.31.2 renders a diff line of 
 
 ### 3. Head comparison for the commit list — executable
 
+- [x] Done
+
 - Files: `scripts/demo-comment.ts`, `scripts/demo-comment.test.ts`
 
 1. Stub tests: empty cases for an absent remove, a present remove, an absent stage, an equal stage, a different stage, and a missing scratch GIF.
@@ -58,6 +64,8 @@ Checked against the code at `14a3a3a`. CommonMark 0.31.2 renders a diff line of 
 4. Write code and run green: read the head file and `scratchRoot/attempt-0/head/<name>/<name>-demo.gif`. Compare with `Buffer.equals`. Do not call git.
 
 ### 4. commit-list CLI — executable
+
+- [x] Done
 
 - Files: `scripts/demo-comment.ts`, `scripts/demo-comment.test.ts`
 
@@ -68,6 +76,8 @@ Checked against the code at `14a3a3a`. CommonMark 0.31.2 renders a diff line of 
 
 ### 5. Text-diff fence — executable
 
+- [x] Done
+
 - Files: `scripts/demo-comment.ts`, `scripts/demo-comment.test.ts`
 
 1. Stub tests: an empty case for a diff that contains a backtick run, next to the existing CHANGED diff case.
@@ -76,6 +86,8 @@ Checked against the code at `14a3a3a`. CommonMark 0.31.2 renders a diff line of 
 4. Write code and run green: choose the fence length from the diff. A diff with no backtick run keeps `` ```diff ``.
 
 ### 6. Unequal-width stack — executable
+
+- [x] Done
 
 - Files: `scripts/demo-fingerprint.ts`, `scripts/demo-fingerprint.test.ts`
 
@@ -86,6 +98,8 @@ Checked against the code at `14a3a3a`. CommonMark 0.31.2 renders a diff line of 
 
 ### 7. Incomplete repair attempt — executable
 
+- [x] Done
+
 - Files: `scripts/demo-fingerprint.test.ts`, `.github/workflows/generate-demos.yaml`
 
 1. Stub tests: an empty case in the `assessScratch` describe for an attempt-1 head with no attempt-1 base.
@@ -94,6 +108,8 @@ Checked against the code at `14a3a3a`. CommonMark 0.31.2 renders a diff line of 
 4. Write code and run green: in the release repair step, stop linking `attempt-1/head` before the first fingerprint CLI call. Keep the attempt-0 head link. The retry loop already records a missing attempt-1 head after it records the repair base. Do not add a test that the workflow file contains a string.
 
 ### 8. Wire the commit list and the width probe — executable
+
+- [x] Done
 
 - Files: `.github/workflows/generate-demos.yaml`
 - Behavior tests: steps 3, 4, and 6. No test locks a YAML string.
@@ -109,6 +125,8 @@ Checked against the code at `14a3a3a`. CommonMark 0.31.2 renders a diff line of 
     5. Before `buildDockerFfmpegStackArgs`, run `ffmpeg -hide_banner -i` on each GIF inside the demo image, parse both sizes with `parseFfmpegStreamSize`, and pass `beforeWidth` and `afterWidth`. `ffmpeg -i` with no output exits 1 after it prints the size. Treat a parsed size as success. Do not scale.
 
 ### 9. Docs and review replies — prose/policy
+
+- [x] Done
 
 - Files: `CONTRIBUTING.md`, `memory-bank/techContext.md`, `memory-bank/active/projectbrief.md`, `memory-bank/active/creative/creative-commit-demos-on-merge.md`
 - No tests: prose/policy artifact
@@ -157,6 +175,6 @@ No new technology - validation not required. The fence check used the already-in
 - [x] Implementation plan complete
 - [x] Technology validation complete
 - [x] Pre-Mortem complete
-- [ ] Preflight
-- [ ] Build
+- [x] Preflight
+- [x] Build
 - [ ] QA

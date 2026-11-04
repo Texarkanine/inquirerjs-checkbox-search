@@ -317,14 +317,52 @@ export const containerFramesDir = '/tmp/vhs-frames';
  * Paths are resolved so a relative path is a bind mount, not a named
  * volume. The output directory is mounted writable. The two input
  * directories are read-only. The process temp dir is not redirected.
- * This function does not run Docker.
+ * When the widths differ, each input is padded to the wider width.
+ * Neither GIF is scaled. This function does not run Docker.
  */
+
+const EQUAL_WIDTH_STACK_FILTER =
+  '[0][1]vstack=inputs=2,split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=none';
+
+function stackFilter(beforeWidth?: number, afterWidth?: number): string {
+  if (
+    beforeWidth === undefined ||
+    afterWidth === undefined ||
+    beforeWidth === afterWidth
+  ) {
+    return EQUAL_WIDTH_STACK_FILTER;
+  }
+  const maxWidth = Math.max(beforeWidth, afterWidth);
+  const pad = `pad=w=${maxWidth}:h=ih:x=(ow-iw)/2:y=0:color=black,setsar=1`;
+  return `[0]${pad}[top];[1]${pad}[bot];[top][bot]vstack=inputs=2,split[a][b];[a]palettegen=stats_mode=diff[pal];[b][pal]paletteuse=dither=none`;
+}
+/**
+ * Read the first `Video:` size from `ffmpeg -i` text.
+ * Throws when no `WIDTHxHEIGHT` size is present.
+ */
+export function parseFfmpegStreamSize(ffmpegText: string): {
+  width: number;
+  height: number;
+} {
+  const match = ffmpegText.match(/Video:.*?(\d+)x(\d+)/);
+  if (match === null) {
+    throw new Error('ffmpeg text has no video size');
+  }
+  return { width: Number(match[1]), height: Number(match[2]) };
+}
+
 export function buildDockerFfmpegStackArgs(options: {
   image: string;
   beforeGif: string;
   afterGif: string;
   outputGif: string;
+  beforeWidth?: number;
+  afterWidth?: number;
 }): string[] {
+  const { beforeWidth, afterWidth } = options;
+  if ((beforeWidth === undefined) !== (afterWidth === undefined)) {
+    throw new Error('pass both widths or neither');
+  }
   const beforeGif = resolve(options.beforeGif);
   const afterGif = resolve(options.afterGif);
   const outputGif = resolve(options.outputGif);
@@ -348,7 +386,7 @@ export function buildDockerFfmpegStackArgs(options: {
     '-i',
     afterGif,
     '-filter_complex',
-    '[0][1]vstack=inputs=2,split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=none',
+    stackFilter(beforeWidth, afterWidth),
     outputGif,
   ];
 }
@@ -543,6 +581,17 @@ export function assertSafeDemoName(name: string): void {
   }
 }
 
+/**
+ * Reject a tape name that collides with a preview file.
+ * Upload keys such as `<name>-before` stay allowed by `assertSafeDemoName`.
+ */
+export function assertDemoTapeName(name: string): void {
+  assertSafeDemoName(name);
+  if (name.endsWith('-before-after') || name.endsWith('-before')) {
+    throw new Error(`demo name is not safe: ${name}`);
+  }
+}
+
 export function tapeNames(directory: string): string[] {
   if (!existsSync(directory)) {
     return [];
@@ -644,7 +693,7 @@ export function assessScratch(options: ScratchOptions): {
     const baseNames = tapeNames(options.baseTapesDir);
     const headNames = tapeNames(options.headTapesDir);
     for (const name of [...baseNames, ...headNames]) {
-      assertSafeDemoName(name);
+      assertDemoTapeName(name);
     }
     const names = [...new Set([...baseNames, ...headNames])].sort((a, b) =>
       a.localeCompare(b),

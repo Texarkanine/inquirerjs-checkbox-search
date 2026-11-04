@@ -204,21 +204,47 @@ jobs:
             --scratch "$SCRATCH" \
             --base-tapes "${BASE_WT}/demos" \
             --head-tapes "${HEAD_WT}/demos")"
+          probe_width() {
+            local gif="$1"
+            local dir text
+            dir="$(dirname "$gif")"
+            text="$(docker run --rm --entrypoint ffmpeg -v "${dir}:${dir}:ro" vhs-node-demo:head -hide_banner -i "$gif" 2>&1 || true)"
+            FFMPEG_TEXT="$text" node --input-type=module -e '
+              import { parseFfmpegStreamSize } from "./scripts/demo-fingerprint.ts";
+              const size = parseFfmpegStreamSize(process.env.FFMPEG_TEXT ?? "");
+              process.stdout.write(String(size.width));
+            '
+          }
           while IFS= read -r line; do
             if [[ "$line" =~ ^([a-zA-Z0-9_-]+):\ CHANGED$ ]]; then
               name="${BASH_REMATCH[1]}"
+              before_gif="${SCRATCH}/attempt-0/base/${name}/${name}-demo.gif"
+              after_gif="${SCRATCH}/attempt-0/head/${name}/${name}-demo.gif"
+              before_width="$(probe_width "$before_gif")"
+              after_width="$(probe_width "$after_gif")"
               docker_args_text="$(
                 IMAGE=vhs-node-demo:head \
-                  BEFORE="${SCRATCH}/attempt-0/base/${name}/${name}-demo.gif" \
-                  AFTER="${SCRATCH}/attempt-0/head/${name}/${name}-demo.gif" \
+                  BEFORE="$before_gif" \
+                  AFTER="$after_gif" \
                   OUTPUT="docs/img/${name}-before-after-demo.gif" \
+                  BEFORE_WIDTH="$before_width" \
+                  AFTER_WIDTH="$after_width" \
                   node --input-type=module -e '
                     import { buildDockerFfmpegStackArgs } from "./scripts/demo-fingerprint.ts";
+                    const width = (value) => {
+                      const parsed = Number(value);
+                      if (!Number.isInteger(parsed) || parsed <= 0) {
+                        throw new Error(`GIF width is not a positive integer: ${value}`);
+                      }
+                      return parsed;
+                    };
                     const args = buildDockerFfmpegStackArgs({
                       image: process.env.IMAGE,
                       beforeGif: process.env.BEFORE,
                       afterGif: process.env.AFTER,
                       outputGif: process.env.OUTPUT,
+                      beforeWidth: width(process.env.BEFORE_WIDTH),
+                      afterWidth: width(process.env.AFTER_WIDTH),
                     });
                     process.stdout.write(args.join("\n") + "\n");
                   '
@@ -285,16 +311,27 @@ jobs:
           DEMO_IMAGES: ${{ steps.demo_preview.outputs.demo_images }}
           IS_RELEASE_PLEASE: ${{ steps.context.outputs.is_release_please }}
           USER_COMMIT_SHA: ${{ steps.demo_preview.outputs.user_commit_sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
           SHADOW_ROOT="${RUNNER_TEMP}/demo-shadow"
           BASE_WT="${SHADOW_ROOT}/base"
           HEAD_WT="${SHADOW_ROOT}/head"
           SCRATCH="${SHADOW_ROOT}/scratch"
-          AMEND_OUT="$(node scripts/demo-comment.ts amend \
+          HEAD_DOCS="${RUNNER_TEMP}/head-docs-img"
+          rm -rf "$HEAD_DOCS"
+          mkdir -p "$HEAD_DOCS"
+          while IFS= read -r path; do
+            if [ -z "$path" ]; then
+              continue
+            fi
+            git show "${PR_HEAD_SHA}:${path}" > "$HEAD_DOCS/$(basename "$path")"
+          done < <(git ls-tree -r --name-only "$PR_HEAD_SHA" -- docs/img)
+          AMEND_OUT="$(node scripts/demo-comment.ts commit-list \
             --scratch "$SCRATCH" \
             --base-tapes "${BASE_WT}/demos" \
-            --head-tapes "${HEAD_WT}/demos")"
+            --head-tapes "${HEAD_WT}/demos" \
+            --head-docs "$HEAD_DOCS")"
           comment_args=(
             node scripts/demo-comment.ts comment
             --scratch "$SCRATCH"
@@ -336,14 +373,6 @@ jobs:
           BASE_WT="${SHADOW_ROOT}/base"
           HEAD_WT="${SHADOW_ROOT}/head"
           SCRATCH="${SHADOW_ROOT}/scratch"
-          AMEND_OUT="$(node scripts/demo-comment.ts amend \
-            --scratch "$SCRATCH" \
-            --base-tapes "${BASE_WT}/demos" \
-            --head-tapes "${HEAD_WT}/demos")"
-          if [ -z "$AMEND_OUT" ]; then
-            echo "No CHANGED, NEW, or REMOVED demos. Not committing."
-            exit 0
-          fi
           git config --local user.name "demo-generation-doggo[bot]"
           git config --local user.email "demo-generation-doggo[bot]@users.noreply.github.com"
           git restore --source=HEAD --staged --worktree -- docs/img
@@ -351,6 +380,24 @@ jobs:
           git checkout "$PR_HEAD_REF"
           git restore --source=HEAD --staged --worktree -- docs/img
           git clean -fd -- docs/img
+          HEAD_DOCS="${RUNNER_TEMP}/head-docs-img"
+          rm -rf "$HEAD_DOCS"
+          mkdir -p "$HEAD_DOCS"
+          while IFS= read -r path; do
+            if [ -z "$path" ]; then
+              continue
+            fi
+            git show "HEAD:${path}" > "$HEAD_DOCS/$(basename "$path")"
+          done < <(git ls-tree -r --name-only HEAD -- docs/img)
+          AMEND_OUT="$(node scripts/demo-comment.ts commit-list \
+            --scratch "$SCRATCH" \
+            --base-tapes "${BASE_WT}/demos" \
+            --head-tapes "${HEAD_WT}/demos" \
+            --head-docs "$HEAD_DOCS")"
+          if [ -z "$AMEND_OUT" ]; then
+            echo "No demo GIF differs from HEAD. Not committing."
+            exit 0
+          fi
           while IFS= read -r line; do
             if [ -z "$line" ]; then
               continue
@@ -367,6 +414,10 @@ jobs:
               git rm -f --ignore-unmatch -- "$path"
             fi
           done <<< "$AMEND_OUT"
+          if git diff --cached --quiet; then
+            echo "Commit list produced no staged change."
+            exit 0
+          fi
           git commit -m "chore: update demo GIFs" --no-gpg-sign
           git push origin "$PR_HEAD_REF"
 
@@ -398,10 +449,9 @@ jobs:
           REPAIR_SCRATCH="${REPAIR_ROOT}/scratch"
           mkdir -p "$REPAIR_SCRATCH/attempt-0"
           ln -s "$SCRATCH/attempt-0/head" "$REPAIR_SCRATCH/attempt-0/head"
-          if [ -d "$SCRATCH/attempt-1/head" ]; then
-            mkdir -p "$REPAIR_SCRATCH/attempt-1"
-            ln -s "$SCRATCH/attempt-1/head" "$REPAIR_SCRATCH/attempt-1/head"
-          fi
+          # Do not link attempt-1 head here. attemptsForDemo throws when
+          # that side exists and the repair base does not. The retry loop
+          # records the pair.
           git worktree add --detach "$REPAIR_WT" "$GIF_SHA"
           node scripts/generate-demo.js all \
             --image=vhs-node-demo:repair \
@@ -453,14 +503,6 @@ jobs:
         run: |
           set -euo pipefail
           HEAD_TAPES="${RUNNER_TEMP}/demo-shadow/head/demos"
-          AMEND_OUT="$(node scripts/demo-comment.ts amend \
-            --scratch "$REPAIR_SCRATCH" \
-            --base-tapes "$REPAIR_BASE_TAPES" \
-            --head-tapes "$HEAD_TAPES")"
-          if [ -z "$AMEND_OUT" ]; then
-            echo "docs/img matches the release head. Not amending."
-            exit 0
-          fi
           git config --local user.name "demo-generation-doggo[bot]"
           git config --local user.email "demo-generation-doggo[bot]@users.noreply.github.com"
           git restore --source=HEAD --staged --worktree -- docs/img
@@ -468,6 +510,24 @@ jobs:
           git checkout "$PR_HEAD_REF"
           git restore --source=HEAD --staged --worktree -- docs/img
           git clean -fd -- docs/img
+          HEAD_DOCS="${RUNNER_TEMP}/head-docs-img"
+          rm -rf "$HEAD_DOCS"
+          mkdir -p "$HEAD_DOCS"
+          while IFS= read -r path; do
+            if [ -z "$path" ]; then
+              continue
+            fi
+            git show "HEAD:${path}" > "$HEAD_DOCS/$(basename "$path")"
+          done < <(git ls-tree -r --name-only HEAD -- docs/img)
+          AMEND_OUT="$(node scripts/demo-comment.ts commit-list \
+            --scratch "$REPAIR_SCRATCH" \
+            --base-tapes "$REPAIR_BASE_TAPES" \
+            --head-tapes "$HEAD_TAPES" \
+            --head-docs "$HEAD_DOCS")"
+          if [ -z "$AMEND_OUT" ]; then
+            echo "docs/img matches the release head. Not amending."
+            exit 0
+          fi
           while IFS= read -r line; do
             if [ -z "$line" ]; then
               continue

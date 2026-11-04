@@ -2,6 +2,8 @@
 
 Superseded in part on 2026-11-03. The operator accepted `creative-commit-demos-on-merge.md`: a pull request that changes a demo adds one GIF commit. The release-base decision below still stands. "A feature pull request gets no bot commit" does not.
 
+Superseded in part on 2026-11-04. The release amend stages NOISY and UNSTABLE as well as CHANGED and NEW. SAME stays unstaged.
+
 ## Requirements & Constraints
 
 Ranked quality attributes:
