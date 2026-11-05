@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.0.2](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v3.0.1...v3.0.2) (2026-11-05)
+
+
+### Bug Fixes
+
+* **deps-dev:** bump eslint ([67822d7](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/67822d751b870893286940bd0c8783d1933eb11a))
+* **deps-dev:** bump eslint from 10.13.0 to 10.14.0 in the dev-deps-minor-patch group ([#203](https://github.com/Texarkanine/inquirerjs-checkbox-search/issues/203)) ([67822d7](https://github.com/Texarkanine/inquirerjs-checkbox-search/commit/67822d751b870893286940bd0c8783d1933eb11a))
+
 ## [3.0.1](https://github.com/Texarkanine/inquirerjs-checkbox-search/compare/v3.0.0...v3.0.1) (2026-11-04)
 
 
