@@ -1,0 +1,1 @@
+Dependabot assigns a dependency to the highest pattern-specificity group, not the first group in the file. Exact name scores 1000, a group with no patterns scores 500, and @vitest/* scores 94, so a patternless dev group takes @vitest/* unless those names are exclude-patterns.
