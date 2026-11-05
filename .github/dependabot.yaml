@@ -8,9 +8,14 @@ updates:
       day: 'monday'
       time: '09:00'
     groups:
-      # vitest, @vitest/ui, and @vitest/coverage-v8 pin the same version of each
-      # other. A split bump fails npm ci with ERESOLVE. This group matches first,
-      # so those packages move together for every update type, including majors.
+      # vitest, @vitest/ui, and @vitest/coverage-v8 peer-depend on one exact
+      # version. A split bump fails npm ci with ERESOLVE, so this group has to
+      # be their only match, for every update type.
+      #
+      # A group with no patterns outranks a wildcard and does not yield, so
+      # dev-deps-minor-patch takes @vitest/* (and also keeps exact vitest) no
+      # matter which group is listed first. Its exclude-patterns are what make
+      # this group the only match. Keep that list the same as these patterns.
       vitest:
         patterns:
           - 'vitest'
@@ -25,6 +30,10 @@ updates:
         update-types:
           - 'minor'
           - 'patch'
+        # Same names as the vitest group's patterns.
+        exclude-patterns:
+          - 'vitest'
+          - '@vitest/*'
     open-pull-requests-limit: 10
     # Keep @types/node on the engines floor (currently ^22). Majors widen
     # typings beyond the supported runtime baseline; bump package.json first,

@@ -1,0 +1,1 @@
+OUTCOME: a patternless Dependabot group outranks @vitest/* and does not yield, so file order does not keep vitest lockstep. exclude-patterns on dev-deps-minor-patch is the only match. Checked with dependabot-core DependencyGroupEngine from main.
